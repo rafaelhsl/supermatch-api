@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import uvicorn
 import urllib.request
 import json
@@ -42,24 +43,24 @@ async def buscar_e_comparar(cep: str, item: str):
     print(f"\n📡 API Recebeu pedido ULTRA-RÁPIDO! Item: '{item}' | CEP: '{cep}'")
     
     uf_cliente = obter_uf_pelo_cep(cep)
-    print(f"📍 Região: {uf_cliente}")
     
-    # --- A MÁGICA DA VELOCIDADE ---
-    # Pedimos ao banco: "Me dê os produtos onde o nome pareça com o item digitado 
-    # E que atendam o estado do cliente (ou o Brasil todo)"
-    # O comando .ilike faz a busca ignorando maiúsculas e minúsculas!
+    # --- O TRUQUE DO CORINGA PARA IGNORAR ACENTOS ---
+    # Troca qualquer vogal (com ou sem acento) pelo coringa "_"
+    item_limpo = item.lower()
+    item_coringa = re.sub(r'[aáãâeéêiíoóõôuúç]', '_', item_limpo)
+    
+    print(f"🔍 Buscando no banco pelo padrão: {item_coringa}")
+    
     resposta_banco = supabase.table('produtos') \
         .select('*') \
-        .ilike('nome', f'%{item}%') \
+        .ilike('nome', f'%{item_coringa}%') \
         .in_('uf_cobertura', [uf_cliente, 'BR']) \
         .execute()
         
     produtos_encontrados = resposta_banco.data
     print(f"⚡ O banco retornou {len(produtos_encontrados)} produtos em milissegundos!")
     
-    # O nosso agrupador já entende a lista perfeitamente
     relatorio_final = cruzar_multiplos_produtos([produtos_encontrados])
-    
     mercados_acionados = list(set([p['supermercado'] for p in produtos_encontrados]))
     
     return {
