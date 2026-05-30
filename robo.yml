@@ -7,6 +7,11 @@ on:
   # Isso permite que você clique num botão para rodar na hora que quiser testar!
   workflow_dispatch: 
 
+  # --- A CORREÇÃO PARA O AVISO DO NODE.JS 24 ---
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+# ---------------------------------------------
+
 jobs:
   atualizar_banco_de_dados:
     runs-on: ubuntu-latest # O GitHub liga um Linux para nós
