@@ -1,0 +1,33 @@
+name: Robô da Madrugada (Scraper)
+
+on:
+  # O Despertador: Roda todo dia às 07:00 UTC (04:00 da manhã no Brasil)
+  schedule:
+    - cron: '0 7 * * *'
+  # Isso permite que você clique num botão para rodar na hora que quiser testar!
+  workflow_dispatch: 
+
+jobs:
+  atualizar_banco_de_dados:
+    runs-on: ubuntu-latest # O GitHub liga um Linux para nós
+
+    steps:
+    - name: Puxando o código do projeto
+      uses: actions/checkout@v4
+
+    - name: Configurando o Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Instalando as bibliotecas (requirements.txt)
+      run: pip install -r requirements.txt
+
+    - name: Instalando os navegadores fantasmas (Playwright)
+      run: python -m playwright install --with-deps chromium
+
+    - name: 🚀 Acordando os Robôs e Salvando no Supabase!
+      env:
+        # Injeta a chave secreta que salvamos no cofre do GitHub
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: python alimentar_banco.py
