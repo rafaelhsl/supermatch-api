@@ -33,7 +33,6 @@ def estruturar_produto_atacadao_json(texto_bruto):
 async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
     print(f"🤖 [Atacadão] Iniciando robô invisível para buscar '{item_usuario}'...")
     async with async_playwright() as p:
-        # Modo invisível ativado
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
             viewport={'width': 1366, 'height': 768},
@@ -41,8 +40,16 @@ async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
         )
         page = await context.new_page()
         
-        await page.goto("https://www.atacadao.com.br/", wait_until="load")
-        await page.wait_for_timeout(5000) 
+        # --- BLINDAGEM ANTI-QUEDA DE REDE ---
+        try:
+            # domcontentloaded é mais rápido. 60000ms dá 1 minuto pro servidor respirar
+            await page.goto("https://www.atacadao.com.br/", wait_until="domcontentloaded", timeout=60000)
+            await page.wait_for_timeout(5000) 
+        except Exception as e:
+            print(f"⚠️ [Atacadão] Site fora do ar ou muito lento. Abortando este item. Erro: {e}")
+            await browser.close()
+            return [] # Retorna vazio, mas NÃO QUEBRA os outros robôs!
+        # ------------------------------------
 
         try:
             search_bar = page.locator("input[type='search']:visible, input[placeholder*='busc' i]:visible, input[placeholder*='pesquis' i]:visible").first
