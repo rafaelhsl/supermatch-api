@@ -50,7 +50,7 @@ async def buscar_no_apoio(cep_usuario: str, item_usuario: str):
         context = await browser.new_context(viewport={'width': 1366, 'height': 768})
         page = await context.new_page()
 
-        await page.goto("https://www.apoioentrega.com/", wait_until="domcontentloaded")
+        await page.goto("https://www.apoioentrega.com/", wait_until="domcontentloaded", timeout=60000)
         
         try:
             btn_pf = page.locator("text='Sou pessoa física'").first
