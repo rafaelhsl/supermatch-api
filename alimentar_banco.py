@@ -8,6 +8,7 @@ from supabase import create_client, Client
 from Scraper_Apoio_v2 import buscar_no_apoio
 from Scraper_Atacadao_v2 import buscar_no_atacadao
 from Scraper_Supernosso import buscar_no_supernosso
+from Scraper_SuperABC import buscar_na_plataforma_regex
 
 # --- 1. CONFIGURAÇÃO DO SEU BANCO DE DADOS SUPABASE ---
 # Usando a URL exata que você me passou
@@ -37,10 +38,11 @@ async def popular_banco():
         print(f"\n🛒 Extraindo '{item}' dos supermercados...")
         
         # ⚡ LIGA OS TRÊS ROBÔS AO MESMO TEMPO ⚡
-        resultados_apoio, resultados_atacadao, resultados_supernosso = await asyncio.gather(
+        resultados_apoio, resultados_atacadao, resultados_supernosso, resultados_abc = await asyncio.gather(
             buscar_no_apoio(cep_usuario=CEP_BASE, item_usuario=item),
             buscar_no_atacadao(cep_usuario=CEP_BASE, item_usuario=item),
-            buscar_no_supernosso(cep_usuario=CEP_BASE, item_usuario=item)
+            buscar_no_supernosso(cep_usuario=CEP_BASE, item_usuario=item),
+            buscar_na_plataforma_regex("https://www.superabc.com.br/", "Super ABC", item)
         )
         
         # --- SALVANDO APOIO ---
@@ -63,6 +65,13 @@ async def popular_banco():
                 produto['uf_cobertura'] = 'MG' # O Supernosso também é fortíssimo em MG
                 supabase.table('produtos').insert(produto).execute()
             print(f"   ✅ Salvos {len(resultados_supernosso)} itens do Supernosso.")
+
+        # --- SALVANDO SUPER ABC ---
+        if resultados_abc:
+            for produto in resultados_abc:
+                produto['uf_cobertura'] = 'MG' 
+                supabase.table('produtos').insert(produto).execute()
+            print(f"   ✅ Salvos {len(resultados_abc)} itens do Super ABC.")
 
     print("\n🎉 MISSÃO CUMPRIDA! BANCO DE DADOS ATUALIZADO COM OS 3 MERCADOS!")
 
