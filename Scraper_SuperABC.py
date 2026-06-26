@@ -102,7 +102,7 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
 # (Para teste local, caso você queira rodar o arquivo isolado)
 if __name__ == "__main__":
     async def teste():
-        res = await buscar_na_plataforma_regex("https://www.superabc.com.br/", "Super ABC", "Cafe")
+        res = await buscar_na_plataforma_regex("https://superabconline.com.br/", "Super ABC", "Cafe")
         import json
         print(json.dumps(res[:3], indent=4, ensure_ascii=False))
     asyncio.run(teste())
