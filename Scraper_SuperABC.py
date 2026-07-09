@@ -68,7 +68,7 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
                 "input[placeholder*='procur' i]:visible"
             ).first
             
-            await search_bar.wait_for(state="visible", timeout=5000)
+            await search_bar.wait_for(state="visible", timeout=10000)
             await search_bar.click(force=True)
             await search_bar.fill(item_usuario, force=True)
             await search_bar.press("Enter")
