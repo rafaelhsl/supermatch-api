@@ -61,25 +61,23 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
 
         # PASSO B: Pesquisar (Otimizado para Angular / Regex Solutions)
         try:
-            # Usamos a CLASSE EXATA que você encontrou no Inspecionar!
             search_bar = page.locator(
-                "input.input-busca-produto:visible, "
-                "input[placeholder*='O que você procura' i]:visible"
+                "input.input-busca-produto, "
+                "input[placeholder*='O que você procura' i]"
             ).first
             
-            # Aumentamos o tempo de espera para 10s porque o Angular demora a renderizar
-            await search_bar.wait_for(state="visible", timeout=10000)
-            
-            # Clique duplo forçado para acordar campos do Angular
+            await search_bar.wait_for(state="attached", timeout=10000)
             await search_bar.click(click_count=2, force=True)
             
             await search_bar.fill(item_usuario, force=True)
             await search_bar.press("Enter")
             
-            print(f"⏳ [{nome_mercado}] Pesquisa feita! Aguardando o Angular carregar a prateleira...")
+            print(f"⏳ [{nome_mercado}] Pesquisa feita! Aguardando a prateleira...")
             await page.wait_for_timeout(10000) 
         except Exception as e:
             print(f"❌ [{nome_mercado}] Erro na barra de busca: {e}")
+            # TIRA UMA FOTO PARA NÓS VERMOS O QUE ESTÁ BLOQUEANDO A TELA!
+            await page.screenshot(path=f"debug_erro_{nome_mercado.replace(' ', '')}.png")
 
         # PASSO C: Ler a Prateleira (Usando o padrão que você mapeou)
         textos_produtos = await page.evaluate('''() => {
@@ -103,3 +101,11 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
         await browser.close()
         print(f"✅ [{nome_mercado}] Extração concluída! Encontrados {len(lista_final_json)} itens.")
         return lista_final_json
+
+# (Para teste local, caso você queira rodar o arquivo isolado)
+if __name__ == "__main__":
+    async def teste():
+        res = await buscar_na_plataforma_regex("https://superabconline.com.br/", "Super ABC", "Cafe")
+        import json
+        print(json.dumps(res[:3], indent=4, ensure_ascii=False))
+    asyncio.run(teste())
