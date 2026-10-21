@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melhor Compra - Comparador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans pb-24 lg:pb-8 relative">
+
+    <header id="topoDaPagina" class="bg-blue-600 text-white p-4 md:p-6 shadow-md">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl md:text-3xl font-bold text-center">🥇 Encontre o <span class="text-yellow-300">melhor preço</span></h1>
+            
+            <button onclick="abrirModalCep()" class="text-sm bg-blue-700 hover:bg-blue-800 transition px-4 py-2 rounded-full flex items-center gap-2 shadow-sm w-full md:w-auto justify-center">
+                <span>📍</span>
+                <div class="text-left">
+                    <span class="block text-xs text-blue-200 leading-none">Enviar para:</span>
+                    <span id="cepDisplay" class="font-bold leading-none">Não informado</span>
+                </div>
+                <span class="text-xl ml-1">✎</span>
+            </button>
+        </div>
+    </header>
+
+    <div id="modalCep" class="fixed inset-0 bg-black bg-opacity-60 hidden flex justify-center items-center z-50 backdrop-blur-sm p-4">
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">📍 Onde você quer receber?</h2>
+            <p class="text-sm text-gray-500 mb-6">Digite seu CEP para encontrarmos os supermercados da sua região.</p>
+            <input type="text" id="inputCep" placeholder="Ex: 30180-030" maxlength="9" class="w-full border-2 border-gray-300 rounded-xl p-4 text-xl text-center focus:outline-none focus:border-blue-500">
+            <p id="msgErroCep" class="text-red-500 text-sm mt-2 hidden font-semibold">⚠️ CEP inválido ou não encontrado.</p>
+            <div class="flex flex-col md:flex-row justify-end gap-3 mt-8">
+                <button onclick="fecharModalCep()" class="px-5 py-3 text-gray-500 hover:bg-gray-100 rounded-xl font-semibold w-full md:w-auto">Cancelar</button>
+                <button onclick="salvarCep()" id="btnSalvarCep" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-md w-full md:w-auto">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-6xl mx-auto mt-4 md:mt-8 px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="lg:col-span-2">
+            <div class="bg-white p-4 md:p-6 rounded-2xl shadow-md flex flex-col md:flex-row gap-3 border border-gray-100">
+                <input type="text" id="inputBusca" placeholder="Ex: Arroz Camil, Feijão, Óleo..." class="flex-1 border-2 border-gray-200 rounded-xl p-4 text-lg focus:outline-none focus:border-blue-500">
+                <button onclick="buscarProdutos()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-xl shadow-md transition-colors text-lg w-full md:w-auto">Buscar</button>
+            </div>
+
+            <div id="loading" class="hidden text-center mt-12">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-b-blue-600 mb-4"></div>
+                <h2 class="text-xl text-gray-800 font-bold mb-2">Consultando supermercados...</h2>
+                <p class="text-gray-500 font-medium">Lendo do banco de dados.</p>
+            </div>
+
+            <div id="resultados" class="mt-6 md:mt-8 grid grid-cols-1 gap-6"></div>
+        </div>
+
+        <div class="lg:col-span-1" id="ancoraCarrinho">
+            <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg lg:sticky lg:top-8 border border-gray-200">
+                <div class="flex justify-between items-center mb-4 border-b pb-4">
+                    <h2 class="text-xl font-bold text-gray-800">🛒 Seu Carrinho</h2>
+                    <button onclick="limparCarrinho()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded transition">Esvaziar</button>
+                </div>
+                
+                <div id="listaItensCarrinho" class="space-y-4 mb-6 max-h-[50vh] overflow-y-auto pr-2"></div>
+                <div id="totalCarrinho" class="mt-4"></div>
+            </div>
+
+            <div class="text-center mt-6 lg:hidden">
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-blue-600 font-bold bg-blue-50 hover:bg-blue-100 transition px-6 py-3 rounded-full shadow-sm flex items-center justify-center gap-2 w-full">
+                    <span>⬆️</span> Voltar à Busca
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <button onclick="irParaCarrinho()" class="lg:hidden fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition z-40 flex items-center justify-center border-2 border-white">
+        <span class="text-2xl">🛒</span>
+        <span id="badgeCarrinho" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white -mt-2 -mr-2 hidden">0</span>
+    </button>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById('inputBusca').value = "";
+            const cepSalvo = localStorage.getItem("user_cep");
+            const cidadeSalva = localStorage.getItem("user_cidade");
+            if (cepSalvo) {
+                document.getElementById('cepDisplay').innerText = `${cepSalvo.substring(0,5)}-${cepSalvo.substring(5)} (${cidadeSalva})`;
+            } else {
+                abrirModalCep();
+            }
+            renderizarCarrinho(); 
+        
+            document.getElementById('inputBusca').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') { buscarProdutos(); }
+            });
+        });
+
+        function abrirModalCep() { document.getElementById('modalCep').classList.remove('hidden'); document.getElementById('msgErroCep').classList.add('hidden'); }
+        function fecharModalCep() { document.getElementById('modalCep').classList.add('hidden'); }
+
+        async function salvarCep() {
+            const cepLimpo = document.getElementById('inputCep').value.replace(/\D/g, '');
+            const msgErro = document.getElementById('msgErroCep');
+            const btnSalvar = document.getElementById('btnSalvarCep');
+
+            if (cepLimpo.length !== 8) { msgErro.innerText = "⚠️ O CEP deve ter 8 números."; msgErro.classList.remove('hidden'); return; }
+
+            btnSalvar.innerText = "Buscando...";
+            msgErro.classList.add('hidden');
+
+            try {
+                const res = await fetch(`https://brasilapi.com.br/api/cep/v1/${cepLimpo}`);
+                const dados = await res.json();
+                if (dados.errors || dados.message) throw new Error();
+
+                localStorage.setItem("user_cep", cepLimpo);
+                localStorage.setItem("user_cidade", `${dados.city}/${dados.state}`);
+                document.getElementById('cepDisplay').innerText = `${cepLimpo.substring(0,5)}-${cepLimpo.substring(5)} (${dados.city}/${dados.state})`;
+                fecharModalCep();
+            } catch (e) {
+                msgErro.innerText = "⚠️ CEP não encontrado."; msgErro.classList.remove('hidden');
+            } finally { btnSalvar.innerText = "Confirmar"; }
+        }
+
+        let carrinho = JSON.parse(localStorage.getItem("user_carrinho")) || {}; 
+
+        // Retorna a quantidade de um item no carrinho (para o catálogo saber)
+        function getQuantidadeNoCarrinho(nomeProduto, mercado) {
+            if (!carrinho[mercado]) return 0;
+            const item = carrinho[mercado].find(i => i.nome === nomeProduto);
+            return item ? item.quantidade : 0;
+        }
+
+        // Lógica de adicionar o 1º item a partir do botão vazio
+        function adicionarNovoAoCarrinho(produtoEncoded, mercado) {
+            const produto = JSON.parse(decodeURIComponent(produtoEncoded));
+            if (!carrinho[mercado]) carrinho[mercado] = [];
+            produto.quantidade = 1;
+            carrinho[mercado].push(produto);
+            salvarERenderizar();
+        }
+
+        // Lógica para alterar + ou - tanto no catálogo quanto no carrinho
+        function alterarQtdCatalogo(produtoEncoded, mercado, delta) {
+            const produto = JSON.parse(decodeURIComponent(produtoEncoded));
+            const idx = carrinho[mercado].findIndex(i => i.nome === produto.nome);
+            if (idx >= 0) {
+                carrinho[mercado][idx].quantidade += delta;
+                if (carrinho[mercado][idx].quantidade <= 0) {
+                    carrinho[mercado].splice(idx, 1);
+                }
+                salvarERenderizar();
+            }
+        }
+
+        // Continua servindo o Carrinho Lateral (usa index por ser mais leve)
+        function alterarQuantidade(mercado, indexItem, delta) {
+            let item = carrinho[mercado][indexItem];
+            item.quantidade += delta;
+            if (item.quantidade <= 0) { carrinho[mercado].splice(indexItem, 1); }
+            salvarERenderizar();
+        }
+
+        function removerItem(mercado, indexItem) {
+            carrinho[mercado].splice(indexItem, 1);
+            salvarERenderizar();
+        }
+
+        function limparCarrinho() {
+            if(confirm("Deseja esvaziar todos os carrinhos?")) { carrinho = {}; salvarERenderizar(); }
+        }
+
+        function adicionarTodos(event, listaEncoded) {
+            const listaProdutos = JSON.parse(decodeURIComponent(listaEncoded));
+            listaProdutos.forEach(prod => {
+                if (!carrinho[prod.supermercado]) carrinho[prod.supermercado] = [];
+                const indexExistente = carrinho[prod.supermercado].findIndex(item => item.nome === prod.nome);
+                if (indexExistente >= 0) { carrinho[prod.supermercado][indexExistente].quantidade += 1; } 
+                else { prod.quantidade = 1; carrinho[prod.supermercado].push(prod); }
+            });
+            salvarERenderizar();
+            
+            // Feedback do botão Roxo
+            const btn = event.currentTarget;
+            const original = btn.innerHTML;
+            btn.innerHTML = "✓ Adicionados";
+            btn.classList.add("bg-purple-800");
+            setTimeout(() => { btn.innerHTML = original; btn.classList.remove("bg-purple-800"); }, 1000);
+        }
+
+        function salvarERenderizar() {
+            localStorage.setItem("user_carrinho", JSON.stringify(carrinho));
+            renderizarCarrinho();
+            sincronizarBotoesCatalogo(); // Atualiza os botões de catálogo em tempo real!
+        }
+
+        function calcularPrecoItem(item) {
+            if (item.quantidade >= item.quantidade_atacado && item.preco_atacado < item.preco_varejo) {
+                return { total: item.preco_atacado * item.quantidade, unitario: item.preco_atacado, ehAtacado: true };
+            }
+            return { total: item.preco_varejo * item.quantidade, unitario: item.preco_varejo, ehAtacado: false };
+        }
+
+        function atualizarBadgeMobile() {
+            let totalProdutosDistintos = 0;
+            for (let mercado in carrinho) {
+                // Em vez de somar a quantidade, contamos quantos itens diferentes existem na lista
+                totalProdutosDistintos += carrinho[mercado].length; 
+            }
+            const badge = document.getElementById('badgeCarrinho');
+            if (totalProdutosDistintos > 0) {
+                badge.innerText = totalProdutosDistintos;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderizarCarrinho() {
+            const lista = document.getElementById('listaItensCarrinho');
+            const areaTotal = document.getElementById('totalCarrinho');
+            let mercados = Object.keys(carrinho);
+            
+            atualizarBadgeMobile(); 
+
+            if (mercados.length === 0 || mercados.every(m => carrinho[m].length === 0)) {
+                lista.innerHTML = `<div class="text-center py-8"><span class="text-4xl">🛒</span><p class="text-gray-400 text-sm font-medium mt-3">Seu carrinho está vazio</p></div>`;
+                areaTotal.innerHTML = "";
+                return;
+            }
+
+            let htmlCarrinho = "";
+            let temItens = false;
+
+            mercados.forEach(mercado => {
+                let itens = carrinho[mercado];
+                if (itens.length === 0) return;
+                temItens = true;
+
+                let subtotalMercado = 0;
+                let qtdItensMercado = 0;
+                let htmlItens = "";
+                
+                itens.forEach((item, index) => {
+                    let calculo = calcularPrecoItem(item);
+                    subtotalMercado += calculo.total;
+                    qtdItensMercado += item.quantidade;
+                    
+                    let seloAtacado = calculo.ehAtacado 
+                        ? `<span class="bg-green-100 text-green-700 text-[9px] font-bold px-1 py-0.5 rounded ml-1 block mt-1">Preço Atacado!</span>` 
+                        : `<span class="text-[9px] text-gray-400 ml-1 block mt-1">Atacado a partir de ${item.quantidade_atacado}</span>`;
+
+                    htmlItens += `
+                        <div class="bg-white p-3 rounded-lg mb-2 shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-gray-800 leading-tight flex-1 pr-2 line-clamp-2" title="${item.nome}">${item.nome}</span>
+                                <button onclick="removerItem('${mercado}', ${index})" class="text-gray-300 hover:text-red-500 transition">✕</button>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div class="flex items-center bg-gray-100 rounded-md border border-gray-200">
+                                    <button onclick="alterarQuantidade('${mercado}', ${index}, -1)" class="px-2 py-1 text-gray-600 font-bold hover:bg-gray-200">-</button>
+                                    <span class="px-2 py-1 text-xs font-bold text-gray-800 min-w-[24px] text-center">${item.quantidade}</span>
+                                    <button onclick="alterarQuantidade('${mercado}', ${index}, 1)" class="px-2 py-1 text-gray-600 font-bold hover:bg-gray-200">+</button>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-black text-sm text-gray-900">R$ ${calculo.total.toFixed(2)}</p>
+                                    ${seloAtacado}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                htmlCarrinho += `
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-inner mb-4">
+                        <div class="font-black text-sm text-blue-700 border-b pb-2 mb-3 uppercase flex justify-between items-center">
+                            <span>🏪 ${mercado}</span>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${qtdItensMercado} itens</span>
+                        </div>
+                        ${htmlItens}
+                        <div class="mt-3 text-right font-black text-base text-gray-800 border-t pt-2">
+                            Subtotal: <span class="text-blue-600">R$ ${subtotalMercado.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            lista.innerHTML = temItens ? htmlCarrinho : "";
+
+            if (temItens) {
+                areaTotal.innerHTML = `
+                    <button onclick="finalizarCompra()" class="w-full bg-green-600 text-white font-black py-4 rounded-xl hover:bg-green-700 transition shadow-lg text-lg flex justify-center items-center gap-2">
+                        <span>🏆</span> Fechar Cesta Mais Barata
+                    </button>
+                `;
+            } else {
+                areaTotal.innerHTML = "";
+            }
+        }
+
+        function finalizarCompra() {
+            let totais =[];
+            for (let mercado in carrinho) {
+                if (carrinho[mercado].length > 0) {
+                    let sum = carrinho[mercado].reduce((acc, item) => acc + calcularPrecoItem(item).total, 0);
+                    let qtd = carrinho[mercado].reduce((acc, item) => acc + item.quantidade, 0);
+                    totais.push({ mercado: mercado, total: sum, qtdItens: qtd });
+                }
+            }
+            if (totais.length === 0) return;
+            totais.sort((a, b) => a.total - b.total);
+            const vencedor = totais[0];
+
+            let mensagem = `🏆 MERCADO CAMPEÃO: ${vencedor.mercado}\n💰 Valor Total: R$ ${vencedor.total.toFixed(2)} (${vencedor.qtdItens} produtos)\n\n--- Comparativo Final ---\n`;
+            totais.forEach(t => { mensagem += `🏪 ${t.mercado}: R$ ${t.total.toFixed(2)}\n`; });
+            alert(mensagem);
+        }
+
+        function irParaCarrinho() {
+            document.getElementById('ancoraCarrinho').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- A MÁGICA DE SINCRONIZAÇÃO DO CATÁLOGO ---
+        // Essa função "pinta" os botões na tela baseados na memória do carrinho
+        function sincronizarBotoesCatalogo() {
+            const containers = document.querySelectorAll('.acao-produto-container');
+            
+            containers.forEach(container => {
+                const produtoEncoded = container.getAttribute('data-produto');
+                const mercado = container.getAttribute('data-mercado');
+                const produtoInfo = JSON.parse(decodeURIComponent(produtoEncoded));
+                
+                const qtdNoCarrinho = getQuantidadeNoCarrinho(produtoInfo.nome, mercado);
+
+                if (qtdNoCarrinho === 0) {
+                    // Botão Padrão "Adicionar"
+                    container.innerHTML = `
+                        <button onclick="adicionarNovoAoCarrinho('${produtoEncoded}', '${mercado}')" 
+                                class="w-full sm:w-auto shrink-0 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white px-4 py-2 md:py-3 rounded-xl text-sm font-bold shadow-sm transition border border-transparent">
+                            Adicionar
+                        </button>
+                    `;
+                } else {
+                    // Controles Numéricos de Quantidade
+                    container.innerHTML = `
+                        <div class="flex items-center justify-between bg-white border-2 border-blue-500 rounded-xl h-full w-full sm:w-32 shadow-sm overflow-hidden">
+                            <button onclick="alterarQtdCatalogo('${produtoEncoded}', '${mercado}', -1)" class="w-10 py-2 flex items-center justify-center text-blue-700 font-bold hover:bg-blue-50 transition">-</button>
+                            <span class="font-black text-blue-900 w-full text-center text-sm">${qtdNoCarrinho}</span>
+                            <button onclick="alterarQtdCatalogo('${produtoEncoded}', '${mercado}', 1)" class="w-10 py-2 flex items-center justify-center text-blue-700 font-bold hover:bg-blue-50 transition">+</button>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        async function buscarProdutos() {
+            const termoBusca = document.getElementById('inputBusca').value;
+            if (!termoBusca) return alert("Digite um produto para buscar!");
+
+            const cepAtivo = localStorage.getItem("user_cep");
+            if (!cepAtivo) { abrirModalCep(); return; }
+
+            const divResultados = document.getElementById('resultados');
+            const divLoading = document.getElementById('loading');
+
+            divResultados.innerHTML = "";
+            divLoading.classList.remove('hidden');
+
+            try {
+                const resposta = await fetch(`https://supermatch-api.onrender.com/comparar?cep=${cepAtivo}&item=${termoBusca}`);
+                const dados = await resposta.json();
+
+                divLoading.classList.add('hidden');
+
+                if (dados.carrinho_comparativo.length === 0) {
+                    divResultados.innerHTML = "<p class='text-center text-gray-500 text-lg'>Nenhum produto encontrado.</p>";
+                    return;
+                }
+
+                dados.carrinho_comparativo.forEach(grupo => {
+                    const produtosEncoded = encodeURIComponent(JSON.stringify(grupo.opcoes_de_compra));
+
+                    let opcoesHTML = grupo.opcoes_de_compra.map(opcao => {
+                        const opcaoEncoded = encodeURIComponent(JSON.stringify(opcao));
+                        // Inserimos a "âncora" acao-produto-container para a Sincronização Dinâmica
+                        return `
+                            <div class="bg-gray-50 p-3 md:p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:bg-gray-100 transition">
+                                <div class="overflow-hidden w-full">
+                                    <p class="font-bold text-[10px] md:text-xs text-gray-500 uppercase tracking-wider mb-1">${opcao.supermercado}</p>
+                                    <p class="text-sm font-semibold text-gray-800 leading-tight w-full line-clamp-2" title="${opcao.nome}">${opcao.nome}</p>
+                                    <div class="flex items-baseline gap-2 mt-1">
+                                        <p class="text-xl font-black text-blue-600">R$ ${opcao.preco_varejo.toFixed(2)}</p>
+                                        <p class="text-[10px] text-gray-500 font-medium">Atacado a partir de ${opcao.quantidade_atacado}un <span class="text-green-600 font-bold">(R$ ${opcao.preco_atacado.toFixed(2)})</span></p>
+                                    </div>
+                                </div>
+                                <div class="acao-produto-container w-full sm:w-auto shrink-0 flex items-center justify-end" data-mercado="${opcao.supermercado}" data-produto="${opcaoEncoded}">
+                                    <!-- Os botões serão injetados aqui pela função sincronizarBotoesCatalogo() -->
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    divResultados.innerHTML += `
+                        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-200">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4 pb-3 border-b">
+                                <h3 class="text-lg md:text-xl font-extrabold text-gray-800 w-full md:w-2/3 leading-tight">${grupo.produto_base}</h3>
+                                <button onclick="adicionarTodos(event, '${produtosEncoded}')" 
+                                        class="w-full md:w-auto shrink-0 bg-purple-100 text-purple-700 hover:bg-purple-600 hover:text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition flex items-center justify-center gap-1 border border-transparent">
+                                    <span>⚡</span> Add em Todos
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${opcoesHTML}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Após desenhar a tela de busca, liga a sincronização visual!
+                sincronizarBotoesCatalogo();
+
+            } catch (erro) {
+                divLoading.classList.add('hidden');
+                divResultados.innerHTML = `<p class="text-center text-red-500 bg-red-50 p-4 rounded-xl border">Erro: O servidor da API está demorando a responder. Tente novamente.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
