@@ -42,7 +42,7 @@ async def popular_banco():
             buscar_no_apoio(cep_usuario=CEP_BASE, item_usuario=item),
             buscar_no_atacadao(cep_usuario=CEP_BASE, item_usuario=item),
             buscar_no_supernosso(cep_usuario=CEP_BASE, item_usuario=item),
-            buscar_na_plataforma_regex("https://www.superabc.com.br/", "Super ABC", item)
+            buscar_na_plataforma_regex("https://superabconline.com.br/", "Super ABC", item)
         )
         
         # --- SALVANDO APOIO ---
