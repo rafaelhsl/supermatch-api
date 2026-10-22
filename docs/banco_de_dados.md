@@ -1,10 +1,10 @@
 # Banco de dados (Supabase)
 
-> **Status: INFERIDO DO CÓDIGO, ainda não conferido no Supabase.**
-> Este documento descreve o que o código espera do banco. Os pontos marcados com
-> **[CONFIRMAR]** precisam ser verificados no painel do Supabase com as consultas
-> da seção [Como confirmar no Supabase](#como-confirmar-no-supabase).
-> Depois de conferir, remova este aviso e ajuste o que estiver diferente.
+> **Fonte do esquema:** script de criação da tabela fornecido pelo dono do projeto (seção
+> [Script de criação](#script-de-criação)). Colunas, tipos, restrições e índice abaixo vêm dele.
+> Continuam **[CONFIRMAR]** no painel do Supabase: se o banco ainda é igual ao script (alguma
+> alteração manual posterior), se existem outras tabelas e como está o RLS. As consultas estão em
+> [Como confirmar no Supabase](#como-confirmar-no-supabase).
 
 - Projeto Supabase: `gtdvgdfalpsrnefzyfgu` (`https://gtdvgdfalpsrnefzyfgu.supabase.co`)
 - Tabelas conhecidas: apenas **`produtos`** (o código não usa nenhuma outra).
@@ -16,29 +16,61 @@
 Cada linha é **um produto de um supermercado na última coleta**. Não há histórico: a cada carga a
 tabela inteira é apagada e regravada.
 
-| Coluna | Tipo provável | Origem | Descrição |
-|---|---|---|---|
-| `supermercado` | texto | scrapers | Nome do mercado: `Apoio Entrega`, `Atacadao`, `Supernosso`, `Super ABC` |
-| `nome` | texto | scrapers | Nome do produto como aparece no site do mercado |
-| `preco_varejo` | numérico | scrapers | Preço unitário normal. Nos mercados com regra de atacado, é o **maior** dos preços lidos |
-| `preco_atacado` | numérico | scrapers | Preço unitário a partir de `quantidade_atacado`. Sem atacado, é igual a `preco_varejo` |
-| `quantidade_atacado` | inteiro | scrapers | A partir de quantas unidades vale `preco_atacado`. Sem atacado, vale `1` |
-| `texto_original` | texto | scrapers | Texto bruto do card do produto, guardado para depuração |
-| `uf_cobertura` | texto | `alimentar_banco.py` | UF atendida pelo mercado: `MG` (Apoio, Supernosso, Super ABC) ou `BR` (Atacadão) |
+| Coluna | Tipo | Obrigatória | Preenchida por | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (chave primária) | sim, automática | banco (`gen_random_uuid()`) | Identificador da linha. Muda a cada carga, pois a tabela é regravada |
+| `supermercado` | `text` | sim | scrapers | Nome do mercado: `Apoio Entrega`, `Atacadao`, `Supernosso`, `Super ABC` |
+| `nome` | `text` | sim | scrapers | Nome do produto como aparece no site do mercado |
+| `preco_varejo` | `decimal(10,2)` | sim | scrapers | Preço unitário normal. Nos mercados com regra de atacado, é o **maior** dos preços lidos |
+| `preco_atacado` | `decimal(10,2)` | sim | scrapers | Preço unitário a partir de `quantidade_atacado`. Sem atacado, é igual a `preco_varejo` |
+| `quantidade_atacado` | `integer` | sim | scrapers | A partir de quantas unidades vale `preco_atacado`. Sem atacado, vale `1` |
+| `uf_cobertura` | `text` | sim | `alimentar_banco.py` | UF atendida pelo mercado: `MG` (Apoio, Supernosso, Super ABC) ou `BR` (Atacadão) |
+| `texto_original` | `text` | não | scrapers | Texto bruto do card do produto, guardado para depuração |
+| `atualizado_em` | `timestamptz` | sim, automática | banco (`now()` em UTC) | Momento em que a linha foi inserida, ou seja, a hora da coleta |
 
-Colunas que provavelmente existem mas o código não menciona **[CONFIRMAR]**: `id` (chave primária
-gerada pelo Supabase) e `created_at`.
+### Regras que o banco garante e as que só o código assume
 
-### Regras que o código assume (hoje não garantidas pelo banco)
+- **Garantido pelo banco:** `supermercado`, `nome`, os três campos de preço/quantidade e
+  `uf_cobertura` nunca são nulos. Isso casa com os scrapers, que descartam produtos sem preço, e
+  protege o comparador ([`Comparador_inteligente.py`](../Comparador_inteligente.py)), que ordena
+  por `preco_varejo`.
+- **Só no código:** `supermercado` identifica o mercado apenas pelo **texto**. Não existe tabela de
+  mercados; um erro de digitação no nome cria um "mercado novo".
+- **Só no código:** `uf_cobertura` é fixada em `alimentar_banco.py`, não é lida do site do mercado.
+- **Só no código:** um produto é reconhecido só por `supermercado` + `nome`. Não há código de
+  barras nem SKU, e nada impede linhas repetidas.
+- `atualizado_em` já registra a hora da coleta, mas a API **não a devolve**, então o site não mostra
+  quão recentes são os preços.
 
-- `preco_varejo` e `preco_atacado` **nunca são nulos**: os scrapers descartam produtos sem preço
-  (`return None`). Mas o comparador ([`Comparador_inteligente.py`](../Comparador_inteligente.py))
-  faz `preco_varejo < ...` e ordena por esse campo, então um valor nulo quebraria a resposta da API.
-  **[CONFIRMAR]** se as colunas têm `NOT NULL`.
-- `supermercado` identifica o mercado só pelo **texto**. Não existe tabela de mercados; um erro de
-  digitação no nome cria um "mercado novo".
-- `uf_cobertura` é fixada **no código** (`alimentar_banco.py`), não é lida do site do mercado.
-- Um produto é identificado só por `supermercado` + `nome`. Não há código de barras nem SKU.
+## Script de criação
+
+```sql
+-- Criando a tabela para armazenar nossos produtos
+CREATE TABLE produtos (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    supermercado TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    preco_varejo DECIMAL(10, 2) NOT NULL,
+    preco_atacado DECIMAL(10, 2) NOT NULL,
+    quantidade_atacado INTEGER NOT NULL,
+    uf_cobertura TEXT NOT NULL, -- Para sabermos se é de MG, SP, ou BR (Brasil todo)
+    texto_original TEXT,
+    atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Criando um índice para deixar a busca por nome super rápida!
+CREATE INDEX idx_nome_produto ON produtos USING GIN (to_tsvector('portuguese', nome));
+```
+
+### O índice de nome não é usado pela API
+
+O índice `idx_nome_produto` é de **busca textual** (`to_tsvector`). Ele só acelera consultas escritas
+com `to_tsvector('portuguese', nome) @@ ...`. A API busca com `nome ilike '%...%'` (veja
+[Como os dados saem](#como-os-dados-saem)), e o PostgreSQL **não usa esse índice** para `ilike`.
+Na prática, hoje a busca varre a tabela inteira e o índice só custa tempo extra a cada inserção.
+Com poucos milhares de linhas isso passa despercebido, mas deve ser resolvido quando o modelo de
+dados for redesenhado (por exemplo, com `pg_trgm` + `unaccent`, ou passando a consulta a usar a
+busca textual).
 
 ## Como os dados entram
 
@@ -76,13 +108,11 @@ where nome ilike '%<termo com vogais trocadas por _>%'
 4. Passa o resultado para `cruzar_multiplos_produtos`, que agrupa produtos equivalentes de mercados
    diferentes (nome parecido, mesma medida, mesmas tags) e aponta o mais barato de cada grupo.
 
-Observações de desempenho: `ilike '%...%'` não usa índice comum, então a busca varre a tabela
-inteira. Com poucos milhares de linhas isso é aceitável; com mais dados, vale um índice `pg_trgm`.
-
 ## Como confirmar no Supabase
 
-No painel do Supabase, abra **SQL Editor** e rode as consultas abaixo. Cole os resultados na
-conversa para atualizarmos este documento.
+No painel do Supabase, abra **SQL Editor** e rode as consultas abaixo. As mais importantes são as
+de número **2**, **4** e **5**; a 1 e a 3 só confirmam que o banco continua igual ao script.
+Cole os resultados na conversa para atualizarmos este documento.
 
 **1. Colunas, tipos e obrigatoriedade**
 
@@ -125,7 +155,7 @@ where tablename = 'produtos';
 **5. Volume e cobertura atuais**
 
 ```sql
-select supermercado, uf_cobertura, count(*) as itens
+select supermercado, uf_cobertura, count(*) as itens, max(atualizado_em) as ultima_coleta
 from produtos
 group by supermercado, uf_cobertura
 order by supermercado;
