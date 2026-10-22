@@ -65,22 +65,26 @@ O RLS está **ligado** em `produtos` e **não há nenhuma política** (confirmad
 
 Cada busca devolve em média 20 a 26 produtos por mercado (a primeira página da prateleira).
 
-### Problema: o Super ABC não está entrando no banco
+### Super ABC: causa encontrada e corrigida
 
 - Nas **10 últimas execuções** (13 a 21/10/2026), as 11 buscas do Super ABC terminaram com
   `Erro na barra de busca: Locator.wait_for: Timeout 10000ms exceeded` e **0 itens**.
-- O workflow aparece como `success` mesmo assim, porque o scraper captura o erro e devolve lista
-  vazia. Ninguém é avisado.
-- Consequência: a API nunca devolve preços do Super ABC, embora o resto do sistema o trate como um
-  dos mercados.
-- `alimentar_banco.py` chama `https://www.superabc.com.br/` (a página responde com título
-  "Home | Super ABC"), mas o teste local do próprio scraper usa `https://superabconline.com.br/`.
-  Em 22/10/2026 esse segundo endereço respondeu `403` (bloqueio do CloudFront) a uma requisição
-  simples.
-- **[A INVESTIGAR]** Hipóteses ainda não confirmadas: (1) a loja online é a `superabconline.com.br`
-  e o robô está abrindo o site institucional, que não tem a barra de busca de produtos; (2) o site
-  da loja bloqueia os IPs do GitHub Actions. Falta abrir os dois endereços num navegador e rodar o
-  scraper isolado.
+- **Causa confirmada em 22/10/2026:** `alimentar_banco.py` abria `https://www.superabc.com.br/`, que
+  é o site **institucional** (título "Home | Super ABC") e não tem busca de produtos. A loja online
+  é `https://superabconline.com.br/` (título "Super ABC - Loja Online"), que já abre com a loja
+  "Hiper ABC Centro - Divinópolis / MG" selecionada.
+- Testes com o scraper real, busca por "Cafe": a loja online devolve **30 itens** tanto de uma rede
+  residencial em MG quanto do servidor do GitHub Actions (EUA, Microsoft). O site institucional
+  devolve 0 nos dois lugares, com o mesmo erro do log.
+- Hipóteses descartadas: geobloqueio ou bloqueio de datacenter (o GitHub Actions acessa a loja
+  normalmente) e lentidão de renderização no servidor.
+- O workflow aparecia como `success` mesmo assim, porque o scraper captura o erro e devolve lista
+  vazia. Ninguém era avisado.
+- **Correção:** a URL em `alimentar_banco.py` passou para `https://superabconline.com.br/`. A tabela
+  acima só passa a incluir o Super ABC na próxima carga completa.
+- Para o modelo de cobertura por CEP: a loja online abre com **uma unidade selecionada por padrão**
+  (Hiper ABC Centro, Divinópolis/MG), então os preços coletados provavelmente são os dessa unidade
+  **[CONFIRMAR]**.
 
 ## Script de criação
 
