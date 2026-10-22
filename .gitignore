@@ -1,0 +1,34 @@
+# --- Segredos (nunca versionar chaves; usar variavel de ambiente / GitHub Secrets) ---
+.env
+.env.*
+!.env.example
+*.key
+Superbase.txt
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# --- Playwright / depuracao dos robos ---
+debug_*.png
+test-results/
+playwright-report/
+
+# --- Logs ---
+*.log
+
+# --- Node / Netlify ---
+node_modules/
+.netlify/
+
+# --- Editor / sistema operacional ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
