@@ -112,12 +112,11 @@ Confirmado: só existem dois índices, `produtos_pkey` (em `id`) e `idx_nome_pro
 em `uf_cobertura` nem em `supermercado`.
 
 O `idx_nome_produto` é de **busca textual** (`to_tsvector`). Ele só acelera consultas escritas
-com `to_tsvector('portuguese', nome) @@ ...`. A API busca com `nome ilike '%...%'` (veja
-[Como os dados saem](#como-os-dados-saem)), e o PostgreSQL **não usa esse índice** para `ilike`.
-Na prática, hoje a busca varre a tabela inteira e o índice só custa tempo extra a cada inserção.
-Com algumas centenas de linhas isso passa despercebido, mas deve ser resolvido quando o modelo de
-dados for redesenhado (por exemplo, com `pg_trgm` + `unaccent`, ou passando a consulta a usar a
-busca textual).
+com `to_tsvector('portuguese', nome) @@ ...`. A API **não faz busca por nome no banco**: ela carrega
+o catálogo da UF e filtra em memória (veja [Como os dados saem](#como-os-dados-saem)). Portanto
+esse índice não é usado por ninguém e só custa tempo extra a cada inserção. Pode ser removido, ou
+aproveitado quando o modelo de dados for redesenhado (por exemplo, com `pg_trgm` + `unaccent`, se o
+catálogo crescer a ponto de não caber em memória).
 
 ## Como os dados entram
 
@@ -144,19 +143,35 @@ Riscos conhecidos desse fluxo:
 Endpoint `GET /comparar?cep=...&item=...` em [`api_supabase.py`](../api_supabase.py):
 
 1. Descobre a UF do CEP pelo ViaCEP (se falhar, usa `BR`).
-2. Troca todas as vogais (e o `ç`) do termo por `_`, o curinga de um caractere do SQL, para ignorar
-   acentos. Por exemplo, `feijão` vira `f__j__` e passa a casar com `Feijao` e `Feijão`.
-3. Consulta equivalente a:
+2. Carrega o **catálogo** da UF, ou seja, todos os produtos com `uf_cobertura` igual à UF do CEP ou
+   a `BR`, e o guarda **em memória por 10 minutos** (os preços só mudam na carga diária). A consulta
+   ao banco é paginada de 1000 em 1000 linhas, o limite do Supabase por requisição:
 
 ```sql
 select *
 from produtos
-where nome ilike '%<termo com vogais trocadas por _>%'
-  and uf_cobertura in ('<UF do CEP>', 'BR');
+where uf_cobertura in ('<UF do CEP>', 'BR')
+order by id
+limit 1000 offset <0, 1000, 2000, ...>;
 ```
 
+3. Filtra o catálogo em memória ([`busca.py`](../busca.py)): ignora maiúsculas e acentos e exige que
+   o nome contenha **todas** as palavras digitadas, em qualquer ordem. Palavras de ligação (`de`,
+   `da`, `do`, `e`, `com`, `para`, `em`) são ignoradas, então `óleo de soja` também acha
+   `Óleo Soja Liza`.
 4. Passa o resultado para `cruzar_multiplos_produtos`, que agrupa produtos equivalentes de mercados
    diferentes (nome parecido, mesma medida, mesmas tags) e aponta o mais barato de cada grupo.
+5. Ordena os grupos: primeiro os vendidos em mais mercados (os que permitem comparar), depois por
+   ordem alfabética.
+
+Antes de 23/10/2026 a busca era feita no banco com `nome ilike '%...%'`, trocando **todas as
+vogais do termo por `_`** para ignorar acentos. Em palavras curtas isso virava um padrão que casa
+com quase tudo: `óleo` virava `_l__` e devolvia 583 produtos, só 83 deles com óleo, com o arroz no
+topo. O comparador também fazia a conta de nome, medida e tags de cada grupo a cada produto, o que
+levava 15 s no Render para essa resposta.
+
+O endpoint `GET /saude` responde `{"status": "ok"}` sem consultar o banco. O site o chama ao abrir a
+página para acordar o servidor, que no plano gratuito do Render dorme após 15 minutos sem uso.
 
 ## Diagnóstico rápido (reexecutável)
 
