@@ -78,21 +78,21 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
         mercado_atual = produto['supermercado']
         
         for grupo in grupos_de_produtos:
-            nome_grupo_limpo = normalizar_nome(grupo['produto_base'])
-            medida_grupo = extrair_medida(grupo['produto_base'])
-            tags_grupo = extrair_tags_chave(grupo['produto_base'])
-            
+            # Nome limpo, medida e tags do grupo foram calculados uma única vez, quando ele foi criado
+            medida_grupo = grupo['medida']
+            tags_grupo = grupo['tags']
+
             # --- O LEÃO DE CHÁCARA ---
             # 1. Se os pesos forem diferentes, bloqueia e vira grupo novo!
             if medida_produto and medida_grupo and medida_produto != medida_grupo:
-                continue 
-                
+                continue
+
             # 2. Se um for "Grão" e o outro "Pó" (ou Extraforte vs Tradicional), bloqueia!
             if tags_produto != tags_grupo and (len(tags_produto) > 0 and len(tags_grupo) > 0):
                 continue
 
             # Só depois de passar pela segurança, ele faz a matemática de texto
-            pontuacao = fuzz.token_sort_ratio(nome_limpo, nome_grupo_limpo)
+            pontuacao = fuzz.token_sort_ratio(nome_limpo, grupo['nome_limpo'])
             
             if pontuacao >= limite_confianca:
                 if mercado_atual in grupo['opcoes_dict']:
@@ -108,6 +108,9 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
         if not encaixou_em_algum_grupo:
             grupos_de_produtos.append({
                 "produto_base": produto['nome'],
+                "nome_limpo": nome_limpo,
+                "medida": medida_produto,
+                "tags": tags_produto,
                 "opcoes_dict": { mercado_atual: produto }
             })
 
