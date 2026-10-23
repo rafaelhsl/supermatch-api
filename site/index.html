@@ -47,7 +47,7 @@
             <div id="loading" class="hidden text-center mt-12">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-b-blue-600 mb-4"></div>
                 <h2 class="text-xl text-gray-800 font-bold mb-2">Consultando supermercados...</h2>
-                <p class="text-gray-500 font-medium">Lendo do banco de dados.</p>
+                <p id="loadingDetalhe" class="text-gray-500 font-medium">Lendo do banco de dados.</p>
             </div>
 
             <div id="resultados" class="mt-6 md:mt-8 grid grid-cols-1 gap-6"></div>
@@ -78,7 +78,13 @@
     </button>
 
     <script>
+        const URL_API = "https://supermatch-api.onrender.com";
+
         document.addEventListener("DOMContentLoaded", () => {
+            // O servidor gratuito do Render dorme após 15 min sem uso. Este "toque" o acorda
+            // enquanto a pessoa digita o CEP e o produto, para a primeira busca não esperar tanto.
+            fetch(`${URL_API}/saude`).catch(() => {});
+
             document.getElementById('inputBusca').value = "";
             const cepSalvo = localStorage.getItem("user_cep");
             const cidadeSalva = localStorage.getItem("user_cidade");
@@ -365,8 +371,15 @@
             divResultados.innerHTML = "";
             divLoading.classList.remove('hidden');
 
+            // Se a resposta demorar, avisa o motivo provável em vez de deixar a tela parada
+            const textoLoading = document.getElementById('loadingDetalhe');
+            textoLoading.innerText = "Lendo do banco de dados.";
+            const avisoDemora = setTimeout(() => {
+                textoLoading.innerText = "O servidor estava em repouso e está acordando. A primeira busca pode levar até 1 minuto.";
+            }, 8000);
+
             try {
-                const resposta = await fetch(`https://supermatch-api.onrender.com/comparar?cep=${cepAtivo}&item=${termoBusca}`);
+                const resposta = await fetch(`${URL_API}/comparar?cep=${encodeURIComponent(cepAtivo)}&item=${encodeURIComponent(termoBusca)}`);
                 const dados = await resposta.json();
 
                 divLoading.classList.add('hidden');
@@ -421,6 +434,8 @@
             } catch (erro) {
                 divLoading.classList.add('hidden');
                 divResultados.innerHTML = `<p class="text-center text-red-500 bg-red-50 p-4 rounded-xl border">Erro: O servidor da API está demorando a responder. Tente novamente.</p>`;
+            } finally {
+                clearTimeout(avisoDemora);
             }
         }
     </script>
