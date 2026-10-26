@@ -2,78 +2,120 @@ import asyncio
 import sys
 import os
 import warnings
-from supabase import create_client, Client
+from datetime import datetime, timezone
+from supabase import create_client
 
 # Importando o trio parada dura!
 from Scraper_Apoio_v2 import buscar_no_apoio
 from Scraper_Atacadao_v2 import buscar_no_atacadao
 from Scraper_Supernosso import buscar_no_supernosso
 from Scraper_SuperABC import buscar_na_plataforma_regex
+from robos_comum import FalhaNoRobo
 
 # --- 1. CONFIGURAÇÃO DO SEU BANCO DE DADOS SUPABASE ---
 # Usando a URL exata que você me passou
 SUPABASE_URL = "https://gtdvgdfalpsrnefzyfgu.supabase.co"
 # O Python vai puxar a chave secreta direto do GitHub Actions!
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY") 
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) 
-
-# Conectando ao Banco...
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# SEM_GRAVAR=1 roda os robôs e mostra o resumo sem tocar no banco (e sem precisar da chave)
+GRAVAR = os.environ.get("SEM_GRAVAR") != "1"
 # --------------------------------------------------------
 
 # Lista de categorias básicas para o nosso teste de "Carga Inicial"
 ITENS_PARA_BUSCAR = ["Arroz", "Feijao", "Oleo", "Cafe", "Manteiga", "Açucar", "Macarrao", "Detergente", "Sabao", "Amaciante", "Higienico"]
-CEP_BASE = "32607600" 
+CEP_BASE = "32607600"
+
+# Nome do mercado (como é gravado na coluna `supermercado`) -> UF que ele atende.
+# A ordem tem que ser a mesma dos robôs no asyncio.gather logo abaixo.
+MERCADOS = {"Apoio Entrega": "MG", "Atacadao": "BR", "Supernosso": "MG", "Super ABC": "MG"}
+TAMANHO_LOTE = 200
+
+
+def aproveitar(mercado, item, resultado, falhas):
+    """Devolve os produtos do robô, ou [] anotando o motivo se ele falhou."""
+    if isinstance(resultado, BaseException):
+        motivo = resultado.motivo if isinstance(resultado, FalhaNoRobo) else f"erro inesperado: {resultado!r}"
+        falhas.setdefault(mercado, []).append(f"'{item}': {motivo}")
+        print(f"   ⛔ {mercado}: {motivo}")
+        return []
+    return resultado
+
+
+def gravar_mercado(banco, mercado, produtos, inicio):
+    """Grava os produtos novos do mercado e só depois apaga os antigos dele.
+
+    Se a gravação falhar no meio, os dados antigos continuam lá (pode haver duplicados até a próxima carga).
+    """
+    for i in range(0, len(produtos), TAMANHO_LOTE):
+        banco.table('produtos').insert(produtos[i:i + TAMANHO_LOTE]).execute()
+    banco.table('produtos').delete().eq('supermercado', mercado).lt('atualizado_em', inicio).execute()
+
 
 async def popular_banco():
-    print("🚀 INICIANDO O ROBÔ DE MADRUGADA (AGORA COM 3 MERCADOS!)...")
-    print("🧹 Limpando o banco de dados antigo para não duplicar...")
-    try:
-        supabase.table('produtos').delete().neq('supermercado', 'nada').execute()
-    except Exception as e:
-        print("Nota: O banco já estava vazio ou erro ao limpar.")
+    print("🚀 INICIANDO O ROBÔ DE MADRUGADA (4 MERCADOS)...")
+    inicio = datetime.now(timezone.utc).isoformat()
+    coletado = {mercado: [] for mercado in MERCADOS}
+    falhas = {}
 
     for item in ITENS_PARA_BUSCAR:
         print(f"\n🛒 Extraindo '{item}' dos supermercados...")
-        
-        # ⚡ LIGA OS TRÊS ROBÔS AO MESMO TEMPO ⚡
-        resultados_apoio, resultados_atacadao, resultados_supernosso, resultados_abc = await asyncio.gather(
+
+        # ⚡ LIGA OS QUATRO ROBÔS AO MESMO TEMPO ⚡
+        # return_exceptions: se um robô falhar, os outros continuam e a falha vai para o resumo
+        resultados = await asyncio.gather(
             buscar_no_apoio(cep_usuario=CEP_BASE, item_usuario=item),
             buscar_no_atacadao(cep_usuario=CEP_BASE, item_usuario=item),
             buscar_no_supernosso(cep_usuario=CEP_BASE, item_usuario=item),
-            buscar_na_plataforma_regex("https://superabconline.com.br/", "Super ABC", item)
+            buscar_na_plataforma_regex("https://superabconline.com.br/", "Super ABC", item, cep_usuario=CEP_BASE),
+            return_exceptions=True,
         )
-        
-        # --- SALVANDO APOIO ---
-        if resultados_apoio:
-            for produto in resultados_apoio:
-                produto['uf_cobertura'] = 'MG' 
-                supabase.table('produtos').insert(produto).execute()
-            print(f"   ✅ Salvos {len(resultados_apoio)} itens do Apoio.")
-            
-        # --- SALVANDO ATACADÃO ---
-        if resultados_atacadao:
-            for produto in resultados_atacadao:
-                produto['uf_cobertura'] = 'BR'
-                supabase.table('produtos').insert(produto).execute()
-            print(f"   ✅ Salvos {len(resultados_atacadao)} itens do Atacadão.")
 
-        # --- SALVANDO SUPERNOSSO ---
-        if resultados_supernosso:
-            for produto in resultados_supernosso:
-                produto['uf_cobertura'] = 'MG' # O Supernosso também é fortíssimo em MG
-                supabase.table('produtos').insert(produto).execute()
-            print(f"   ✅ Salvos {len(resultados_supernosso)} itens do Supernosso.")
+        for (mercado, uf), resultado in zip(MERCADOS.items(), resultados):
+            produtos = aproveitar(mercado, item, resultado, falhas)
+            for produto in produtos:
+                produto['uf_cobertura'] = uf
+            coletado[mercado].extend(produtos)
+            if produtos:
+                print(f"   ✅ Coletados {len(produtos)} itens do {mercado}.")
 
-        # --- SALVANDO SUPER ABC ---
-        if resultados_abc:
-            for produto in resultados_abc:
-                produto['uf_cobertura'] = 'MG' 
-                supabase.table('produtos').insert(produto).execute()
-            print(f"   ✅ Salvos {len(resultados_abc)} itens do Super ABC.")
+    # --- GRAVAÇÃO: um mercado por vez, e só os que foram coletados por inteiro ---
+    banco = create_client(SUPABASE_URL, SUPABASE_KEY) if GRAVAR else None
+    atualizados = []
+    for mercado, produtos in coletado.items():
+        if not produtos and mercado not in falhas:
+            falhas[mercado] = ["nenhum produto coletado"]
+        if mercado in falhas:
+            print(f"⚠️  {mercado}: coleta incompleta, os dados antigos desse mercado foram mantidos.")
+            continue
+        if not GRAVAR:
+            print(f"   (SEM_GRAVAR) {mercado}: {len(produtos)} itens não foram gravados.")
+            continue
+        try:
+            gravar_mercado(banco, mercado, produtos, inicio)
+            atualizados.append(mercado)
+        except Exception as erro:
+            falhas[mercado] = [f"erro ao gravar no banco: {erro!r}"]
+            print(f"⛔ {mercado}: {falhas[mercado][0]}")
 
-    print("\n🎉 MISSÃO CUMPRIDA! BANCO DE DADOS ATUALIZADO COM OS 3 MERCADOS!")
+    print("\n📊 RESUMO DA CARGA")
+    for mercado, produtos in coletado.items():
+        if mercado in atualizados:
+            situacao = "banco atualizado"
+        elif mercado in falhas:
+            situacao = "NÃO atualizado (dados antigos mantidos)"
+        else:
+            situacao = "não gravado (SEM_GRAVAR)"
+        print(f"   {mercado}: {len(produtos)} itens coletados, {len(falhas.get(mercado, []))} falha(s) - {situacao}")
+
+    if falhas:
+        for mercado, motivos in falhas.items():
+            # Aparece em destaque na tela da execução no GitHub
+            print(f"::error title=Falha no robô do {mercado}::{len(motivos)} falha(s). Primeira: {motivos[0]}")
+        print("\n❌ CARGA INCOMPLETA: veja as falhas acima.")
+        return 1
+
+    print("\n🎉 MISSÃO CUMPRIDA! BANCO DE DADOS ATUALIZADO COM OS 4 MERCADOS!")
+    return 0
 
 if sys.platform == "win32":
     with warnings.catch_warnings():
@@ -81,4 +123,4 @@ if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 if __name__ == "__main__":
-    asyncio.run(popular_banco())
+    sys.exit(asyncio.run(popular_banco()))
