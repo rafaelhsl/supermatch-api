@@ -2,9 +2,12 @@ import asyncio
 import re
 from playwright.async_api import async_playwright
 
+from robos_comum import (BuscaNaoRealizada, abortar, cep_com_hifen, eh_etiqueta_promocional,
+                         esperar_na_pagina, url_mostra_busca)
+
 def estruturar_produto_atacadao_json(texto_bruto):
     partes = [p.strip() for p in texto_bruto.split('|') if p.strip()]
-    nome = partes[0] if partes else "Produto Desconhecido"
+    nome = next((p for p in partes if not eh_etiqueta_promocional(p)), "Produto Desconhecido")
     
     produto = {
         "supermercado": "Atacadao",
@@ -32,6 +35,22 @@ def estruturar_produto_atacadao_json(texto_bruto):
         return None
         
     return produto
+
+async def confirmar_localizacao(page, browser, cep, erro_saga):
+    """Confirma que o cabeçalho passou a dizer "Entregue pela Loja - <loja> para o CEP <cep>"."""
+    esperado = cep_com_hifen(cep)
+    confirmou = await esperar_na_pagina(
+        page,
+        "(c) => /Entregue pela Loja/i.test(document.body.innerText) && document.body.innerText.includes(c)",
+        esperado,
+        segundos=15,
+    )
+    if not confirmou:
+        detalhe = f" (erro ao informar o CEP: {str(erro_saga)[:80]})" if erro_saga else ""
+        await abortar(browser, "Atacadão", f"o cabeçalho do site não passou a mostrar 'Entregue pela Loja ... para o CEP {esperado}'{detalhe}")
+    texto = await page.evaluate("() => document.body.innerText")
+    achou = re.search(r"Entregue pela Loja\s*-\s*(.+?)\s+para o CEP", texto, re.S)
+    print(f"📍 [Atacadão] Localização confirmada: loja {achou.group(1).strip() if achou else '?'}, CEP {esperado}")
 
 async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
     print(f"🤖 [Atacadão] Iniciando robô invisível para buscar '{item_usuario}'...")
@@ -71,6 +90,7 @@ async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
         await page.wait_for_timeout(3000)
 
         # OS PASSOS QUE VOCÊ DESCOBRIU:
+        erro_saga = None
         try:
             print("🚚 [Atacadão] Selecionando 'Entrega em Casa'...")
             btn_entrega = page.locator("button:has-text('Entrega em Casa')").first
@@ -95,8 +115,12 @@ async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
             await btn_confirmar.click(force=True)
             await page.wait_for_timeout(5000) # Espera o modal sumir
         except Exception as e:
+            erro_saga = e
             print(f"   ⚠️ Falha na saga de localização: {e}")
         # -----------------------------------
+
+        # O robô só segue se o site confirmar que assumiu o CEP; senão os preços seriam de outro lugar
+        await confirmar_localizacao(page, browser, cep_usuario, erro_saga)
 
         # PASSO B: Pesquisar (Agora com o seletor exato da imagem: "procura")
         try:
@@ -116,6 +140,9 @@ async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
             await page.wait_for_timeout(10000) # Espera a prateleira carregar
         except Exception as e:
             print(f"❌ [Atacadão] Erro ao tentar pesquisar: {e}")
+
+        if not url_mostra_busca(page.url, item_usuario):
+            await abortar(browser, "Atacadão", f"a busca por '{item_usuario}' não abriu a página de resultados ({page.url[:90]})", erro=BuscaNaoRealizada)
 
         # 📸 A Câmera continua ligada caso algo dê errado
         await page.screenshot(path="debug_atacadao_prateleira.png")
