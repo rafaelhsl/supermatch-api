@@ -112,34 +112,40 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
         if cep_usuario:
             await escolher_unidade(page, browser, nome_mercado, cep_usuario)
 
-        # Fechar possíveis pop-ups iniciais de loja (Clica no primeiro botão que parecer "Confirmar" ou "Entrar")
+        # Fecha um possível pop-up inicial de loja. O botão "Entrar" não entra aqui: ele abre o login.
         try:
-            btn_entrar = page.locator("button:has-text('Entrar'), button:has-text('Confirmar'), button:has-text('Continuar')").first
-            await btn_entrar.click(timeout=3000, force=True)
+            btn_confirmar = page.locator("button:has-text('Confirmar'), button:has-text('Continuar')").first
+            await btn_confirmar.click(timeout=3000, force=True)
         except: pass
 
         # PASSO B: Pesquisar (Otimizado para Angular / Regex Solutions)
-        try:
-            search_bar = page.locator(
-                "input.input-busca-produto, "
-                "input[placeholder*='O que você procura' i]"
-            ).first
-            
-            await search_bar.wait_for(state="attached", timeout=10000)
-            await search_bar.click(click_count=2, force=True)
-            
-            await search_bar.fill(item_usuario, force=True)
-            await search_bar.press("Enter")
-            
-            print(f"⏳ [{nome_mercado}] Pesquisa feita! Aguardando a prateleira...")
-            await page.wait_for_timeout(10000) 
-        except Exception as e:
-            print(f"❌ [{nome_mercado}] Erro na barra de busca: {e}")
-            # TIRA UMA FOTO PARA NÓS VERMOS O QUE ESTÁ BLOQUEANDO A TELA!
-            await page.screenshot(path=f"debug_erro_{nome_mercado.replace(' ', '')}.png")
+        # A página tem dois campos de busca iguais (desktop e celular): só o visível serve.
+        # Com vários robôs ao mesmo tempo a busca às vezes não sai da página inicial, então tenta até 3 vezes.
+        for tentativa in (1, 2, 3):
+            try:
+                search_bar = page.locator(
+                    "input.input-busca-produto:visible, "
+                    "input[placeholder*='O que você procura' i]:visible"
+                ).first
+                await search_bar.wait_for(state="visible", timeout=10000)
+                await search_bar.click(click_count=2)
+                await search_bar.fill(item_usuario)
+                await search_bar.press("Enter")
+                print(f"⏳ [{nome_mercado}] Pesquisa feita! Aguardando a prateleira...")
+                for _ in range(10):
+                    if url_mostra_busca(page.url, item_usuario):
+                        break
+                    await page.wait_for_timeout(1000)
+                if url_mostra_busca(page.url, item_usuario):
+                    break
+            except Exception as e:
+                print(f"❌ [{nome_mercado}] Erro na barra de busca (tentativa {tentativa}): {e}")
+                # TIRA UMA FOTO PARA NÓS VERMOS O QUE ESTÁ BLOQUEANDO A TELA!
+                await page.screenshot(path=f"debug_erro_{nome_mercado.replace(' ', '')}.png")
 
         if not url_mostra_busca(page.url, item_usuario):
             await abortar(browser, nome_mercado, f"a busca por '{item_usuario}' não abriu a página de resultados ({page.url[:90]})", erro=BuscaNaoRealizada)
+        await page.wait_for_timeout(8000)  # deixa a prateleira carregar
 
         # PASSO C: Ler a Prateleira (Usando o padrão que você mapeou)
         textos_produtos = await page.evaluate('''() => {

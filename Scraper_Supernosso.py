@@ -56,10 +56,22 @@ async def definir_localizacao(page, browser, cep):
     Se o site não atender o CEP, ou se o CEP não for assumido, aborta com LocalizacaoNaoConfirmada.
     """
     try:
-        # O painel de CEP abre pelo cabeçalho. Clicar em "Comprar" também abriria, mas adicionaria um produto.
-        await page.get_by_text("qual a forma de entrega?", exact=False).first.click(timeout=8000)
-        campo = page.locator("input[name='cep']:visible").first
-        await campo.wait_for(state="visible", timeout=8000)
+        await page.wait_for_load_state("load", timeout=15000)
+    except Exception:
+        pass  # alguns rastreadores do site nunca terminam de carregar: segue mesmo assim
+
+    # O painel de CEP abre pelo cabeçalho. Clicar em "Comprar" também abriria, mas adicionaria um produto.
+    # Com vários robôs ao mesmo tempo a página demora a ficar interativa e o primeiro clique pode se perder.
+    campo = page.locator("input[name='cep']:visible").first
+    for tentativa in (1, 2, 3):
+        try:
+            await page.get_by_text("qual a forma de entrega?", exact=False).first.click(timeout=20000)
+            await campo.wait_for(state="visible", timeout=8000)
+            break
+        except Exception as erro:
+            if tentativa == 3:
+                await abortar(browser, "Supernosso", f"não consegui abrir o painel de CEP do site ({str(erro)[:90]})")
+    try:
         await campo.click()
         # Digita tecla por tecla: o campo tem máscara e ignora o preenchimento direto.
         await campo.press_sequentially(cep, delay=70)
