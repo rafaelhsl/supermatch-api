@@ -44,7 +44,13 @@ async def abortar(browser, mercado, motivo, erro=LocalizacaoNaoConfirmada):
 def url_mostra_busca(url, item):
     """A URL da página atual contém o termo buscado? (páginas de resultado trazem o termo na URL)"""
     def normalizar(texto):
-        return re.sub(r"[^a-z0-9]", "", sem_acento(unquote(texto)))
+        # Alguns sites codificam a URL duas vezes ("Açucar" vira "A%25C3%25A7ucar"): decodifica até estabilizar
+        for _ in range(3):
+            decodificado = unquote(texto)
+            if decodificado == texto:
+                break
+            texto = decodificado
+        return re.sub(r"[^a-z0-9]", "", sem_acento(texto))
     return normalizar(item) in normalizar(url)
 
 
