@@ -10,7 +10,7 @@ from Scraper_Apoio_v2 import buscar_no_apoio
 from Scraper_Atacadao_v2 import buscar_no_atacadao
 from Scraper_Supernosso import buscar_no_supernosso
 from Scraper_SuperABC import buscar_na_plataforma_regex
-from robos_comum import FalhaNoRobo
+from robos_comum import FalhaNoRobo, com_novas_tentativas
 
 # --- 1. CONFIGURAÇÃO DO SEU BANCO DE DADOS SUPABASE ---
 # Usando a URL exata que você me passou
@@ -61,12 +61,13 @@ async def popular_banco():
         print(f"\n🛒 Extraindo '{item}' dos supermercados...")
 
         # ⚡ LIGA OS QUATRO ROBÔS AO MESMO TEMPO ⚡
-        # return_exceptions: se um robô falhar, os outros continuam e a falha vai para o resumo
+        # return_exceptions: se um robô falhar, os outros continuam e a falha vai para o resumo.
+        # com_novas_tentativas: uma falha passageira (site lento) repete o robô uma vez com navegador novo.
         resultados = await asyncio.gather(
-            buscar_no_apoio(cep_usuario=CEP_BASE, item_usuario=item),
-            buscar_no_atacadao(cep_usuario=CEP_BASE, item_usuario=item),
-            buscar_no_supernosso(cep_usuario=CEP_BASE, item_usuario=item),
-            buscar_na_plataforma_regex("https://superabconline.com.br/", "Super ABC", item, cep_usuario=CEP_BASE),
+            com_novas_tentativas(buscar_no_apoio, cep_usuario=CEP_BASE, item_usuario=item),
+            com_novas_tentativas(buscar_no_atacadao, cep_usuario=CEP_BASE, item_usuario=item),
+            com_novas_tentativas(buscar_no_supernosso, cep_usuario=CEP_BASE, item_usuario=item),
+            com_novas_tentativas(buscar_na_plataforma_regex, "https://superabconline.com.br/", "Super ABC", item, cep_usuario=CEP_BASE),
             return_exceptions=True,
         )
 

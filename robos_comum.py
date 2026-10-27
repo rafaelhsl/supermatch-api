@@ -12,10 +12,12 @@ class FalhaNoRobo(Exception):
 
     descricao = "falha"
 
-    def __init__(self, mercado, motivo):
+    def __init__(self, mercado, motivo, definitiva=False):
         super().__init__(f"[{mercado}] {self.descricao}: {motivo}")
         self.mercado = mercado
         self.motivo = motivo
+        # definitiva=True: repetir não adianta (ex.: o site informa que não atende a região)
+        self.definitiva = definitiva
 
 
 class LocalizacaoNaoConfirmada(FalhaNoRobo):
@@ -34,11 +36,26 @@ class BuscaNaoRealizada(FalhaNoRobo):
     descricao = "busca não realizada"
 
 
-async def abortar(browser, mercado, motivo, erro=LocalizacaoNaoConfirmada):
+async def abortar(browser, mercado, motivo, erro=LocalizacaoNaoConfirmada, definitiva=False):
     """Fecha o navegador e levanta o erro pedido (por padrão, LocalizacaoNaoConfirmada)."""
     print(f"⛔ [{mercado}] {erro.descricao.capitalize()}: {motivo}")
     await browser.close()
-    raise erro(mercado, motivo)
+    raise erro(mercado, motivo, definitiva=definitiva)
+
+
+async def com_novas_tentativas(robo, *args, tentativas=2, **kwargs):
+    """Roda o robô e, se falhar por um motivo passageiro, repete com um navegador novo.
+
+    Os sites às vezes ficam lentos (principalmente com vários robôs ao mesmo tempo) e uma etapa se perde.
+    Falhas definitivas, como "o site não atende essa região", não são repetidas.
+    """
+    for numero in range(1, tentativas + 1):
+        try:
+            return await robo(*args, **kwargs)
+        except FalhaNoRobo as erro:
+            if erro.definitiva or numero == tentativas:
+                raise
+            print(f"🔁 [{erro.mercado}] Tentando de novo ({numero + 1}/{tentativas}) depois de: {erro.motivo[:90]}")
 
 
 def url_mostra_busca(url, item):

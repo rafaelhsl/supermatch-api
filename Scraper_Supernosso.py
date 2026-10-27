@@ -92,7 +92,7 @@ async def definir_localizacao(page, browser, cep):
                 await abortar(browser, "Supernosso", "o site não respondeu ao CEP informado")
             await botao_enviar.click(force=True)  # o site às vezes ignora o primeiro envio: tenta de novo
     if await nao_atende.is_visible():
-        await abortar(browser, "Supernosso", "o site informa que não atende a região deste CEP")
+        await abortar(browser, "Supernosso", "o site informa que não atende a região deste CEP", definitiva=True)
 
     await horario.click(force=True)  # escolhe a entrega agendada: existe em BH e na região metropolitana
 

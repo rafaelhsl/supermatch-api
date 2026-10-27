@@ -69,7 +69,7 @@ async def escolher_unidade(page, browser, mercado, cep):
             escolhida = unidade
             break
     if escolhida is None:
-        await abortar(browser, mercado, f"o Super ABC não tem unidade em {cidade}/{uf}")
+        await abortar(browser, mercado, f"o Super ABC não tem unidade em {cidade}/{uf}", definitiva=True)
 
     try:
         await escolhida.locator("button").first.click(timeout=8000)
