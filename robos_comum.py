@@ -43,6 +43,16 @@ async def abortar(browser, mercado, motivo, erro=LocalizacaoNaoConfirmada, defin
     raise erro(mercado, motivo, definitiva=definitiva)
 
 
+async def exigir_produtos(browser, mercado, produtos):
+    """Uma página de resultados sem nenhum produto com preço quase sempre é página lida cedo demais.
+
+    Trata como falha (passageira, então a carga repete o robô) em vez de devolver uma lista vazia que
+    passaria despercebida.
+    """
+    if not produtos:
+        await abortar(browser, mercado, "a página de resultados não trouxe nenhum produto com preço", erro=BuscaNaoRealizada)
+
+
 async def com_novas_tentativas(robo, *args, tentativas=2, **kwargs):
     """Roda o robô e, se falhar por um motivo passageiro, repete com um navegador novo.
 

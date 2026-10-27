@@ -1,6 +1,7 @@
 import asyncio
 import re
 from playwright.async_api import async_playwright
+from robos_comum import exigir_produtos
 
 from busca import sem_acento
 from robos_comum import BuscaNaoRealizada, abortar, cidade_do_cep, eh_etiqueta_promocional, url_mostra_busca
@@ -166,6 +167,7 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
             if produto:
                 lista_final_json.append(produto)
 
+        await exigir_produtos(browser, nome_mercado, lista_final_json)
         await browser.close()
         print(f"✅ [{nome_mercado}] Extração concluída! Encontrados {len(lista_final_json)} itens.")
         return lista_final_json

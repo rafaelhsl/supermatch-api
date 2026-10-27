@@ -1,6 +1,7 @@
 import asyncio
 import re
 from playwright.async_api import async_playwright
+from robos_comum import exigir_produtos
 
 from robos_comum import (BuscaNaoRealizada, abortar, cep_com_ponto_e_hifen, eh_etiqueta_promocional,
                          esperar_na_pagina, esperar_recarregamento, url_mostra_busca)
@@ -174,6 +175,7 @@ async def buscar_no_supernosso(cep_usuario: str, item_usuario: str):
             if produto:
                 lista_final_json.append(produto)
 
+        await exigir_produtos(browser, "Supernosso", lista_final_json)
         await browser.close()
         print(f"✅ [Supernosso] Extração concluída! Encontrados {len(lista_final_json)} itens limpos.")
         return lista_final_json

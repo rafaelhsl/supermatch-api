@@ -1,6 +1,7 @@
 import asyncio
 import re
 from playwright.async_api import async_playwright
+from robos_comum import exigir_produtos
 
 from robos_comum import (BuscaNaoRealizada, abortar, cep_com_hifen, eh_etiqueta_promocional,
                          esperar_na_pagina, url_mostra_busca)
@@ -168,6 +169,7 @@ async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
             if produto:
                 lista_final_json.append(produto)
 
+        await exigir_produtos(browser, "Atacadão", lista_final_json)
         await browser.close()
         print(f"✅ [Atacadão] Extração concluída! Encontrados {len(lista_final_json)} itens.")
         return lista_final_json

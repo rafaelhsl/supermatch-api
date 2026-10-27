@@ -1,5 +1,6 @@
 import re
 from playwright.async_api import async_playwright
+from robos_comum import exigir_produtos
 
 from robos_comum import (BuscaNaoRealizada, abortar, cep_com_hifen, eh_etiqueta_promocional,
                          esperar_na_pagina, esperar_recarregamento, url_mostra_busca)
@@ -140,6 +141,16 @@ async def buscar_no_apoio(cep_usuario: str, item_usuario: str):
         if not url_mostra_busca(page.url, item_usuario):
             await abortar(browser, "Apoio", f"a busca por '{item_usuario}' não abriu a página de resultados ({page.url[:90]})", erro=BuscaNaoRealizada)
 
+        # Nos servidores do GitHub a prateleira demora mais que os 7 s fixos: 4 de 11 buscas voltaram com 0 itens.
+        # Espera os produtos aparecerem de verdade (até 20 s) e deixa o resto da lista terminar de carregar.
+        await esperar_na_pagina(
+            page,
+            '''() => [...document.querySelectorAll("article, section.vtex-product-summary-2-x-container, div[class*='shelf-item'], div[class*='box-item'], li[layout]")]
+                      .some(card => card.innerText && card.innerText.includes("R$"))''',
+            segundos=20,
+        )
+        await page.wait_for_timeout(2000)
+
         textos_produtos = await page.evaluate('''() => {
             const items =[];
             const cards = document.querySelectorAll("article, section.vtex-product-summary-2-x-container, div[class*='shelf-item'], div[class*='box-item'], li[layout]");
@@ -158,6 +169,7 @@ async def buscar_no_apoio(cep_usuario: str, item_usuario: str):
             if produto:
                 lista_final_json.append(produto)
 
+        await exigir_produtos(browser, "Apoio", lista_final_json)
         await browser.close()
         print(f"✅ [Apoio] Extração concluída! Encontrados {len(lista_final_json)} itens.")
         
