@@ -41,6 +41,13 @@ e 32041000 (Contagem). Os sites mudam: se um robô começar a falhar, é aqui qu
   unidade, o robô escolhe a primeira da lista.
 - **Atacadão:** as lojas variam por CEP (Betim, Pampulha, Uberlândia), mas nos produtos testados
   os preços foram iguais.
+- **Apoio, no GitHub:** a prateleira de resultados demora mais para aparecer nos servidores do
+  GitHub do que na máquina local. Com espera fixa de 7 s, 4 de 11 buscas voltaram com 0 itens sem
+  aviso; por isso o robô espera os produtos aparecerem de verdade (até 20 s).
+- **Super ABC, busca:** a página tem dois campos de busca iguais (desktop e celular); só o visível
+  serve. A URL de resultados vem **codificada duas vezes** (`Açucar` vira `A%25C3%25A7ucar`).
+- **Supernosso, no começo da carga:** com os 4 navegadores abrindo juntos, uma etapa (painel de CEP,
+  cabeçalho ou a busca de "Arroz") se perde de vez em quando. Isolada, a mesma busca passa sempre.
 
 ## Etiquetas de promoção no nome
 
@@ -59,6 +66,31 @@ SEM_GRAVAR=1 python alimentar_banco.py     # PowerShell: $env:SEM_GRAVAR = "1"; 
 ```
 
 Ela mostra um resumo por mercado no fim e sai com código `1` se algum robô falhou.
+
+## Falhas: o que repete e o que para
+
+Um robô levanta `FalhaNoRobo` quando prefere parar a devolver dado duvidoso:
+
+- localização não confirmada;
+- busca que não abriu a página de resultados;
+- página de resultados **sem nenhum produto com preço** (quase sempre é página lida cedo demais).
+
+A carga (`com_novas_tentativas`) **repete o robô uma vez, com navegador novo**, quando a falha é
+passageira. Falhas **definitivas** não são repetidas: "o site informa que não atende a região"
+(Supernosso) e "o Super ABC não tem unidade na cidade".
+
+## Verificação feita antes de entrar na `main`
+
+Carga completa com `SEM_GRAVAR=1`, 4 robôs em paralelo, 11 buscas, CEP 32607600 (Betim):
+
+| Onde | Resultado |
+|---|---|
+| GitHub Actions, 27/10/2026 | sucesso, 0 falhas, 0 repetições: Apoio 256, Atacadão 223, Supernosso 224, Super ABC 304 itens; 44 de 44 localizações confirmadas |
+| Máquina local, mesmo dia | sucesso, 0 falhas em duas rodadas seguidas; contagens iguais (Apoio 256, Atacadão 224, Supernosso 224, Super ABC 304). Na primeira, a repetição automática salvou a busca de "Arroz" do Supernosso; na segunda não precisou de nenhuma |
+
+Antes das correções, no GitHub: 3 falhas do Supernosso, 1 falso alarme do Super ABC e 4 buscas do Apoio
+com 0 itens sem aviso. Testes isolados por CEP: Atacadão, Apoio, Supernosso e Super ABC aceitam BH e
+Betim; Apoio e Supernosso recusam Uberlândia; o Super ABC recusa Contagem (sem unidade).
 
 ## A carga e as falhas
 
