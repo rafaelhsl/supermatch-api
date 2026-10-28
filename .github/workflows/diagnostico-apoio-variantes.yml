@@ -1,0 +1,31 @@
+name: Diagnóstico do canal depois do ?sc=15 (temporário, sem banco)
+
+# Roda só na branch apoio-variantes. Não usa nenhum segredo e não escreve nada no banco.
+on:
+  push:
+    branches: [apoio-variantes]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Puxando o código do projeto
+      uses: actions/checkout@v4
+
+    - name: Configurando o Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Instalando as bibliotecas (requirements.txt)
+      run: pip install -r requirements.txt
+
+    - name: Instalando os navegadores fantasmas (Playwright)
+      run: python -m playwright install --with-deps chromium
+
+    - name: Medindo o canal do carrinho e a prateleira depois do ?sc=15
+      run: python diagnostico_apoio_canal2.py
