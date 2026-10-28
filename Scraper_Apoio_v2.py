@@ -112,13 +112,20 @@ async def abrir_busca_no_canal(page, browser, item, canal):
     url = f"https://www.apoioentrega.com/{quote(item)}?sc={canal}"
     try:
         await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-        atual = await page.evaluate(
-            "async () => (await (await fetch('/api/checkout/pub/orderForm', {credentials: 'same-origin'})).json()).salesChannel"
-        )
     except Exception as erro:
         await abortar(browser, "Apoio", f"não consegui abrir a busca no canal de vendas {canal} ({str(erro)[:80]})", erro=BuscaNaoRealizada)
-    if str(atual) != str(canal):
-        await abortar(browser, "Apoio", f"a sessão ficou no canal de vendas {atual} em vez do {canal}", erro=BuscaNaoRealizada)
+
+    # Logo depois de abrir a página o carrinho ainda marca o canal antigo (1) e só passa para o da URL cerca de
+    # 3 s depois, enquanto a prateleira já mostra os preços. Por isso espera o canal chegar, em vez de checar já.
+    chegou = await esperar_na_pagina(
+        page,
+        "async (c) => { try { const o = await (await fetch('/api/checkout/pub/orderForm', {credentials: 'same-origin'})).json();"
+        " return String(o.salesChannel) === String(c); } catch (e) { return false; } }",
+        str(canal),
+        segundos=15,
+    )
+    if not chegou:
+        await abortar(browser, "Apoio", f"o carrinho não passou para o canal de vendas {canal} em 15 s", erro=BuscaNaoRealizada)
     print(f"🛒 [Apoio] Busca aberta no canal de vendas {canal}")
     await page.wait_for_timeout(3000)
 
