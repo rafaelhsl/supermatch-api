@@ -24,6 +24,10 @@ GRAVAR = os.environ.get("SEM_GRAVAR") != "1"
 # Lista de categorias básicas para o nosso teste de "Carga Inicial"
 ITENS_PARA_BUSCAR = ["Arroz", "Feijao", "Oleo", "Cafe", "Manteiga", "Açucar", "Macarrao", "Detergente", "Sabao", "Amaciante", "Higienico"]
 CEP_BASE = "32607600"
+# Canal de vendas do Apoio para o CEP_BASE (Betim). Verificado em 28/10/2026: no canal 15 os produtos têm preço e
+# estoque; no canal 1 (o padrão, onde a sessão do GitHub às vezes fica presa) todos aparecem como indisponíveis.
+# Para outro CEP o canal é outro (BH Centro apareceu como 8) e precisa ser descoberto antes de usar.
+CANAL_APOIO_BASE = "15"
 
 # Nome do mercado (como é gravado na coluna `supermercado`) -> UF que ele atende.
 MERCADOS = {"Apoio Entrega": "MG", "Atacadao": "BR", "Supernosso": "MG", "Super ABC": "MG"}
@@ -31,7 +35,7 @@ TAMANHO_LOTE = 200
 
 # Um robô por mercado, já com repetição automática para falha passageira (site lento).
 ROBOS = {
-    "Apoio Entrega": lambda item: com_novas_tentativas(buscar_no_apoio, cep_usuario=CEP_BASE, item_usuario=item),
+    "Apoio Entrega": lambda item: com_novas_tentativas(buscar_no_apoio, cep_usuario=CEP_BASE, item_usuario=item, canal_de_vendas=CANAL_APOIO_BASE),
     "Atacadao": lambda item: com_novas_tentativas(buscar_no_atacadao, cep_usuario=CEP_BASE, item_usuario=item),
     "Supernosso": lambda item: com_novas_tentativas(buscar_no_supernosso, cep_usuario=CEP_BASE, item_usuario=item),
     "Super ABC": lambda item: com_novas_tentativas(buscar_na_plataforma_regex, "https://superabconline.com.br/", "Super ABC", item, cep_usuario=CEP_BASE),
