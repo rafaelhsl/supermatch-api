@@ -115,18 +115,20 @@ async def abrir_busca_no_canal(page, browser, item, canal):
     except Exception as erro:
         await abortar(browser, "Apoio", f"não consegui abrir a busca no canal de vendas {canal} ({str(erro)[:80]})", erro=BuscaNaoRealizada)
 
-    # Logo depois de abrir a página o carrinho ainda marca o canal antigo (1) e só passa para o da URL cerca de
-    # 3 s depois, enquanto a prateleira já mostra os preços. Por isso espera o canal chegar, em vez de checar já.
+    # O canal do CARRINHO é um sinal instável e só informativo: logo depois de abrir a página ele marca o canal
+    # antigo (1), passa para o da URL uns 3 s depois e, em alguns períodos, nem chega em 15 s, enquanto a
+    # prateleira já mostra os preços. Abortar por ele derrubou duas cargas reais. Quem decide é a prateleira:
+    # no canal 1 todo produto aparece "indisponível" (sem preço), então preço na tela prova que o canal é o certo,
+    # e sem preço a busca falha em exigir_produtos (e a carga repete).
     chegou = await esperar_na_pagina(
         page,
         "async (c) => { try { const o = await (await fetch('/api/checkout/pub/orderForm', {credentials: 'same-origin'})).json();"
         " return String(o.salesChannel) === String(c); } catch (e) { return false; } }",
         str(canal),
-        segundos=15,
+        segundos=6,
     )
-    if not chegou:
-        await abortar(browser, "Apoio", f"o carrinho não passou para o canal de vendas {canal} em 15 s", erro=BuscaNaoRealizada)
-    print(f"🛒 [Apoio] Busca aberta no canal de vendas {canal}")
+    cookie = await page.evaluate("() => (document.cookie.match(/VTEXSC=[^;]*/) || ['sem VTEXSC'])[0]")
+    print(f"🛒 [Apoio] Busca aberta com ?sc={canal} (carrinho {'já no canal' if chegou else 'ainda no canal antigo'}; {cookie})")
     await page.wait_for_timeout(3000)
 
 
