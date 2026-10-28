@@ -169,7 +169,7 @@ async def buscar_no_apoio(cep_usuario: str, item_usuario: str):
             if produto:
                 lista_final_json.append(produto)
 
-        await exigir_produtos(browser, "Apoio", lista_final_json)
+        await exigir_produtos(browser, "Apoio", lista_final_json, page)
         await browser.close()
         print(f"✅ [Apoio] Extração concluída! Encontrados {len(lista_final_json)} itens.")
         

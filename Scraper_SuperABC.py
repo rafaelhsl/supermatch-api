@@ -167,7 +167,7 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
             if produto:
                 lista_final_json.append(produto)
 
-        await exigir_produtos(browser, nome_mercado, lista_final_json)
+        await exigir_produtos(browser, nome_mercado, lista_final_json, page)
         await browser.close()
         print(f"✅ [{nome_mercado}] Extração concluída! Encontrados {len(lista_final_json)} itens.")
         return lista_final_json

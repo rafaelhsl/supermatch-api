@@ -169,7 +169,7 @@ async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
             if produto:
                 lista_final_json.append(produto)
 
-        await exigir_produtos(browser, "Atacadão", lista_final_json)
+        await exigir_produtos(browser, "Atacadão", lista_final_json, page)
         await browser.close()
         print(f"✅ [Atacadão] Extração concluída! Encontrados {len(lista_final_json)} itens.")
         return lista_final_json
