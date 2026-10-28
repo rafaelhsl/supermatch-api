@@ -43,14 +43,27 @@ async def abortar(browser, mercado, motivo, erro=LocalizacaoNaoConfirmada, defin
     raise erro(mercado, motivo, definitiva=definitiva)
 
 
-async def exigir_produtos(browser, mercado, produtos):
+async def exigir_produtos(browser, mercado, produtos, page=None):
     """Uma página de resultados sem nenhum produto com preço quase sempre é página lida cedo demais.
 
     Trata como falha (passageira, então a carga repete o robô) em vez de devolver uma lista vazia que
-    passaria despercebida.
+    passaria despercebida. Com `page`, a mensagem de falha traz o título, a URL e o início do texto da
+    página, para o log do GitHub mostrar o que o robô estava vendo (e salva uma captura de tela).
     """
-    if not produtos:
-        await abortar(browser, mercado, "a página de resultados não trouxe nenhum produto com preço", erro=BuscaNaoRealizada)
+    if produtos:
+        return
+    detalhe = ""
+    if page is not None:
+        try:
+            titulo = await page.title()
+            texto = await page.evaluate(
+                "() => (document.body ? document.body.innerText : '').split(String.fromCharCode(10)).join(' | ').slice(0, 220)"
+            )
+            await page.screenshot(path=f"debug_sem_produtos_{mercado.replace(' ', '')}.png")
+            detalhe = f" [título: {titulo!r}; URL: {page.url[:90]}; texto da página: {texto}]"
+        except Exception:
+            pass  # o diagnóstico é um extra: nunca pode atrapalhar a falha em si
+    await abortar(browser, mercado, "a página de resultados não trouxe nenhum produto com preço" + detalhe, erro=BuscaNaoRealizada)
 
 
 async def com_novas_tentativas(robo, *args, tentativas=2, **kwargs):

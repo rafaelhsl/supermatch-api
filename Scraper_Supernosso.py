@@ -175,7 +175,7 @@ async def buscar_no_supernosso(cep_usuario: str, item_usuario: str):
             if produto:
                 lista_final_json.append(produto)
 
-        await exigir_produtos(browser, "Supernosso", lista_final_json)
+        await exigir_produtos(browser, "Supernosso", lista_final_json, page)
         await browser.close()
         print(f"✅ [Supernosso] Extração concluída! Encontrados {len(lista_final_json)} itens limpos.")
         return lista_final_json
