@@ -59,8 +59,10 @@ async def exigir_produtos(browser, mercado, produtos, page=None):
             texto = await page.evaluate(
                 "() => (document.body ? document.body.innerText : '').split(String.fromCharCode(10)).join(' | ').slice(0, 220)"
             )
+            # Alguns sites listam os produtos mas sem preço ("Item indisponível"): é o que o Apoio mostrou de madrugada
+            indisponiveis = await page.evaluate("() => (document.body.innerText.match(/indispon[ií]vel/gi) || []).length")
             await page.screenshot(path=f"debug_sem_produtos_{mercado.replace(' ', '')}.png")
-            detalhe = f" [título: {titulo!r}; URL: {page.url[:90]}; texto da página: {texto}]"
+            detalhe = f" [título: {titulo!r}; URL: {page.url[:90]}; avisos de 'indisponível' na página: {indisponiveis}; texto da página: {texto}]"
         except Exception:
             pass  # o diagnóstico é um extra: nunca pode atrapalhar a falha em si
     await abortar(browser, mercado, "a página de resultados não trouxe nenhum produto com preço" + detalhe, erro=BuscaNaoRealizada)
