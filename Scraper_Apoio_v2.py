@@ -50,7 +50,7 @@ def estruturar_produto_apoio_json(texto_bruto):
 
     return produto
 
-async def definir_localizacao(page, browser, cep):
+async def definir_localizacao(page, browser, cep, escolher_entrega=True):
     """Informa o CEP no painel do carrinho e confirma que o site atende a região.
 
     O ícone do carrinho abre o painel "Informe seu CEP" sem adicionar produto algum. Se o site não
@@ -94,6 +94,13 @@ async def definir_localizacao(page, browser, cep):
             break
     if not confirmou:
         await abortar(browser, "Apoio", f"o site não confirmou 'Atendemos sua região' para o CEP {esperado} (não atende ou não respondeu)")
+
+    if not escolher_entrega:
+        # Escolher "Quero receber" faz o site reavaliar a região do endereço e, nos períodos em que a entrega
+        # dali está indisponível, jogar a sessão no canal de vendas 1 (todo produto "indisponível"), desfazendo
+        # até o ?sc= da URL. Para ler preços isso não é preciso: o canal já define preço e estoque.
+        print(f"📍 [Apoio] Localização confirmada: atende o CEP {esperado} (sem escolher a entrega)")
+        return
 
     try:  # "Quero receber": entrega em casa
         await page.evaluate("() => document.querySelector(\"li[data-type='click-delivery']\").click()")
@@ -155,7 +162,7 @@ async def buscar_no_apoio(cep_usuario: str, item_usuario: str, canal_de_vendas: 
         except: pass 
 
         # PASSO A: Definir a localização e só seguir se o site confirmar o CEP
-        await definir_localizacao(page, browser, cep_usuario)
+        await definir_localizacao(page, browser, cep_usuario, escolher_entrega=not canal_de_vendas)
 
         if canal_de_vendas:
             # O site às vezes deixa a sessão presa no canal de vendas 1, onde todo produto aparece como
