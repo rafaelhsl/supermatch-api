@@ -26,9 +26,27 @@ ITENS_PARA_BUSCAR = ["Arroz", "Feijao", "Oleo", "Cafe", "Manteiga", "Açucar", "
 CEP_BASE = "32607600"
 
 # Nome do mercado (como é gravado na coluna `supermercado`) -> UF que ele atende.
-# A ordem tem que ser a mesma dos robôs no asyncio.gather logo abaixo.
 MERCADOS = {"Apoio Entrega": "MG", "Atacadao": "BR", "Supernosso": "MG", "Super ABC": "MG"}
 TAMANHO_LOTE = 200
+
+# Um robô por mercado, já com repetição automática para falha passageira (site lento).
+ROBOS = {
+    "Apoio Entrega": lambda item: com_novas_tentativas(buscar_no_apoio, cep_usuario=CEP_BASE, item_usuario=item),
+    "Atacadao": lambda item: com_novas_tentativas(buscar_no_atacadao, cep_usuario=CEP_BASE, item_usuario=item),
+    "Supernosso": lambda item: com_novas_tentativas(buscar_no_supernosso, cep_usuario=CEP_BASE, item_usuario=item),
+    "Super ABC": lambda item: com_novas_tentativas(buscar_na_plataforma_regex, "https://superabconline.com.br/", "Super ABC", item, cep_usuario=CEP_BASE),
+}
+
+# SO_MERCADOS="Apoio Entrega" (vários, separados por vírgula) roda a carga só desses mercados; vazio = todos.
+# Serve para refazer um mercado que falhou sem mexer nos outros.
+ESCOLHIDOS = [nome.strip() for nome in os.environ.get("SO_MERCADOS", "").split(",") if nome.strip()]
+
+
+def mercados_da_carga():
+    desconhecidos = [nome for nome in ESCOLHIDOS if nome not in MERCADOS]
+    if desconhecidos:
+        sys.exit(f"SO_MERCADOS tem mercado desconhecido: {desconhecidos}. Opções: {list(MERCADOS)}")
+    return {mercado: uf for mercado, uf in MERCADOS.items() if not ESCOLHIDOS or mercado in ESCOLHIDOS}
 
 
 def aproveitar(mercado, item, resultado, falhas):
@@ -52,26 +70,20 @@ def gravar_mercado(banco, mercado, produtos, inicio):
 
 
 async def popular_banco():
-    print("🚀 INICIANDO O ROBÔ DE MADRUGADA (4 MERCADOS)...")
+    mercados = mercados_da_carga()
+    print(f"🚀 INICIANDO O ROBÔ ({len(mercados)} MERCADO(S): {', '.join(mercados)})...")
     inicio = datetime.now(timezone.utc).isoformat()
-    coletado = {mercado: [] for mercado in MERCADOS}
+    coletado = {mercado: [] for mercado in mercados}
     falhas = {}
 
     for item in ITENS_PARA_BUSCAR:
         print(f"\n🛒 Extraindo '{item}' dos supermercados...")
 
-        # ⚡ LIGA OS QUATRO ROBÔS AO MESMO TEMPO ⚡
+        # ⚡ LIGA OS ROBÔS DOS MERCADOS ESCOLHIDOS AO MESMO TEMPO ⚡
         # return_exceptions: se um robô falhar, os outros continuam e a falha vai para o resumo.
-        # com_novas_tentativas: uma falha passageira (site lento) repete o robô uma vez com navegador novo.
-        resultados = await asyncio.gather(
-            com_novas_tentativas(buscar_no_apoio, cep_usuario=CEP_BASE, item_usuario=item),
-            com_novas_tentativas(buscar_no_atacadao, cep_usuario=CEP_BASE, item_usuario=item),
-            com_novas_tentativas(buscar_no_supernosso, cep_usuario=CEP_BASE, item_usuario=item),
-            com_novas_tentativas(buscar_na_plataforma_regex, "https://superabconline.com.br/", "Super ABC", item, cep_usuario=CEP_BASE),
-            return_exceptions=True,
-        )
+        resultados = await asyncio.gather(*(ROBOS[mercado](item) for mercado in mercados), return_exceptions=True)
 
-        for (mercado, uf), resultado in zip(MERCADOS.items(), resultados):
+        for (mercado, uf), resultado in zip(mercados.items(), resultados):
             produtos = aproveitar(mercado, item, resultado, falhas)
             for produto in produtos:
                 produto['uf_cobertura'] = uf
@@ -115,7 +127,7 @@ async def popular_banco():
         print("\n❌ CARGA INCOMPLETA: veja as falhas acima.")
         return 1
 
-    print("\n🎉 MISSÃO CUMPRIDA! BANCO DE DADOS ATUALIZADO COM OS 4 MERCADOS!")
+    print(f"\n🎉 MISSÃO CUMPRIDA! {len(mercados)} MERCADO(S) COLETADO(S): {', '.join(mercados)}.")
     return 0
 
 if sys.platform == "win32":
