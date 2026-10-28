@@ -1,4 +1,5 @@
 import re
+from urllib.parse import quote
 from playwright.async_api import async_playwright
 from robos_comum import exigir_produtos
 
@@ -101,8 +102,29 @@ async def definir_localizacao(page, browser, cep):
     print(f"📍 [Apoio] Localização confirmada: atende o CEP {esperado}")
     await esperar_recarregamento(page, segundos=6)
 
+async def abrir_busca_no_canal(page, browser, item, canal):
+    """Abre a busca do Apoio já no canal de vendas informado (parâmetro `sc` da URL).
+
+    O Apoio vende por canal de vendas. No canal regional do CEP (15 para Betim) os produtos têm preço e
+    estoque; no canal 1, o padrão, todos aparecem como "Item indisponível" (estoque 0). Depois do CEP o site
+    deveria mover a sessão para o canal regional, mas nos servidores do GitHub isso falha com frequência.
+    """
+    url = f"https://www.apoioentrega.com/{quote(item)}?sc={canal}"
+    try:
+        await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        atual = await page.evaluate(
+            "async () => (await (await fetch('/api/checkout/pub/orderForm', {credentials: 'same-origin'})).json()).salesChannel"
+        )
+    except Exception as erro:
+        await abortar(browser, "Apoio", f"não consegui abrir a busca no canal de vendas {canal} ({str(erro)[:80]})", erro=BuscaNaoRealizada)
+    if str(atual) != str(canal):
+        await abortar(browser, "Apoio", f"a sessão ficou no canal de vendas {atual} em vez do {canal}", erro=BuscaNaoRealizada)
+    print(f"🛒 [Apoio] Busca aberta no canal de vendas {canal}")
+    await page.wait_for_timeout(3000)
+
+
 # --- MUDANÇA AQUI: Agora é uma função que recebe CEP e ITEM ---
-async def buscar_no_apoio(cep_usuario: str, item_usuario: str):
+async def buscar_no_apoio(cep_usuario: str, item_usuario: str, canal_de_vendas: str = None):
     print(f"🤖 [Apoio] Iniciando robô invisível para buscar '{item_usuario}' no CEP {cep_usuario}...")
     
     async with async_playwright() as p:
@@ -126,16 +148,21 @@ async def buscar_no_apoio(cep_usuario: str, item_usuario: str):
         # PASSO A: Definir a localização e só seguir se o site confirmar o CEP
         await definir_localizacao(page, browser, cep_usuario)
 
-        try:
-            search_bar = page.locator("input.fulltext-search-box:visible").first
-            await search_bar.wait_for(state="visible", timeout=5000)
-            await search_bar.click(force=True) 
-            # Usa a variável que veio da API
-            await search_bar.fill(item_usuario, force=True) 
-            await search_bar.press("Enter")
-            await page.wait_for_timeout(7000) 
-        except Exception as e:
-            print(f"❌ [Apoio] Erro na busca: {e}")
+        if canal_de_vendas:
+            # O site às vezes deixa a sessão presa no canal de vendas 1, onde todo produto aparece como
+            # "Item indisponível". Abrir a busca já no canal certo evita isso.
+            await abrir_busca_no_canal(page, browser, item_usuario, canal_de_vendas)
+        else:
+            try:
+                search_bar = page.locator("input.fulltext-search-box:visible").first
+                await search_bar.wait_for(state="visible", timeout=5000)
+                await search_bar.click(force=True) 
+                # Usa a variável que veio da API
+                await search_bar.fill(item_usuario, force=True) 
+                await search_bar.press("Enter")
+                await page.wait_for_timeout(7000) 
+            except Exception as e:
+                print(f"❌ [Apoio] Erro na busca: {e}")
 
         # Sem a página de resultados, o que está na tela não é a busca
         if not url_mostra_busca(page.url, item_usuario):

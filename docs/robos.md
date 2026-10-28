@@ -41,9 +41,23 @@ e 32041000 (Contagem). Os sites mudam: se um robô começar a falhar, é aqui qu
   unidade, o robô escolhe a primeira da lista.
 - **Atacadão:** as lojas variam por CEP (Betim, Pampulha, Uberlândia), mas nos produtos testados
   os preços foram iguais.
-- **Apoio, no GitHub:** a prateleira de resultados demora mais para aparecer nos servidores do
-  GitHub do que na máquina local. Com espera fixa de 7 s, 4 de 11 buscas voltaram com 0 itens sem
-  aviso; por isso o robô espera os produtos aparecerem de verdade (até 20 s).
+- **Apoio, canal de vendas (a causa dos "Item indisponível"):** o Apoio vende por **canal de vendas**
+  (parâmetro `sc` da URL; `salesChannel` do carrinho). No canal regional do CEP (**15 para Betim**) os
+  produtos têm preço e estoque. No canal **1**, o padrão, todos aparecem como "Item indisponível" (a API
+  pública confirma: `sc=15` dá 24 de 24 produtos com estoque; `sc=1` dá 0 de 24). Depois do CEP o site
+  deveria mover a sessão para o canal regional. Na máquina do usuário isso sempre acontece; nos servidores
+  do GitHub, de forma intermitente a sessão **fica presa no canal 1** (medido no mesmo minuto: local
+  canal 15 e GitHub canal 1). O CEP é gravado e "Atendemos sua região" aparece mesmo assim, então a
+  confirmação do CEP não basta. Por isso, com `canal_de_vendas`, o robô abre a busca já com `?sc=15` e
+  confere que o carrinho ficou nesse canal. O canal depende do CEP (BH Centro apareceu como `8`) e
+  precisa ser descoberto antes de usar outro CEP.
+  - Hipóteses descartadas, todas testadas: horário (falhou às 06h e às 10h), concorrência com os outros
+    robôs, idioma/fuso/geolocalização brasileiros, e "os preços somem alguns segundos depois".
+  - Os 24 primeiros resultados de uma busca podem mudar um pouco entre a busca pela tela e a busca
+    direta no canal (em "Arroz", 19 de 24 iguais; em Café e Higiênico, 24 de 24), mas os preços dos
+    produtos em comum são os mesmos.
+  - Antes disso, uma espera fixa de 7 s só fazia 4 de 11 buscas voltarem com 0 itens; a espera pelos
+    produtos (até 20 s) continua, mas não era a causa.
 - **Super ABC, busca:** a página tem dois campos de busca iguais (desktop e celular); só o visível
   serve. A URL de resultados vem **codificada duas vezes** (`Açucar` vira `A%25C3%25A7ucar`).
 - **Supernosso, no começo da carga:** com os 4 navegadores abrindo juntos, uma etapa (painel de CEP,
