@@ -50,7 +50,7 @@ def estruturar_produto_apoio_json(texto_bruto):
 
     return produto
 
-async def definir_localizacao(page, browser, cep):
+async def definir_localizacao(page, browser, cep, escolher_entrega=True):
     """Informa o CEP no painel do carrinho e confirma que o site atende a região.
 
     O ícone do carrinho abre o painel "Informe seu CEP" sem adicionar produto algum. Se o site não
@@ -95,6 +95,13 @@ async def definir_localizacao(page, browser, cep):
     if not confirmou:
         await abortar(browser, "Apoio", f"o site não confirmou 'Atendemos sua região' para o CEP {esperado} (não atende ou não respondeu)")
 
+    if not escolher_entrega:
+        # Escolher "Quero receber" faz o site reavaliar a região do endereço e, nos períodos em que a entrega
+        # dali está indisponível, jogar a sessão no canal de vendas 1 (todo produto "indisponível"), desfazendo
+        # até o ?sc= da URL. Para ler preços isso não é preciso: o canal já define preço e estoque.
+        print(f"📍 [Apoio] Localização confirmada: atende o CEP {esperado} (sem escolher a entrega)")
+        return
+
     try:  # "Quero receber": entrega em casa
         await page.evaluate("() => document.querySelector(\"li[data-type='click-delivery']\").click()")
     except Exception as erro:
@@ -115,18 +122,20 @@ async def abrir_busca_no_canal(page, browser, item, canal):
     except Exception as erro:
         await abortar(browser, "Apoio", f"não consegui abrir a busca no canal de vendas {canal} ({str(erro)[:80]})", erro=BuscaNaoRealizada)
 
-    # Logo depois de abrir a página o carrinho ainda marca o canal antigo (1) e só passa para o da URL cerca de
-    # 3 s depois, enquanto a prateleira já mostra os preços. Por isso espera o canal chegar, em vez de checar já.
+    # O canal do CARRINHO é um sinal instável e só informativo: logo depois de abrir a página ele marca o canal
+    # antigo (1), passa para o da URL uns 3 s depois e, em alguns períodos, nem chega em 15 s, enquanto a
+    # prateleira já mostra os preços. Abortar por ele derrubou duas cargas reais. Quem decide é a prateleira:
+    # no canal 1 todo produto aparece "indisponível" (sem preço), então preço na tela prova que o canal é o certo,
+    # e sem preço a busca falha em exigir_produtos (e a carga repete).
     chegou = await esperar_na_pagina(
         page,
         "async (c) => { try { const o = await (await fetch('/api/checkout/pub/orderForm', {credentials: 'same-origin'})).json();"
         " return String(o.salesChannel) === String(c); } catch (e) { return false; } }",
         str(canal),
-        segundos=15,
+        segundos=6,
     )
-    if not chegou:
-        await abortar(browser, "Apoio", f"o carrinho não passou para o canal de vendas {canal} em 15 s", erro=BuscaNaoRealizada)
-    print(f"🛒 [Apoio] Busca aberta no canal de vendas {canal}")
+    cookie = await page.evaluate("() => (document.cookie.match(/VTEXSC=[^;]*/) || ['sem VTEXSC'])[0]")
+    print(f"🛒 [Apoio] Busca aberta com ?sc={canal} (carrinho {'já no canal' if chegou else 'ainda no canal antigo'}; {cookie})")
     await page.wait_for_timeout(3000)
 
 
@@ -153,7 +162,7 @@ async def buscar_no_apoio(cep_usuario: str, item_usuario: str, canal_de_vendas: 
         except: pass 
 
         # PASSO A: Definir a localização e só seguir se o site confirmar o CEP
-        await definir_localizacao(page, browser, cep_usuario)
+        await definir_localizacao(page, browser, cep_usuario, escolher_entrega=not canal_de_vendas)
 
         if canal_de_vendas:
             # O site às vezes deixa a sessão presa no canal de vendas 1, onde todo produto aparece como

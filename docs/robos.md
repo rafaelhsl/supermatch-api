@@ -44,15 +44,24 @@ e 32041000 (Contagem). Os sites mudam: se um robô começar a falhar, é aqui qu
 - **Apoio, canal de vendas (a causa dos "Item indisponível"):** o Apoio vende por **canal de vendas**
   (parâmetro `sc` da URL; `salesChannel` do carrinho). No canal regional do CEP (**15 para Betim**) os
   produtos têm preço e estoque. No canal **1**, o padrão, todos aparecem como "Item indisponível" (a API
-  pública confirma: `sc=15` dá 24 de 24 produtos com estoque; `sc=1` dá 0 de 24). Depois do CEP o site
-  deveria mover a sessão para o canal regional. Na máquina do usuário isso sempre acontece; nos servidores
-  do GitHub, de forma intermitente a sessão **fica presa no canal 1** (medido no mesmo minuto: local
-  canal 15 e GitHub canal 1). O CEP é gravado e "Atendemos sua região" aparece mesmo assim, então a
-  confirmação do CEP não basta. Por isso, com `canal_de_vendas`, o robô abre a busca já com `?sc=15` e
-  confere que o carrinho ficou nesse canal. O canal depende do CEP (BH Centro apareceu como `8`) e
-  precisa ser descoberto antes de usar outro CEP.
-  - Hipóteses descartadas, todas testadas: horário (falhou às 06h e às 10h), concorrência com os outros
-    robôs, idioma/fuso/geolocalização brasileiros, e "os preços somem alguns segundos depois".
+  pública confirma: `sc=15` dá 24 de 24 produtos com estoque; `sc=1` dá 0 de 24).
+  - **Causa:** o clique em **"Quero receber"**. Ao escolher a entrega para o endereço, o site reavalia
+    a região e, nos períodos em que a entrega dali está indisponível, **joga a sessão no canal 1** e
+    desfaz até o `?sc=15` da URL (a página é redirecionada para `?sc=1`). Medido 3 vezes seguidas no
+    mesmo minuto, na máquina do usuário: CEP + "Quero receber" + `?sc=15` dá `sc=1` e 0 preços; só o CEP
+    + `?sc=15` e `?sc=15` direto dão `sc=15` e 24 preços. Quando a entrega está disponível, o mesmo
+    clique funciona, por isso o problema aparecia e sumia com o tempo e em qualquer origem (GitHub ou a
+    máquina do usuário).
+  - **Correção:** com `canal_de_vendas`, o robô confirma o CEP ("Atendemos sua região"), **não clica em
+    "Quero receber"** e abre a busca direto em `?sc=15`. A cobertura continua sendo checada. O canal
+    depende do CEP (BH Centro apareceu como `8`) e precisa ser descoberto antes de usar outro CEP.
+  - O canal do **carrinho** (`orderForm.salesChannel`) é só informação: logo depois de abrir a página
+    marca o canal antigo e passa para o da URL uns 3 s depois (às vezes nem passa), com a prateleira já
+    mostrando preço. Usá-lo como condição derrubou duas cargas reais. Quem decide é a prateleira: sem
+    preço, `exigir_produtos` falha e a carga repete.
+  - Hipóteses descartadas, todas testadas: horário do dia, concorrência com os outros robôs,
+    idioma/fuso/geolocalização brasileiros, IP do GitHub contra a máquina local, e "os preços somem
+    alguns segundos depois". A API pública do catálogo não tem esse problema (depende só do `sc`).
   - Os 24 primeiros resultados de uma busca podem mudar um pouco entre a busca pela tela e a busca
     direta no canal (em "Arroz", 19 de 24 iguais; em Café e Higiênico, 24 de 24), mas os preços dos
     produtos em comum são os mesmos.
