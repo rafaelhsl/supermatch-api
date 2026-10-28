@@ -54,6 +54,10 @@ O RLS está **ligado** em `produtos` e **não há nenhuma política** (confirmad
 
 ## Estado da coleta em 21/10/2026
 
+> Este quadro é o de 21/10. As correções de 26 e 27/10 (CEP confirmado em cada robô e Super ABC na
+> unidade de Betim) estão descritas em [Como os dados entram](#como-os-dados-entram). Vale rodar de
+> novo o [diagnóstico rápido](#diagnóstico-rápido-reexecutável) depois da primeira carga nova.
+
 Última carga completa (GitHub Actions, 21/10/2026 por volta das 12:30 UTC):
 
 | Mercado | UF | Itens | Última coleta (UTC) |
@@ -123,20 +127,31 @@ catálogo crescer a ponto de não caber em memória).
 [`alimentar_banco.py`](../alimentar_banco.py), disparado diariamente pelo workflow
 [`.github/workflows/main.yml`](../.github/workflows/main.yml):
 
-1. Apaga **todas** as linhas: `delete().neq('supermercado', 'nada')`.
-2. Para cada um dos 11 itens da lista (`Arroz`, `Feijao`, `Oleo`, `Cafe`, `Manteiga`, `Açucar`,
-   `Macarrao`, `Detergente`, `Sabao`, `Amaciante`, `Higienico`), roda os 4 scrapers em paralelo
-   com o CEP fixo `32607600`.
-3. Define `uf_cobertura` e insere os produtos **um a um** (`insert` por linha).
+1. Para cada um dos 11 itens da lista (`Arroz`, `Feijao`, `Oleo`, `Cafe`, `Manteiga`, `Açucar`,
+   `Macarrao`, `Detergente`, `Sabao`, `Amaciante`, `Higienico`), roda os 4 robôs em paralelo com o
+   CEP fixo `32607600` (Betim). Cada robô informa o CEP **antes** de buscar e só segue se o site
+   confirmar a localização (veja [`robos.md`](robos.md)). Falha passageira repete o robô uma vez.
+2. Define `uf_cobertura` e guarda tudo em memória, por mercado.
+3. Grava **um mercado por vez, e só os coletados por inteiro**: insere os produtos novos (em lotes de
+   200) e só então apaga os antigos do mesmo mercado (`atualizado_em` anterior ao início da carga).
+   Mercado com falha mantém os dados antigos.
+4. Imprime o resumo por mercado e, se algum falhou, termina com erro: o GitHub marca a execução como
+   falha e envia o e-mail de aviso.
+
+`SEM_GRAVAR=1` roda tudo sem escrever no banco e sem precisar da chave.
+
+Desde 27/10/2026 a carga completa passa no GitHub Actions com os 4 mercados e as 44 localizações
+(4 mercados x 11 buscas) confirmadas: cerca de 1.007 itens (Apoio 256, Atacadão 223, Supernosso 224,
+Super ABC 304). **A tabela passa de 1.000 linhas**, o limite de uma consulta do Supabase; a API já
+pagina o catálogo (veja [Como os dados saem](#como-os-dados-saem)).
 
 Riscos conhecidos desse fluxo:
 
-- Se o robô falhar depois do passo 1, o banco fica **vazio ou incompleto** até a próxima execução.
-- **Falhas silenciosas:** o workflow termina como `success` mesmo quando um mercado inteiro volta
-  com 0 itens (caso do Super ABC, veja acima). Falta uma verificação que avise ou até impeça de
-  apagar os dados antigos quando uma coleta vier vazia.
-- Os preços são os de um único CEP, mas a API os devolve para qualquer CEP da mesma UF.
-- Um `insert` por produto gera muitas requisições; não há tratamento de erro por linha.
+- **Dados antigos podem ficar:** se um mercado falhar, o preço dele continua o do último dia em que
+  deu certo. A API não devolve `atualizado_em`, então o site não mostra a idade do preço.
+- Os preços são os de um único CEP (Betim), mas a API os devolve para qualquer CEP da mesma UF. O
+  modelo de cobertura por CEP ainda não existe.
+- O Super ABC é coletado na unidade de Betim; o Atacadão, na loja de Betim.
 
 ## Como os dados saem
 

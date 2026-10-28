@@ -1,10 +1,14 @@
 import asyncio
 import re
 from playwright.async_api import async_playwright
+from robos_comum import exigir_produtos
+
+from busca import sem_acento
+from robos_comum import BuscaNaoRealizada, abortar, cidade_do_cep, eh_etiqueta_promocional, url_mostra_busca
 
 def estruturar_produto_regex_json(texto_bruto, supermercado_nome):
     partes = [p.strip() for p in texto_bruto.split('|') if p.strip()]
-    nome = partes[0] if partes else "Produto Desconhecido"
+    nome = next((p for p in partes if not eh_etiqueta_promocional(p)), "Produto Desconhecido")
     
     # Se o nome for muito curto, não é um produto válido
     if len(nome) < 4:
@@ -33,7 +37,59 @@ def estruturar_produto_regex_json(texto_bruto, supermercado_nome):
         "texto_original": texto_bruto
     }
 
-async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_usuario: str):
+async def escolher_unidade(page, browser, mercado, cep):
+    """Escolhe a unidade do Super ABC que fica na cidade do CEP.
+
+    O site não localiza unidade por CEP: só filtra por nome ou endereço. Por isso o robô descobre a
+    cidade do CEP e escolhe uma unidade dessa cidade. Sem unidade na cidade, aborta.
+    """
+    info = await asyncio.to_thread(cidade_do_cep, cep)
+    if not info:
+        await abortar(browser, mercado, f"não consegui descobrir a cidade do CEP {cep}")
+    cidade, uf = info
+    cidade_norm = sem_acento(cidade)
+
+    try:
+        await page.locator("div.trocar-loja").first.click(timeout=8000)  # abre a lista de unidades
+        busca = page.locator("input[placeholder*='Buscar por loja' i]").first
+        await busca.wait_for(state="visible", timeout=8000)
+        await busca.fill(cidade)
+        await page.wait_for_timeout(2000)
+    except Exception as erro:
+        await abortar(browser, mercado, f"não consegui abrir a lista de unidades ({str(erro)[:90]})")
+
+    # Só vale unidade cujo endereço termina em "<cidade> - <UF>": a busca também acha ruas e bairros com o mesmo nome.
+    unidades = page.locator("div.loja")
+    escolhida = None
+    for i in range(await unidades.count()):
+        unidade = unidades.nth(i)
+        if not await unidade.is_visible():
+            continue
+        texto = sem_acento(await unidade.inner_text())
+        if re.search(rf",\s*{re.escape(cidade_norm)}\s*-\s*{uf.lower()}\b", texto):
+            escolhida = unidade
+            break
+    if escolhida is None:
+        await abortar(browser, mercado, f"o Super ABC não tem unidade em {cidade}/{uf}", definitiva=True)
+
+    try:
+        await escolhida.locator("button").first.click(timeout=8000)
+    except Exception as erro:
+        await abortar(browser, mercado, f"não consegui selecionar a unidade de {cidade} ({str(erro)[:90]})")
+
+    # Confirmação: o botão do cabeçalho passa a mostrar a unidade e "<cidade> / <UF>".
+    cabecalho = ""
+    for _ in range(10):
+        await page.wait_for_timeout(1000)
+        cabecalho = " ".join((await page.locator("div.trocar-loja").first.inner_text()).split())
+        if cidade_norm in sem_acento(cabecalho):
+            break
+    else:
+        await abortar(browser, mercado, f"o cabeçalho do site não passou a mostrar a unidade de {cidade} (mostra: {cabecalho[:60]})")
+    print(f"📍 [{mercado}] Unidade confirmada: {cabecalho.strip()}")
+    await page.wait_for_timeout(2000)
+
+async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_usuario: str, cep_usuario: str = None):
     print(f"🤖 [{nome_mercado}] Iniciando robô invisível para buscar '{item_usuario}'...")
     
     async with async_playwright() as p:
@@ -53,31 +109,44 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
             await browser.close()
             return []
             
-        # Fechar possíveis pop-ups iniciais de loja (Clica no primeiro botão que parecer "Confirmar" ou "Entrar")
+        # Com CEP, escolhe a unidade da cidade dele. Sem CEP, mantém a unidade padrão do site (Divinópolis).
+        if cep_usuario:
+            await escolher_unidade(page, browser, nome_mercado, cep_usuario)
+
+        # Fecha um possível pop-up inicial de loja. O botão "Entrar" não entra aqui: ele abre o login.
         try:
-            btn_entrar = page.locator("button:has-text('Entrar'), button:has-text('Confirmar'), button:has-text('Continuar')").first
-            await btn_entrar.click(timeout=3000, force=True)
+            btn_confirmar = page.locator("button:has-text('Confirmar'), button:has-text('Continuar')").first
+            await btn_confirmar.click(timeout=3000, force=True)
         except: pass
 
         # PASSO B: Pesquisar (Otimizado para Angular / Regex Solutions)
-        try:
-            search_bar = page.locator(
-                "input.input-busca-produto, "
-                "input[placeholder*='O que você procura' i]"
-            ).first
-            
-            await search_bar.wait_for(state="attached", timeout=10000)
-            await search_bar.click(click_count=2, force=True)
-            
-            await search_bar.fill(item_usuario, force=True)
-            await search_bar.press("Enter")
-            
-            print(f"⏳ [{nome_mercado}] Pesquisa feita! Aguardando a prateleira...")
-            await page.wait_for_timeout(10000) 
-        except Exception as e:
-            print(f"❌ [{nome_mercado}] Erro na barra de busca: {e}")
-            # TIRA UMA FOTO PARA NÓS VERMOS O QUE ESTÁ BLOQUEANDO A TELA!
-            await page.screenshot(path=f"debug_erro_{nome_mercado.replace(' ', '')}.png")
+        # A página tem dois campos de busca iguais (desktop e celular): só o visível serve.
+        # Com vários robôs ao mesmo tempo a busca às vezes não sai da página inicial, então tenta até 3 vezes.
+        for tentativa in (1, 2, 3):
+            try:
+                search_bar = page.locator(
+                    "input.input-busca-produto:visible, "
+                    "input[placeholder*='O que você procura' i]:visible"
+                ).first
+                await search_bar.wait_for(state="visible", timeout=10000)
+                await search_bar.click(click_count=2)
+                await search_bar.fill(item_usuario)
+                await search_bar.press("Enter")
+                print(f"⏳ [{nome_mercado}] Pesquisa feita! Aguardando a prateleira...")
+                for _ in range(10):
+                    if url_mostra_busca(page.url, item_usuario):
+                        break
+                    await page.wait_for_timeout(1000)
+                if url_mostra_busca(page.url, item_usuario):
+                    break
+            except Exception as e:
+                print(f"❌ [{nome_mercado}] Erro na barra de busca (tentativa {tentativa}): {e}")
+                # TIRA UMA FOTO PARA NÓS VERMOS O QUE ESTÁ BLOQUEANDO A TELA!
+                await page.screenshot(path=f"debug_erro_{nome_mercado.replace(' ', '')}.png")
+
+        if not url_mostra_busca(page.url, item_usuario):
+            await abortar(browser, nome_mercado, f"a busca por '{item_usuario}' não abriu a página de resultados ({page.url[:90]})", erro=BuscaNaoRealizada)
+        await page.wait_for_timeout(8000)  # deixa a prateleira carregar
 
         # PASSO C: Ler a Prateleira (Usando o padrão que você mapeou)
         textos_produtos = await page.evaluate('''() => {
@@ -98,6 +167,7 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
             if produto:
                 lista_final_json.append(produto)
 
+        await exigir_produtos(browser, nome_mercado, lista_final_json)
         await browser.close()
         print(f"✅ [{nome_mercado}] Extração concluída! Encontrados {len(lista_final_json)} itens.")
         return lista_final_json
