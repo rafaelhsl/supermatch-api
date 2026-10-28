@@ -1,11 +1,28 @@
 name: Robô da Madrugada (Scraper)
 
 on:
-  # O Despertador: Roda todo dia às 07:00 UTC (04:00 da manhã no Brasil)
+  # O Despertador: roda todo dia às 11:17 UTC (08:17 da manhã no Brasil).
+  # Não pode ser de madrugada: o Apoio Entrega mostra todos os produtos como "Item indisponível" (sem preço)
+  # antes das ~7h, e a carga ficaria sem os dados dele. O GitHub nunca roda antes do horário do cron
+  # (só atrasa), então este horário garante que a carga começa depois das 8h. Evitamos o minuto 00 porque
+  # é quando o GitHub mais atrasa as execuções agendadas.
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '17 11 * * *'
   # Isso permite que você clique num botão para rodar na hora que quiser testar!
-  workflow_dispatch: 
+  # Dispare depois das 8h da manhã (Brasília), pelo mesmo motivo acima.
+  workflow_dispatch:
+    inputs:
+      mercados:
+        description: 'Só estes mercados (separados por vírgula). Vazio = todos. Opções: Apoio Entrega, Atacadao, Supernosso, Super ABC'
+        required: false
+        default: ''
+      gravar:
+        description: 'Gravar no banco? Escolha "nao" para só testar (mostra o resumo e não altera nada)'
+        type: choice
+        options:
+          - sim
+          - nao
+        default: sim
 
 # --- A CORREÇÃO PARA O AVISO DO NODE.JS 24 ---
 env:
@@ -35,4 +52,7 @@ jobs:
       env:
         # Injeta a chave secreta que salvamos no cofre do GitHub
         SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        # Só têm valor quando a execução é disparada à mão; na agendada ficam vazios (todos os mercados, gravando)
+        SO_MERCADOS: ${{ github.event.inputs.mercados }}
+        SEM_GRAVAR: ${{ github.event.inputs.gravar == 'nao' && '1' || '' }}
       run: python alimentar_banco.py
