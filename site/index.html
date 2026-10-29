@@ -1,443 +1,734 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Melhor Compra - Comparador</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Monte sua lista de compras e veja em qual supermercado online ela sai mais barata.">
+<meta name="theme-color" content="#182848">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 26'%3E%3Cpath d='M2 10Q2 2 8 2H22Q28 2 28 10Z' fill='%23ffd23f'/%3E%3Cpath d='M2 10h26' stroke='%23182848' stroke-width='2'/%3E%3Cpath d='M5 10v13M25 10v13' stroke='%23182848' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M8 2l-2 8M15 2v8M22 2l2 8' stroke='%23182848' stroke-width='1.6'/%3E%3C/svg%3E">
+<title>Supermatch: onde a sua compra sai mais barata?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Martian+Mono:wght@400;500;600&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================================
+   SUPERMATCH
+   Cada mercado é uma barraca de toldo listrado; a mais barata ganha a placa amarela. As barracas
+   são as abas de um cupom fiscal com a lista de compras. Pensado primeiro para o celular: na tela
+   pequena os resultados da busca vêm logo abaixo do campo e o cupom fica no fim, com uma barra
+   fixa levando até ele. Publicado a mão no Netlify: este arquivo é o site inteiro.
+   ===================================================================================== */
+:root {
+  --calcada: #edf1f6;       /* a rua onde ficam as barracas */
+  --branco: #ffffff;
+  --papel: #fffdf8;         /* papel térmico do cupom */
+  --tinta: #182848;         /* azul-marinho */
+  --tinta-2: #4a5878;
+  --linha: #d5deea;
+  --picote: #b4c2d6;        /* tracejado do cupom */
+  --sol: #ffd23f;           /* a placa de "mais barato" */
+  --sol-claro: #fff3c2;
+  --alerta: #b3361f;
+  --titulo: "Unbounded", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --texto: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Martian Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--calcada); color: var(--tinta); font: 400 16px/1.5 var(--texto); -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; overflow-x: clip; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--tinta); outline-offset: 3px; border-radius: 8px; }
+.so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- a página é uma grade; no celular as áreas mudam de ordem ---------- */
+.pagina {
+  max-width: 1120px; margin: 0 auto; padding: 0 20px 120px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 400px; column-gap: 28px; align-items: start;
+  grid-template-areas: "topo topo" "busca painel" "barracas barracas" "resultados cupom" "rodape rodape";
+}
+.topo { grid-area: topo; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0 6px; }
+.busca-bloco { grid-area: busca; margin-top: 18px; }
+.painel { grid-area: painel; align-self: stretch; margin-top: 18px; }
+.barracas-bloco { grid-area: barracas; margin-top: 30px; }
+.resultados { grid-area: resultados; margin-top: 36px; min-width: 0; }
+.rodape-pagina { grid-area: rodape; margin: 44px 0 0; max-width: 70ch; font-size: 13px; color: var(--tinta-2); }
+.cupom-area { grid-area: cupom; position: sticky; top: 16px; margin-top: 36px; scroll-margin-top: 14px; }
+
+.marca { font: 800 19px/1 var(--titulo); color: var(--tinta); text-decoration: none; letter-spacing: -.01em; display: inline-flex; align-items: center; gap: 9px; }
+.marca svg { flex: none; }
+.botao-cep { background: var(--branco); border: 1.5px solid var(--linha); border-radius: 999px; padding: 9px 16px; min-height: 44px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.botao-cep:hover { border-color: var(--tinta); }
+.botao-cep small { color: var(--tinta-2); font-weight: 500; font-size: inherit; }
+
+h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02em; margin: 10px 0 14px; }
+.apoio { margin: 0 0 22px; color: var(--tinta-2); max-width: 44ch; }
+.busca { display: flex; background: var(--branco); border: 2px solid var(--tinta); border-radius: 999px; padding: 5px; }
+.busca input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 0 16px; font-size: 17px; }
+.busca input:focus-visible { outline: none; }
+.busca input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.busca:focus-within { box-shadow: 0 0 0 3px var(--sol); }
+.botao { background: var(--tinta); color: var(--branco); border: 0; border-radius: 999px; padding: 12px 24px; min-height: 46px; font-weight: 700; cursor: pointer; }
+.botao:hover { background: #0e1a33; }
+.botao.sol { background: var(--sol); color: var(--tinta); }
+.botao.sol:hover { background: #ffc61a; }
+.botao.vazado { background: transparent; color: var(--tinta); border: 2px solid var(--tinta); padding: 10px 22px; }
+.botao.vazado:hover { background: var(--tinta); color: var(--branco); }
+.sugestoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
+.sugestoes span { color: var(--tinta-2); font-size: 14px; }
+.sugestoes button { background: var(--branco); border: 1.5px solid var(--linha); border-radius: 999px; padding: 6px 15px; min-height: 40px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.sugestoes button:hover { border-color: var(--tinta); }
+
+/* painel do veredito */
+.painel { background: var(--tinta); color: var(--branco); border-radius: 28px; padding: 24px 26px 22px; display: flex; flex-direction: column; justify-content: center; min-height: 190px; }
+.painel p { margin: 0; }
+.painel .antes { color: #b8c4de; font-size: 15px; }
+.painel .numero { font: 800 clamp(48px, 7vw, 68px)/1 var(--texto); color: var(--sol); letter-spacing: -.02em; margin: 4px 0 6px; }
+.painel .depois { font-size: 16px; max-width: 34ch; }
+.painel strong { color: var(--branco); }
+.painel .vazio { font: 700 clamp(21px, 2.4vw, 26px)/1.25 var(--titulo); letter-spacing: -.01em; max-width: 20ch; margin-top: 8px; }
+.painel .vazio strong { font-weight: 800; }
+
+/* ---------- barracas (também são as abas do cupom) ---------- */
+.barracas { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: stretch; }
+.barracas li { display: flex; }
+.barraca { flex: 1; position: relative; display: flex; flex-direction: column; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; border-radius: 16px; }
+.barraca:disabled { cursor: default; }
+.toldo { display: block; --cor: #888; height: 30px; border-radius: 16px 16px 0 0; background: repeating-linear-gradient(90deg, var(--cor) 0 20px, var(--branco) 20px 40px); }
+.toldo::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 30px; height: 12px; z-index: 1;
+  background:
+    radial-gradient(circle at 10px 0, var(--cor) 10px, #0000 10.5px) 0 0 / 40px 12px repeat-x,
+    radial-gradient(circle at 30px 0, var(--branco) 10px, #0000 10.5px) 0 0 / 40px 12px repeat-x;
+}
+.balcao { flex: 1; display: flex; flex-direction: column; background: var(--branco); border: 1.5px solid var(--linha); border-top: 0; border-radius: 0 0 20px 20px; padding: 24px 14px 14px; min-height: 176px; transition: border-color .15s; }
+.barraca:not(:disabled):hover .balcao { border-color: var(--tinta-2); }
+.barraca.vence .balcao { background: var(--sol-claro); border-color: var(--sol); }
+.barraca[aria-pressed="true"] .balcao { border-color: var(--tinta); box-shadow: inset 0 0 0 1px var(--tinta); }
+.barraca.balanca .toldo { transform-origin: top center; animation: balancar .9s ease-out; }
+@keyframes balancar { 20% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.1deg); } 80% { transform: rotate(-.4deg); } }
+.placa { position: absolute; left: 10px; top: 52px; display: none; }
+.barraca.vence .placa { display: inline-flex; }
+.selo { display: inline-flex; align-items: center; gap: 6px; background: var(--sol); color: var(--tinta); border-radius: 999px; padding: 3px 10px 3px 7px; font-weight: 800; font-size: 12.5px; line-height: 1.3; }
+.nome-m { font: 600 13px/1.2 var(--titulo); margin: 0 0 8px; padding-top: 4px; display: flex; align-items: center; gap: 8px; }
+.barraca.vence .nome-m { padding-top: 34px; }
+.nome-m i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.tb { display: block; font: 800 clamp(22px, 2.6vw, 30px)/1.05 var(--texto); letter-spacing: -.015em; }
+.dif { display: block; margin: 4px 0 0; font-size: 14px; color: var(--tinta-2); }
+.dif.alerta { color: var(--alerta); font-weight: 600; }
+.vazio-b { display: block; color: var(--tinta-2); font-size: 14px; }
+.rodape-b { margin-top: auto; padding-top: 10px; min-height: 36px; display: flex; align-items: flex-end; }
+.aberto { background: var(--tinta); color: var(--branco); border-radius: 999px; padding: 3px 11px; font-size: 12.5px; font-weight: 700; line-height: 1.4; }
+.abrir { font-size: 13.5px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- resultados da busca ---------- */
+.titulo-sec { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; margin: 0 0 14px; }
+.titulo-sec h2 { font: 800 21px/1.2 var(--titulo); margin: 0; letter-spacing: -.01em; }
+.titulo-sec p { margin: 0; font-size: 13.5px; color: var(--tinta-2); }
+.produtos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.produto { background: var(--branco); border: 1.5px solid var(--linha); border-radius: 22px; padding: 18px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.produto h3 { margin: 0; font-size: 16px; line-height: 1.3; font-weight: 700; min-height: 2.6em; }
+.pilulas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.pilula { border: 1.5px solid var(--linha); border-radius: 14px; padding: 8px 10px 9px; }
+.pilula.menor { background: var(--sol); border-color: var(--sol); }
+.pilula .nome { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; }
+.pilula .nome i { width: 9px; height: 9px; border-radius: 50%; flex: none; box-shadow: 0 0 0 1.5px var(--branco); }
+.pilula .valor { font-weight: 800; font-size: 20px; line-height: 1.2; letter-spacing: -.01em; }
+.pilula .atacado { font-size: 11.5px; color: var(--tinta-2); line-height: 1.25; display: block; }
+.pilula.menor .atacado { color: #3b3400; }
+.pilula.sem { border-style: dashed; color: var(--tinta-2); }
+.pilula.sem .valor { font-size: 14px; font-weight: 500; }
+.acao { margin-top: auto; }
+.acao .botao { width: 100%; }
+.passos { display: flex; align-items: center; justify-content: space-between; background: var(--tinta); color: var(--branco); border-radius: 999px; padding: 4px; }
+.passos button { width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .14); color: inherit; cursor: pointer; font-size: 20px; line-height: 1; }
+.passos button:hover { background: rgba(255, 255, 255, .28); }
+.passos span { font-weight: 700; }
+.mais-res { display: block; width: 100%; margin-top: 14px; min-height: 50px; border: 2px dashed var(--picote); border-radius: 18px; background: none; cursor: pointer; font-weight: 700; font-size: 15px; }
+.mais-res:hover { border-color: var(--tinta); background: var(--branco); }
+.estado { background: var(--branco); border: 1.5px dashed var(--linha); border-radius: 22px; padding: 30px 24px; color: var(--tinta-2); }
+.estado strong { display: block; font: 800 19px/1.25 var(--titulo); color: var(--tinta); margin-bottom: 8px; letter-spacing: -.01em; }
+.pontinhos::after { content: ""; display: inline-block; width: 1.4em; text-align: left; animation: pontinhos 1.2s steps(4, end) infinite; }
+@keyframes pontinhos { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+/* ---------- o cupom ---------- */
+.cupom-sombra { filter: drop-shadow(0 10px 14px rgba(24, 40, 72, .16)); }
+.cupom {
+  background: var(--papel); padding: 32px 22px 36px; max-height: calc(100vh - 32px); display: flex; flex-direction: column;
+  -webkit-mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 16px 51% repeat-x,
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 16px 51% repeat-x;
+          mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 16px 51% repeat-x,
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 16px 51% repeat-x;
+}
+.cupom > * { flex: none; }
+.cupom > .linhas { flex: 1 1 auto; min-height: 0; }
+.cupom-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cupom h2 { font: 800 21px/1.2 var(--titulo); letter-spacing: -.01em; margin: 0; }
+.chip { display: inline-flex; align-items: center; gap: 7px; font: 600 12px/1 var(--mono); border: 1.5px solid var(--picote); border-radius: 999px; padding: 6px 11px; background: var(--branco); white-space: nowrap; }
+.chip i { width: 9px; height: 9px; border-radius: 50%; }
+.cupom .meta { margin: 8px 0 14px; font: 400 11.5px/1.55 var(--mono); color: var(--tinta-2); }
+.linhas { list-style: none; margin: 0; padding: 0; border-top: 2px dashed var(--picote); overflow: auto; }
+.linhas.rola { -webkit-mask-image: linear-gradient(#000 calc(100% - 34px), #0000); mask-image: linear-gradient(#000 calc(100% - 34px), #0000); }
+.linha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 12px; padding: 13px 0; border-bottom: 2px dashed var(--picote); align-items: center; }
+.linha .nome { font: 500 12.5px/1.45 var(--mono); }
+.linha .valor { font: 600 13.5px/1.2 var(--mono); text-align: right; white-space: nowrap; }
+.linha .un { font: 400 11px/1.35 var(--mono); color: var(--tinta-2); text-align: right; }
+.linha.falta .nome, .linha.falta .valor, .linha.falta .un { color: var(--alerta); }
+.linha.falta .valor { font-weight: 500; font-size: 12.5px; }
+.quant { display: inline-flex; align-items: center; gap: 4px; }
+.quant button { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--picote); background: var(--branco); cursor: pointer; font-size: 17px; line-height: 1; display: grid; place-items: center; padding: 0 0 2px; }
+.quant button:hover { background: var(--tinta); color: var(--branco); border-color: var(--tinta); }
+.quant output { min-width: 26px; text-align: center; font: 600 13px/1 var(--mono); }
+.mostrar { align-self: center; margin: 14px 0 2px; min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border: 1.5px solid var(--tinta); border-radius: 999px; background: var(--branco); cursor: pointer; font-weight: 700; font-size: 14px; }
+.mostrar:hover { background: var(--tinta); color: var(--branco); }
+.mostrar svg { transition: transform .2s; }
+.mostrar[aria-expanded="true"] svg { transform: rotate(180deg); }
+.fecho { margin-top: 12px; }
+.carimbo-vaga { height: 50px; display: flex; justify-content: flex-end; align-items: center; padding-right: 8px; }
+.carimbo { transform: rotate(-5deg); display: inline-flex; align-items: center; gap: 7px; background: var(--sol); color: var(--tinta); border: 2px solid var(--tinta); border-radius: 10px; padding: 6px 13px 6px 10px; font: 800 14px/1 var(--titulo); box-shadow: 2px 3px 0 var(--tinta); pointer-events: none; }
+.carimbo.bate { animation: carimbar .32s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes carimbar { from { transform: translateY(-12px) rotate(-5deg) scale(1.12); opacity: 0; } }   /* não passa da borda do cupom: no celular, um elemento que invade a margem alarga a página */
+.total { display: grid; grid-template-columns: auto 1fr; align-items: end; column-gap: 12px; }
+.total span { font: 400 11.5px/1.35 var(--mono); max-width: 11ch; padding-bottom: 6px; }
+.total strong { font: 800 clamp(34px, 3.4vw, 42px)/1 var(--texto); letter-spacing: -.02em; text-align: right; white-space: nowrap; }
+.economia { margin: 10px 0 12px; font-size: 14px; line-height: 1.4; color: var(--tinta-2); min-height: 1.4em; }
+.economia b { color: var(--tinta); }
+.cupom-rodape { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.limpar, .volta { background: none; border: 0; padding: 8px 0; min-height: 40px; text-decoration: underline; cursor: pointer; color: var(--tinta-2); font-size: 14px; }
+.volta { display: none; color: var(--tinta); font-weight: 600; }
+.vazio-cupom { margin: 0; font: 400 12.5px/1.6 var(--mono); color: var(--tinta-2); border-top: 2px dashed var(--picote); padding-top: 14px; }
+.vazio-cupom strong { color: var(--tinta); font-weight: 600; }
+
+.barra-movel { display: none; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: calc(100vw - 28px); color: var(--tinta); }
+dialog::backdrop { background: rgba(24, 40, 72, .6); }
+.janela { background: var(--branco); width: min(430px, 100%); border-radius: 28px; padding: 28px 26px 24px; }
+.janela h2 { font: 800 24px/1.2 var(--titulo); margin: 0 0 8px; letter-spacing: -.01em; }
+.janela p { margin: 0 0 16px; color: var(--tinta-2); }
+.janela input { width: 100%; border: 2px solid var(--tinta); border-radius: 16px; padding: 14px 16px; font-size: 20px; letter-spacing: .06em; }
+.janela .erro { color: var(--alerta); min-height: 1.5em; margin: 8px 0 0; font-weight: 600; }
+.janela .acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+
+/* ---------- tablet e celular: uma coluna ---------- */
+@media (max-width: 960px) {
+  .pagina {
+    grid-template-columns: minmax(0, 1fr); column-gap: 0;
+    grid-template-areas: "topo" "busca" "resultados" "painel" "barracas" "cupom" "rodape";
+  }
+  .painel { margin-top: 24px; min-height: 0; }
+  .resultados { margin-top: 0; }
+  .resultados > :first-child { margin-top: 24px; }
+  .estado.parado { display: none; }
+  .barracas-bloco { margin-top: 26px; }
+  .cupom-area { position: static; width: 100%; max-width: 520px; justify-self: center; margin-top: 28px; }
+  .cupom { max-height: none; }
+  .linhas.rola { -webkit-mask-image: none; mask-image: none; }
+  .volta { display: inline-block; }
+  .barra-movel {
+    display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 5; gap: 12px; align-items: center; justify-content: space-between;
+    background: var(--tinta); color: var(--branco); border-radius: 999px; padding: 8px 8px 8px 20px; box-shadow: 0 6px 18px rgba(24, 40, 72, .35);
+  }
+  .barra-movel small { display: block; color: #b8c4de; font-size: 12.5px; line-height: 1.2; }
+  .barra-movel strong { font: 800 20px/1.2 var(--texto); }
+  .barra-movel a { background: var(--sol); color: var(--tinta); border-radius: 999px; padding: 12px 20px; font-weight: 800; text-decoration: none; }
+}
+@media (max-width: 720px) {
+  .pagina { padding: 0 14px 124px; }
+  .topo { padding-top: 12px; }
+  .busca-bloco { margin-top: 12px; }
+  .botao-cep small { display: none; }
+  .botao-cep { padding: 9px 14px; white-space: nowrap; font-size: 13.5px; }
+  h1 { margin-top: 6px; }
+  .apoio { margin-bottom: 18px; }
+  .busca input { font-size: 16px; }   /* 16 px evita o zoom automático do iPhone ao focar o campo */
+  .painel { border-radius: 24px; padding: 20px 20px 18px; }
+  .barracas { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .balcao { padding: 22px 12px 12px; min-height: 164px; }
+  .placa { left: 8px; }
+  .nome-m { font-size: 12.5px; gap: 6px; }
+  .produtos { grid-template-columns: 1fr; }
+  .titulo-sec h2 { font-size: 19px; }
+  .cupom { padding: 30px 18px 34px; }
+  .quant button { width: 40px; height: 40px; font-size: 19px; }
+  .quant { gap: 2px; }
+  .cupom h2 { font-size: 19px; }
+}
+@media (max-width: 380px) {
+  .nome-m { font-size: 11.5px; }
+  .pilula .valor { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .barraca.balanca .toldo, .pontinhos::after, .carimbo.bate { animation: none; }
+  .mostrar svg { transition: none; }
+}
+</style>
 </head>
-<body class="bg-gray-100 font-sans pb-24 lg:pb-8 relative">
+<body>
 
-    <header id="topoDaPagina" class="bg-blue-600 text-white p-4 md:p-6 shadow-md">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-2xl md:text-3xl font-bold text-center">🥇 Encontre o <span class="text-yellow-300">melhor preço</span></h1>
-            
-            <button onclick="abrirModalCep()" class="text-sm bg-blue-700 hover:bg-blue-800 transition px-4 py-2 rounded-full flex items-center gap-2 shadow-sm w-full md:w-auto justify-center">
-                <span>📍</span>
-                <div class="text-left">
-                    <span class="block text-xs text-blue-200 leading-none">Enviar para:</span>
-                    <span id="cepDisplay" class="font-bold leading-none">Não informado</span>
-                </div>
-                <span class="text-xl ml-1">✎</span>
-            </button>
-        </div>
-    </header>
+<noscript><p style="margin:0;padding:14px 16px;background:#182848;color:#fff;text-align:center">O Supermatch precisa do JavaScript ligado no navegador para funcionar.</p></noscript>
 
-    <div id="modalCep" class="fixed inset-0 bg-black bg-opacity-60 hidden flex justify-center items-center z-50 backdrop-blur-sm p-4">
-        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md">
-            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">📍 Onde você quer receber?</h2>
-            <p class="text-sm text-gray-500 mb-6">Digite seu CEP para encontrarmos os supermercados da sua região.</p>
-            <input type="text" id="inputCep" placeholder="Ex: 30180-030" maxlength="9" class="w-full border-2 border-gray-300 rounded-xl p-4 text-xl text-center focus:outline-none focus:border-blue-500">
-            <p id="msgErroCep" class="text-red-500 text-sm mt-2 hidden font-semibold">⚠️ CEP inválido ou não encontrado.</p>
-            <div class="flex flex-col md:flex-row justify-end gap-3 mt-8">
-                <button onclick="fecharModalCep()" class="px-5 py-3 text-gray-500 hover:bg-gray-100 rounded-xl font-semibold w-full md:w-auto">Cancelar</button>
-                <button onclick="salvarCep()" id="btnSalvarCep" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-md w-full md:w-auto">Confirmar</button>
-            </div>
-        </div>
+<div class="pagina">
+  <header class="topo">
+    <a class="marca" href="#">
+      <svg width="30" height="26" viewBox="0 0 30 26" aria-hidden="true"><path d="M2 10 Q2 2 8 2 H22 Q28 2 28 10 Z" fill="#ffd23f"/><path d="M2 10h26" stroke="#182848" stroke-width="2"/><path d="M5 10v13M25 10v13" stroke="#182848" stroke-width="2" stroke-linecap="round"/><path d="M8 2l-2 8M15 2v8M22 2l2 8" stroke="#182848" stroke-width="1.6"/></svg>
+      Supermatch
+    </a>
+    <button class="botao-cep" id="botaoCep" type="button"><small>Entrega em</small> <span id="cepTexto">informe seu CEP</span></button>
+  </header>
+
+  <section class="busca-bloco">
+    <h1>Onde a sua compra sai mais barata?</h1>
+    <p class="apoio">Monte a lista e compare o total em 4 mercados com compra online.</p>
+    <form class="busca" id="formBusca" role="search">
+      <label class="so-leitor" for="campoBusca">Buscar produto</label>
+      <input id="campoBusca" type="search" placeholder="Busque um produto" autocomplete="off" enterkeyhint="search">
+      <button class="botao" type="submit">Buscar</button>
+    </form>
+    <div class="sugestoes"><span>Comece por:</span>
+      <button type="button" data-termo="arroz">Arroz</button>
+      <button type="button" data-termo="café">Café</button>
+      <button type="button" data-termo="óleo de soja">Óleo de soja</button>
     </div>
+  </section>
 
-    <main class="max-w-6xl mx-auto mt-4 md:mt-8 px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <div class="lg:col-span-2">
-            <div class="bg-white p-4 md:p-6 rounded-2xl shadow-md flex flex-col md:flex-row gap-3 border border-gray-100">
-                <input type="text" id="inputBusca" placeholder="Ex: Arroz Camil, Feijão, Óleo..." class="flex-1 border-2 border-gray-200 rounded-xl p-4 text-lg focus:outline-none focus:border-blue-500">
-                <button onclick="buscarProdutos()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-xl shadow-md transition-colors text-lg w-full md:w-auto">Buscar</button>
-            </div>
+  <div class="painel" id="painel" aria-live="polite"></div>
 
-            <div id="loading" class="hidden text-center mt-12">
-                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-b-blue-600 mb-4"></div>
-                <h2 class="text-xl text-gray-800 font-bold mb-2">Consultando supermercados...</h2>
-                <p id="loadingDetalhe" class="text-gray-500 font-medium">Lendo do banco de dados.</p>
-            </div>
+  <section class="barracas-bloco" id="barracasBloco" aria-label="Total da sua lista em cada mercado">
+    <ul class="barracas" id="barracas"></ul>
+  </section>
 
-            <div id="resultados" class="mt-6 md:mt-8 grid grid-cols-1 gap-6"></div>
-        </div>
+  <main class="resultados" id="resultados" aria-live="polite"></main>
 
-        <div class="lg:col-span-1" id="ancoraCarrinho">
-            <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg lg:sticky lg:top-8 border border-gray-200">
-                <div class="flex justify-between items-center mb-4 border-b pb-4">
-                    <h2 class="text-xl font-bold text-gray-800">🛒 Seu Carrinho</h2>
-                    <button onclick="limparCarrinho()" class="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded transition">Esvaziar</button>
-                </div>
-                
-                <div id="listaItensCarrinho" class="space-y-4 mb-6 max-h-[50vh] overflow-y-auto pr-2"></div>
-                <div id="totalCarrinho" class="mt-4"></div>
-            </div>
+  <aside class="cupom-area" id="cupom" aria-label="Sua lista"></aside>
 
-            <div class="text-center mt-6 lg:hidden">
-                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-blue-600 font-bold bg-blue-50 hover:bg-blue-100 transition px-6 py-3 rounded-full shadow-sm flex items-center justify-center gap-2 w-full">
-                    <span>⬆️</span> Voltar à Busca
-                </button>
-            </div>
-        </div>
-    </main>
+  <p class="rodape-pagina">O Supermatch compara os preços publicados nos sites dos mercados, coletados uma vez por dia. Promoções e estoque mudam: confira no site do mercado antes de finalizar a compra.</p>
+</div>
 
-    <button onclick="irParaCarrinho()" class="lg:hidden fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition z-40 flex items-center justify-center border-2 border-white">
-        <span class="text-2xl">🛒</span>
-        <span id="badgeCarrinho" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white -mt-2 -mr-2 hidden">0</span>
-    </button>
+<div class="barra-movel" id="barraMovel"></div>
 
-    <script>
-        const URL_API = "https://supermatch-api.onrender.com";
+<dialog id="janelaCep">
+  <form method="dialog" class="janela" id="formCep">
+    <h2>Qual é o seu CEP?</h2>
+    <p>Informe o CEP de entrega para buscar os preços.</p>
+    <label class="so-leitor" for="campoCep">CEP</label>
+    <input id="campoCep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="postal-code">
+    <p class="erro" id="erroCep" role="alert"></p>
+    <div class="acoes">
+      <button class="botao vazado" type="button" id="cancelarCep">Agora não</button>
+      <button class="botao sol" type="submit">Salvar CEP</button>
+    </div>
+  </form>
+</dialog>
 
-        document.addEventListener("DOMContentLoaded", () => {
-            // O servidor gratuito do Render dorme após 15 min sem uso. Este "toque" o acorda
-            // enquanto a pessoa digita o CEP e o produto, para a primeira busca não esperar tanto.
-            fetch(`${URL_API}/saude`).catch(() => {});
+<script>
+/* Supermatch: lista de compras, busca na API, CEP e comparação por mercado.
+   Cuida do que não depende do desenho; a tela só desenha o estado e escuta as mudanças:
+       Supermatch.aoMudar(() => desenhar(Supermatch.estado));
+       Supermatch.iniciar(); */
+(function () {
+  "use strict";
 
-            document.getElementById('inputBusca').value = "";
-            const cepSalvo = localStorage.getItem("user_cep");
-            const cidadeSalva = localStorage.getItem("user_cidade");
-            if (cepSalvo) {
-                document.getElementById('cepDisplay').innerText = `${cepSalvo.substring(0,5)}-${cepSalvo.substring(5)} (${cidadeSalva})`;
-            } else {
-                abrirModalCep();
-            }
-            renderizarCarrinho(); 
-        
-            document.getElementById('inputBusca').addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') { buscarProdutos(); }
-            });
-        });
+  const API = "https://supermatch-api.onrender.com";
+  const PREFIXO = "sm_";
 
-        function abrirModalCep() { document.getElementById('modalCep').classList.remove('hidden'); document.getElementById('msgErroCep').classList.add('hidden'); }
-        function fecharModalCep() { document.getElementById('modalCep').classList.add('hidden'); }
+  // A cor identifica o mercado em toda a tela.
+  const MERCADOS = [
+    { id: "Apoio Entrega", nome: "Apoio Entrega", cor: "#2a78d6" },
+    { id: "Atacadao", nome: "Atacadão", cor: "#eb6834" },
+    { id: "Supernosso", nome: "Supernosso", cor: "#6250d6" },
+    { id: "Super ABC", nome: "Super ABC", cor: "#1baf7a" },
+  ];
 
-        async function salvarCep() {
-            const cepLimpo = document.getElementById('inputCep').value.replace(/\D/g, '');
-            const msgErro = document.getElementById('msgErroCep');
-            const btnSalvar = document.getElementById('btnSalvarCep');
+  const estado = {
+    cep: "",              // só dígitos
+    cidade: "",           // "Betim/MG"
+    lista: [],            // [{ grupo, qtd }]
+    busca: { termo: "", status: "parado", grupos: [], aviso: "", atualizadoEm: "" },
+  };
+  const ouvintes = [];
+  const emitir = () => ouvintes.forEach((f) => f());
 
-            if (cepLimpo.length !== 8) { msgErro.innerText = "⚠️ O CEP deve ter 8 números."; msgErro.classList.remove('hidden'); return; }
+  /* ---------- utilitários ---------- */
+  const semAcento = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const moeda = (n) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const partesPreco = (n) => {
+    const [reais, centavos] = n.toFixed(2).split(".");
+    return { reais: Number(reais).toLocaleString("pt-BR"), centavos };
+  };
+  const formatarCep = (c) => (c.length === 8 ? c.slice(0, 5) + "-" + c.slice(5) : c);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // Redesenhar a tela troca os elementos; sem isto quem usa teclado perde o foco a cada clique.
+  // Os botões que precisam manter o foco levam data-foco="algo-unico".
+  const preservarFoco = (desenhar) => {
+    const ativo = document.activeElement;
+    const chave = ativo && ativo.dataset ? ativo.dataset.foco : null;
+    desenhar();
+    if (chave) {
+      const novo = document.querySelector('[data-foco="' + chave.replace(/"/g, '\\"') + '"]');
+      if (novo) novo.focus({ preventScroll: true });
+    }
+  };
+  // Os mercados mandam o nome do produto em minúsculas, MAIÚSCULAS ou misturado. Padroniza para "Café Torrado e Moído 500g".
+  const MINUSCULAS = new Set(["de", "da", "do", "das", "dos", "e", "com", "em", "para", "a", "o", "ao"]);
+  const nomeBonito = (s) =>
+    s.toLowerCase().replace(/\s+/g, " ").trim().split(" ").map((p, i) => {
+      if (/\d/.test(p) || (i > 0 && MINUSCULAS.has(p))) return p;           // 500g, 5kg, 1,5l e "de", "e"...
+      return p.charAt(0).toUpperCase() + p.slice(1);
+    }).join(" ");
+  const dataHora = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).replace(",", " às");
+  };
+  const mercadoPorId = (id) => MERCADOS.find((m) => m.id === id);
+  // Preço de 1 unidade quando a quantidade da lista alcança a do atacado; senão, o preço normal.
+  const precoUnitario = (opcao, qtd) =>
+    opcao.quantidade_atacado > 1 && qtd >= opcao.quantidade_atacado ? opcao.preco_atacado : opcao.preco_varejo;
+  const opcaoDoMercado = (grupo, mercadoId) => grupo.opcoes_de_compra.find((o) => o.supermercado === mercadoId) || null;
 
-            btnSalvar.innerText = "Buscando...";
-            msgErro.classList.add('hidden');
+  /* ---------- armazenamento ---------- */
+  const guardar = (k, v) => { try { localStorage.setItem(PREFIXO + k, JSON.stringify(v)); } catch (e) { /* modo privado */ } };
+  const ler = (k, padrao) => { try { const v = localStorage.getItem(PREFIXO + k); return v === null ? padrao : JSON.parse(v); } catch (e) { return padrao; } };
 
-            try {
-                const res = await fetch(`https://brasilapi.com.br/api/cep/v1/${cepLimpo}`);
-                const dados = await res.json();
-                if (dados.errors || dados.message) throw new Error();
+  /* ---------- CEP ---------- */
+  // BrasilAPI primeiro, ViaCEP de reserva. Devolve "Cidade/UF", null (o CEP não existe) ou lança erro (sem conexão).
+  async function cidadeDoCep(cep) {
+    try {
+      const r = await fetch("https://brasilapi.com.br/api/cep/v1/" + cep);
+      if (r.ok) { const d = await r.json(); return d.city + "/" + d.state; }
+    } catch (e) { /* tenta a reserva */ }
+    const r = await fetch("https://viacep.com.br/ws/" + cep + "/json/");
+    const d = await r.json();
+    return d.erro ? null : d.localidade + "/" + d.uf;
+  }
 
-                localStorage.setItem("user_cep", cepLimpo);
-                localStorage.setItem("user_cidade", `${dados.city}/${dados.state}`);
-                document.getElementById('cepDisplay').innerText = `${cepLimpo.substring(0,5)}-${cepLimpo.substring(5)} (${dados.city}/${dados.state})`;
-                fecharModalCep();
-            } catch (e) {
-                msgErro.innerText = "⚠️ CEP não encontrado."; msgErro.classList.remove('hidden');
-            } finally { btnSalvar.innerText = "Confirmar"; }
-        }
+  async function definirCep(texto) {
+    const cep = (texto || "").replace(/\D/g, "");
+    if (cep.length !== 8) return { ok: false, motivo: "O CEP tem 8 números. Confira e tente de novo." };
+    let cidade;
+    try { cidade = await cidadeDoCep(cep); }
+    catch (e) { return { ok: false, motivo: "Não deu para conferir o CEP agora. Confira a conexão e tente de novo." }; }
+    if (!cidade) return { ok: false, motivo: "Não encontramos esse CEP. Confira os números e tente de novo." };
+    estado.cep = cep; estado.cidade = cidade;
+    guardar("cep", cep); guardar("cidade", cidade);
+    emitir();
+    return { ok: true, cidade };
+  }
 
-        let carrinho = JSON.parse(localStorage.getItem("user_carrinho")) || {}; 
+  /* ---------- busca ---------- */
+  let numeroDaBusca = 0;   // respostas atrasadas de uma busca antiga não podem sobrescrever a atual
+  async function buscar(termo) {
+    termo = (termo || "").trim();
+    if (!termo) return;
+    const meu = ++numeroDaBusca, b = estado.busca;
+    b.termo = termo; b.status = "carregando"; b.aviso = ""; b.grupos = [];
+    emitir();
+    const aviso = setTimeout(() => {
+      if (meu === numeroDaBusca && b.status === "carregando") {
+        b.aviso = "O servidor estava em repouso e está acordando. A primeira busca pode levar até 1 minuto.";
+        emitir();
+      }
+    }, 8000);
+    let grupos = null;
+    try {
+      const r = await fetch(`${API}/comparar?cep=${encodeURIComponent(estado.cep)}&item=${encodeURIComponent(termo)}`);
+      if (!r.ok) throw new Error("api " + r.status);
+      const d = await r.json();
+      grupos = Array.isArray(d.carrinho_comparativo) ? d.carrinho_comparativo : null;
+    } catch (e) { grupos = null; }
+    clearTimeout(aviso);
+    if (meu !== numeroDaBusca) return;
+    if (grupos === null) {
+      b.status = "erro";
+      b.aviso = "Não deu para consultar os mercados agora. Confira a conexão e busque de novo.";
+    } else {
+      b.grupos = grupos;
+      // a data mais antiga entre os preços exibidos: é a que vale para a tela toda
+      const datas = grupos.flatMap((g) => g.opcoes_de_compra.map((o) => o.atualizado_em)).filter(Boolean).sort();
+      b.atualizadoEm = datas[0] || "";
+      b.status = grupos.length ? "ok" : "vazio";
+    }
+    emitir();
+  }
 
-        // Retorna a quantidade de um item no carrinho (para o catálogo saber)
-        function getQuantidadeNoCarrinho(nomeProduto, mercado) {
-            if (!carrinho[mercado]) return 0;
-            const item = carrinho[mercado].find(i => i.nome === nomeProduto);
-            return item ? item.quantidade : 0;
-        }
+  /* ---------- lista de compras ---------- */
+  const salvarLista = () => guardar("lista", estado.lista);
+  const indiceNaLista = (grupo) => estado.lista.findIndex((i) => i.grupo.produto_base === grupo.produto_base);
+  const qtdNaLista = (grupo) => { const i = indiceNaLista(grupo); return i < 0 ? 0 : estado.lista[i].qtd; };
 
-        // Lógica de adicionar o 1º item a partir do botão vazio
-        function adicionarNovoAoCarrinho(produtoEncoded, mercado) {
-            const produto = JSON.parse(decodeURIComponent(produtoEncoded));
-            if (!carrinho[mercado]) carrinho[mercado] = [];
-            produto.quantidade = 1;
-            carrinho[mercado].push(produto);
-            salvarERenderizar();
-        }
+  function adicionar(grupo) {
+    const i = indiceNaLista(grupo);
+    if (i < 0) estado.lista.push({ grupo, qtd: 1 }); else estado.lista[i].qtd += 1;
+    salvarLista(); emitir();
+  }
+  function alterarQtd(grupo, delta) {
+    const i = indiceNaLista(grupo);
+    if (i < 0) return;
+    estado.lista[i].qtd += delta;
+    if (estado.lista[i].qtd <= 0) estado.lista.splice(i, 1);
+    salvarLista(); emitir();
+  }
+  function remover(grupo) { const i = indiceNaLista(grupo); if (i >= 0) { estado.lista.splice(i, 1); salvarLista(); emitir(); } }
+  function limparLista() { estado.lista = []; salvarLista(); emitir(); }
 
-        // Lógica para alterar + ou - tanto no catálogo quanto no carrinho
-        function alterarQtdCatalogo(produtoEncoded, mercado, delta) {
-            const produto = JSON.parse(decodeURIComponent(produtoEncoded));
-            const idx = carrinho[mercado].findIndex(i => i.nome === produto.nome);
-            if (idx >= 0) {
-                carrinho[mercado][idx].quantidade += delta;
-                if (carrinho[mercado][idx].quantidade <= 0) {
-                    carrinho[mercado].splice(idx, 1);
-                }
-                salvarERenderizar();
-            }
-        }
+  /* ---------- comparação por mercado ----------
+     Para cada mercado: soma da lista toda, quais itens ele não tem e o preço de cada linha.
+     Ranking: quem tem a lista completa vem primeiro; entre eles, o menor total. */
+  function comparar() {
+    const linhasBase = estado.lista;
+    const porMercado = MERCADOS.map((m) => {
+      const linhas = linhasBase.map(({ grupo, qtd }) => {
+        const opcao = opcaoDoMercado(grupo, m.id);
+        const unitario = opcao ? precoUnitario(opcao, qtd) : null;
+        return { grupo, qtd, opcao, unitario, subtotal: opcao ? unitario * qtd : null, atacado: !!opcao && unitario === opcao.preco_atacado && opcao.preco_atacado < opcao.preco_varejo };
+      });
+      const faltam = linhas.filter((l) => !l.opcao).map((l) => l.grupo.produto_base);
+      const total = linhas.reduce((s, l) => s + (l.subtotal || 0), 0);
+      return { mercado: m, linhas, faltam, completo: faltam.length === 0, total };
+    });
+    // menor subtotal de cada linha, só entre os mercados que têm o item
+    linhasBase.forEach((_, i) => {
+      const validos = porMercado.filter((p) => p.linhas[i].opcao);
+      const menor = Math.min(...validos.map((p) => p.linhas[i].subtotal));
+      validos.forEach((p) => { p.linhas[i].menor = validos.length > 1 && p.linhas[i].subtotal === menor; });
+      porMercado.forEach((p) => { if (!p.linhas[i].opcao) p.linhas[i].menor = false; });
+    });
+    const ranking = [...porMercado].sort((a, b) => (a.faltam.length - b.faltam.length) || (a.total - b.total));
+    const completos = ranking.filter((p) => p.completo);
+    const melhor = ranking.length && linhasBase.length ? ranking[0] : null;
+    const maisCaro = completos.length > 1 ? completos[completos.length - 1] : null;
+    return {
+      porMercado, ranking, melhor, maisCaro,
+      economia: melhor && melhor.completo && maisCaro ? maisCaro.total - melhor.total : 0,
+      itens: linhasBase.length,
+      unidades: linhasBase.reduce((s, l) => s + l.qtd, 0),
+    };
+  }
 
-        // Continua servindo o Carrinho Lateral (usa index por ser mais leve)
-        function alterarQuantidade(mercado, indexItem, delta) {
-            let item = carrinho[mercado][indexItem];
-            item.quantidade += delta;
-            if (item.quantidade <= 0) { carrinho[mercado].splice(indexItem, 1); }
-            salvarERenderizar();
-        }
+  /* ---------- início ---------- */
+  function iniciar() {
+    // "user_cep" e "user_cidade" são da versão anterior do site
+    estado.cep = ler("cep", localStorage.getItem("user_cep") || "");
+    estado.cidade = ler("cidade", localStorage.getItem("user_cidade") || "");
+    const salva = ler("lista", null);
+    if (Array.isArray(salva)) estado.lista = salva.filter((i) => i && i.grupo && Array.isArray(i.grupo.opcoes_de_compra) && i.qtd > 0);
+    fetch(API + "/saude").catch(() => {}); // acorda o servidor enquanto a pessoa digita
+    emitir();
+  }
 
-        function removerItem(mercado, indexItem) {
-            carrinho[mercado].splice(indexItem, 1);
-            salvarERenderizar();
-        }
+  function esquecerTudo() {
+    ["cep", "cidade", "lista"].forEach((k) => localStorage.removeItem(PREFIXO + k));
+    location.reload();
+  }
 
-        function limparCarrinho() {
-            if(confirm("Deseja esvaziar todos os carrinhos?")) { carrinho = {}; salvarERenderizar(); }
-        }
+  window.Supermatch = {
+    estado, MERCADOS, mercadoPorId, aoMudar: (f) => ouvintes.push(f), iniciar,
+    definirCep, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo,
+    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, dataHora },
+  };
+})();
+</script>
+<script>
+(function () {
+  const S = Supermatch, U = S.util;
+  const $ = (id) => document.getElementById(id);
+  const SOL = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.4" fill="#182848"/><g stroke="#182848" stroke-width="1.6" stroke-linecap="round"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13"/></g></svg>';
+  const SETA = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const ITENS_NO_CUPOM = 3;                       // o cupom mostra só estes até a pessoa pedir "Mostrar tudo"
+  const celular = window.matchMedia("(max-width: 720px)");
+  const telaPequena = window.matchMedia("(max-width: 960px)");
+  const itens = (n) => n + (n === 1 ? " item" : " itens");
+  let escolhido = null;                           // mercado cujo cupom está aberto; null = o mais barato
+  let cupomCompleto = false, ultimoVencedor = null, termoVisto = null, extras = 0;   // extras: produtos a mais pedidos em "Mostrar mais"
 
-        function adicionarTodos(event, listaEncoded) {
-            const listaProdutos = JSON.parse(decodeURIComponent(listaEncoded));
-            listaProdutos.forEach(prod => {
-                if (!carrinho[prod.supermercado]) carrinho[prod.supermercado] = [];
-                const indexExistente = carrinho[prod.supermercado].findIndex(item => item.nome === prod.nome);
-                if (indexExistente >= 0) { carrinho[prod.supermercado][indexExistente].quantidade += 1; } 
-                else { prod.quantidade = 1; carrinho[prod.supermercado].push(prod); }
-            });
-            salvarERenderizar();
-            
-            // Feedback do botão Roxo
-            const btn = event.currentTarget;
-            const original = btn.innerHTML;
-            btn.innerHTML = "✓ Adicionados";
-            btn.classList.add("bg-purple-800");
-            setTimeout(() => { btn.innerHTML = original; btn.classList.remove("bg-purple-800"); }, 1000);
-        }
+  const selecionado = (c) => c.porMercado.find((p) => p.mercado.id === escolhido) || c.melhor;
 
-        function salvarERenderizar() {
-            localStorage.setItem("user_carrinho", JSON.stringify(carrinho));
-            renderizarCarrinho();
-            sincronizarBotoesCatalogo(); // Atualiza os botões de catálogo em tempo real!
-        }
+  /* ---------- painel do veredito e barra do celular ---------- */
+  function desenharVeredito() {
+    const c = S.comparar(), v = c.melhor;
+    if (!c.itens) {
+      $("painel").innerHTML = `<p class="antes">Sua lista está vazia</p><p class="vazio"><strong>Adicione o que você compra todo mês</strong> e a gente mostra onde sai mais barato.</p>`;
+      $("barraMovel").innerHTML = `<div><small>Sua lista</small><strong>vazia</strong></div><a href="#cupom">Ver cupom</a>`;
+      return;
+    }
+    if (v.completo && c.economia > 0) {
+      $("painel").innerHTML = `<p class="antes">Comprando no ${U.esc(v.mercado.nome)}, você economiza</p><p class="numero">${U.moeda(c.economia)}</p><p class="depois">Sua lista de ${itens(c.itens)} sai por <strong>${U.moeda(v.total)}</strong>. No ${U.esc(c.maisCaro.mercado.nome)}, o mesmo sai por ${U.moeda(c.maisCaro.total)}.</p>`;
+    } else {
+      const unico = v.completo && c.ranking.filter((p) => p.completo).length === 1;
+      const fecho = !v.completo ? `no ${U.esc(v.mercado.nome)}, mas ele não tem ${itens(v.faltam.length)} da lista.`
+        : unico ? `no ${U.esc(v.mercado.nome)}, o único mercado que tem todos os itens da sua lista.` : `no ${U.esc(v.mercado.nome)}.`;
+      $("painel").innerHTML = `<p class="antes">Sua lista de ${itens(c.itens)} sai por</p><p class="numero">${U.moeda(v.total)}</p><p class="depois">${fecho}</p>`;
+    }
+    $("barraMovel").innerHTML = `<div><small>${U.esc(v.mercado.nome)}${v.completo ? ", o mais barato" : ", o mais perto"}</small><strong>${U.moeda(v.total)}</strong></div><a href="#cupom">Ver cupom</a>`;
+  }
 
-        function calcularPrecoItem(item) {
-            if (item.quantidade >= item.quantidade_atacado && item.preco_atacado < item.preco_varejo) {
-                return { total: item.preco_atacado * item.quantidade, unitario: item.preco_atacado, ehAtacado: true };
-            }
-            return { total: item.preco_varejo * item.quantidade, unitario: item.preco_varejo, ehAtacado: false };
-        }
+  /* ---------- barracas ---------- */
+  function desenharBarracas() {
+    const c = S.comparar(), v = c.melhor, el = $("barracas");
+    if (!c.itens) { el.innerHTML = S.MERCADOS.map((m) => barraca(m, null, false, false, 0, false)).join(""); return; }
+    const sel = selecionado(c);
+    const muda = ultimoVencedor !== null && v.mercado.id !== ultimoVencedor;
+    el.innerHTML = c.ranking.map((p) => barraca(p.mercado, p, p === v && p.completo, p === sel, v.total, muda && p === v)).join("");
+    ultimoVencedor = v.mercado.id;
+  }
 
-        function atualizarBadgeMobile() {
-            let totalProdutosDistintos = 0;
-            for (let mercado in carrinho) {
-                // Em vez de somar a quantidade, contamos quantos itens diferentes existem na lista
-                totalProdutosDistintos += carrinho[mercado].length; 
-            }
-            const badge = document.getElementById('badgeCarrinho');
-            if (totalProdutosDistintos > 0) {
-                badge.innerText = totalProdutosDistintos;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        }
+  function barraca(m, p, vence, aberta, menor, balanca) {
+    const dif = !p ? `<span class="vazio-b">Sem lista ainda</span>`
+      : !p.completo ? `<span class="dif alerta">Falta ${itens(p.faltam.length)}</span>`
+      : vence ? `<span class="dif">O menor total</span>` : `<span class="dif">${U.moeda(p.total - menor)} a mais</span>`;
+    const rodape = !p ? "" : aberta ? `<span class="aberto">Cupom aberto</span>` : `<span class="abrir">Ver cupom</span>`;
+    return `<li><button type="button" class="barraca${vence ? " vence" : ""}${balanca ? " balanca" : ""}" data-foco="b-${U.esc(m.id)}" data-mercado="${U.esc(m.id)}" aria-pressed="${aberta}"${p ? "" : " disabled"}>
+      <span class="toldo" style="--cor:${m.cor}"></span>
+      <span class="placa"><span class="selo">${SOL}Mais barato</span></span>
+      <span class="balcao"><span class="nome-m"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span>${p ? `<span class="tb">${U.moeda(p.total)}</span>` : `<span class="tb" aria-label="sem total">—</span>`}${dif}<span class="rodape-b">${rodape}</span></span></button></li>`;
+  }
 
-        function renderizarCarrinho() {
-            const lista = document.getElementById('listaItensCarrinho');
-            const areaTotal = document.getElementById('totalCarrinho');
-            let mercados = Object.keys(carrinho);
-            
-            atualizarBadgeMobile(); 
+  /* ---------- resultados da busca ---------- */
+  function desenharResultados() {
+    const b = S.estado.busca, el = $("resultados");
+    if (b.termo !== termoVisto) { termoVisto = b.termo; extras = 0; }
+    if (b.status === "parado") {
+      el.innerHTML = `<div class="estado parado"><strong>Faça a sua primeira busca</strong>Toque em Arroz, Café ou Óleo de soja, ou digite o que você costuma comprar. Cada produto aparece com o preço nos 4 mercados.</div>`;
+    } else if (b.status === "carregando") {
+      el.innerHTML = `<div class="estado"><strong>Consultando os 4 mercados<span class="pontinhos"></span></strong>${U.esc(b.aviso || "Isso leva alguns segundos.")}</div>`;
+    } else if (b.status === "erro") {
+      el.innerHTML = `<div class="estado"><strong>Não deu para consultar agora</strong>${U.esc(b.aviso)}<br><br><button class="botao vazado" type="button" id="tentar">Buscar de novo</button></div>`;
+    } else if (b.status === "vazio") {
+      el.innerHTML = `<div class="estado"><strong>Nada encontrado para “${U.esc(b.termo)}”</strong>Tente uma palavra mais curta ou confira a escrita.</div>`;
+    } else {
+      const total = b.grupos.length, limite = Math.min(total, (celular.matches ? 4 : 6) + extras), resto = total - limite;
+      const atualizado = U.dataHora(b.atualizadoEm);
+      el.innerHTML = `<div class="titulo-sec"><h2>${total} produtos para “${U.esc(b.termo)}”</h2><p>${atualizado ? "Preços de " + atualizado : ""}</p></div>
+        <div class="produtos">${b.grupos.slice(0, limite).map(produto).join("")}</div>
+        ${resto > 0 ? `<button class="mais-res" type="button" id="verMais" data-foco="verMais">Mostrar mais ${Math.min(10, resto)} produtos (faltam ${resto})</button>` : ""}`;
+    }
+  }
 
-            if (mercados.length === 0 || mercados.every(m => carrinho[m].length === 0)) {
-                lista.innerHTML = `<div class="text-center py-8"><span class="text-4xl">🛒</span><p class="text-gray-400 text-sm font-medium mt-3">Seu carrinho está vazio</p></div>`;
-                areaTotal.innerHTML = "";
-                return;
-            }
+  function produto(g, i) {
+    const qtd = S.qtdNaLista(g), nome = U.esc(U.nomeBonito(g.produto_base));
+    const ofertas = [...g.opcoes_de_compra].sort((a, b) => a.preco_varejo - b.preco_varejo);
+    const menor = ofertas[0].preco_varejo;
+    const pilulas = S.MERCADOS.map((m) => ({ m, o: ofertas.find((x) => x.supermercado === m.id) }))
+      .sort((a, b) => (a.o ? a.o.preco_varejo : 1e9) - (b.o ? b.o.preco_varejo : 1e9))
+      .map(({ m, o }) => {
+        if (!o) return `<li class="pilula sem"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">Não vende</span></li>`;
+        const e = o.preco_varejo === menor && ofertas.length > 1;
+        const at = o.quantidade_atacado > 1 && o.preco_atacado < o.preco_varejo ? `<span class="atacado">${U.moeda(o.preco_atacado)} a partir de ${o.quantidade_atacado} un.</span>` : "";
+        return `<li class="pilula${e ? " menor" : ""}"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">${U.moeda(o.preco_varejo)}</span>${at}</li>`;
+      }).join("");
+    const acao = qtd
+      ? `<div class="passos" role="group" aria-label="Quantidade na lista"><button type="button" data-foco="p-menos-${i}" data-menos="${i}" aria-label="Tirar uma unidade de ${nome}">−</button><span>${qtd} na lista</span><button type="button" data-foco="p-mais-${i}" data-mais="${i}" aria-label="Colocar mais uma unidade de ${nome}">+</button></div>`
+      : `<button class="botao" type="button" data-foco="p-add-${i}" data-add="${i}" aria-label="Adicionar ${nome} à lista">Adicionar à lista</button>`;
+    return `<article class="produto"><h3>${nome}</h3><ul class="pilulas">${pilulas}</ul><div class="acao">${acao}</div></article>`;
+  }
 
-            let htmlCarrinho = "";
-            let temItens = false;
+  /* ---------- cupom ---------- */
+  function desenharCupom() {
+    const c = S.comparar(), e = S.estado, el = $("cupom");
+    const onde = e.cidade || "Grande BH";
+    if (!c.itens) {
+      el.innerHTML = `<div class="cupom-sombra"><section class="cupom"><div class="cupom-topo"><h2>Sua lista</h2></div><p class="meta">${U.esc(onde)}</p>
+        <p class="vazio-cupom"><strong>Lista vazia.</strong><br>Adicione produtos e este cupom mostra o total em cada mercado e qual deles cobra menos.</p></section></div>`;
+      return;
+    }
+    const v = c.melhor, sel = selecionado(c), ehVencedor = sel === v && v.completo;
+    // a data do cupom é a do preço mais antigo entre os itens dele (a lista fica salva e envelhece)
+    const em = sel.linhas.map((l) => l.opcao && l.opcao.atualizado_em).filter(Boolean).sort()[0] || "";
+    // Recolhido: os primeiros itens e, sempre, os que o mercado não vende (a pessoa precisa ver o que falta sem abrir nada).
+    const indices = sel.linhas.map((_, i) => i).filter((i) => cupomCompleto || i < ITENS_NO_CUPOM || !sel.linhas[i].opcao);
+    const escondidos = sel.linhas.length - indices.length;
+    const linhas = indices.map((i) => linha(sel.linhas[i], i, sel)).join("");
+    const botaoMostrar = cupomCompleto || escondidos > 0
+      ? `<button class="mostrar" type="button" id="mostrar" data-foco="mostrar" aria-expanded="${cupomCompleto}" aria-controls="linhas">${cupomCompleto ? "Mostrar menos" : "Mostrar tudo (mais " + itens(escondidos) + ")"}${SETA}</button>` : "";
 
-            mercados.forEach(mercado => {
-                let itens = carrinho[mercado];
-                if (itens.length === 0) return;
-                temItens = true;
+    const completos = c.ranking.filter((p) => p.completo).length;
+    const nomeSel = U.esc(sel.mercado.nome);
+    let frase = "";
+    if (!sel.completo) frase = `${nomeSel} não vende ${itens(sel.faltam.length)} da sua lista: o total considera só o que ele tem.`;
+    else if (ehVencedor) frase = c.economia > 0 ? `Você economiza <b>${U.moeda(c.economia)}</b> contra o ${U.esc(c.maisCaro.mercado.nome)}.` : completos === 1 ? "É o único mercado com todos os itens da sua lista." : "";
+    else if (v.completo) frase = `<b>${U.moeda(sel.total - v.total)}</b> a mais que no ${U.esc(v.mercado.nome)}, o mais barato.`;
 
-                let subtotalMercado = 0;
-                let qtdItensMercado = 0;
-                let htmlItens = "";
-                
-                itens.forEach((item, index) => {
-                    let calculo = calcularPrecoItem(item);
-                    subtotalMercado += calculo.total;
-                    qtdItensMercado += item.quantidade;
-                    
-                    let seloAtacado = calculo.ehAtacado 
-                        ? `<span class="bg-green-100 text-green-700 text-[9px] font-bold px-1 py-0.5 rounded ml-1 block mt-1">Preço Atacado!</span>` 
-                        : `<span class="text-[9px] text-gray-400 ml-1 block mt-1">Atacado a partir de ${item.quantidade_atacado}</span>`;
+    const bate = ehVencedor && ultimoVencedorNoCupom !== null && ultimoVencedorNoCupom !== v.mercado.id ? " bate" : "";   // só quando o vencedor muda, não ao abrir a página
+    ultimoVencedorNoCupom = ehVencedor ? v.mercado.id : ultimoVencedorNoCupom;
+    el.innerHTML = `<div class="cupom-sombra"><section class="cupom">
+      <div class="cupom-topo"><h2>Sua lista</h2><span class="chip"><i style="background:${sel.mercado.cor}"></i>${nomeSel}</span></div>
+      <p class="meta">${itens(c.itens)}, ${c.unidades} ${c.unidades === 1 ? "unidade" : "unidades"}<br>${U.esc(onde)}${em ? ". Preços de " + U.dataHora(em) : ""}</p>
+      <ol class="linhas" id="linhas" aria-label="Itens no cupom do ${nomeSel}">${linhas}</ol>
+      ${botaoMostrar}
+      <div class="fecho" aria-live="polite">
+        ${ehVencedor ? `<div class="carimbo-vaga"><div class="carimbo${bate}">${SOL}Mais barato</div></div>` : ""}
+        <div class="total"><span>Total no ${nomeSel}</span><strong>${U.moeda(sel.total)}</strong></div>
+        <p class="economia">${frase}</p>
+      </div>
+      <div class="cupom-rodape"><button class="limpar" type="button" id="limpar">Limpar lista</button><a class="volta" href="#barracasBloco">Ver outra barraca</a></div>
+    </section></div>`;
+    const ol = el.querySelector(".linhas");
+    ol.classList.toggle("rola", ol.scrollHeight > ol.clientHeight + 2);
+  }
+  let ultimoVencedorNoCupom = null;
 
-                    htmlItens += `
-                        <div class="bg-white p-3 rounded-lg mb-2 shadow-sm border border-gray-100">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-semibold text-gray-800 leading-tight flex-1 pr-2 line-clamp-2" title="${item.nome}">${item.nome}</span>
-                                <button onclick="removerItem('${mercado}', ${index})" class="text-gray-300 hover:text-red-500 transition">✕</button>
-                            </div>
-                            <div class="flex justify-between items-end">
-                                <div class="flex items-center bg-gray-100 rounded-md border border-gray-200">
-                                    <button onclick="alterarQuantidade('${mercado}', ${index}, -1)" class="px-2 py-1 text-gray-600 font-bold hover:bg-gray-200">-</button>
-                                    <span class="px-2 py-1 text-xs font-bold text-gray-800 min-w-[24px] text-center">${item.quantidade}</span>
-                                    <button onclick="alterarQuantidade('${mercado}', ${index}, 1)" class="px-2 py-1 text-gray-600 font-bold hover:bg-gray-200">+</button>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-black text-sm text-gray-900">R$ ${calculo.total.toFixed(2)}</p>
-                                    ${seloAtacado}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
+  function linha(l, i, sel) {
+    const nome = U.esc(U.nomeBonito(l.grupo.produto_base));
+    const ctrl = `<span class="quant"><button type="button" data-foco="c-menos-${i}" data-lmenos="${i}" aria-label="Tirar uma unidade de ${nome}">−</button><output>${l.qtd}</output><button type="button" data-foco="c-mais-${i}" data-lmais="${i}" aria-label="Colocar mais uma unidade de ${nome}">+</button></span>`;
+    if (!l.opcao) return `<li class="linha falta"><span class="nome">${nome}</span><span class="valor">sem preço</span>${ctrl}<span class="un">${U.esc(sel.mercado.nome)} não vende</span></li>`;
+    const un = l.qtd > 1 ? `${l.qtd} × ${U.moeda(l.unitario)}${l.atacado ? ", atacado" : ""}` : l.atacado ? "preço de atacado" : "";
+    return `<li class="linha"><span class="nome">${nome}</span><span class="valor">${U.moeda(l.subtotal)}</span>${ctrl}<span class="un">${un}</span></li>`;
+  }
 
-                htmlCarrinho += `
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-inner mb-4">
-                        <div class="font-black text-sm text-blue-700 border-b pb-2 mb-3 uppercase flex justify-between items-center">
-                            <span>🏪 ${mercado}</span>
-                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">${qtdItensMercado} itens</span>
-                        </div>
-                        ${htmlItens}
-                        <div class="mt-3 text-right font-black text-base text-gray-800 border-t pt-2">
-                            Subtotal: <span class="text-blue-600">R$ ${subtotalMercado.toFixed(2)}</span>
-                        </div>
-                    </div>
-                `;
-            });
+  function desenhar() {
+    const e = S.estado;
+    $("cepTexto").textContent = e.cep ? U.formatarCep(e.cep) + (e.cidade ? ", " + e.cidade : "") : "informe seu CEP";
+    U.preservarFoco(() => { desenharVeredito(); desenharBarracas(); desenharResultados(); desenharCupom(); });
+  }
+  S.aoMudar(desenhar);
+  celular.addEventListener("change", desenhar);   // a quantidade de resultados visíveis depende do tamanho da tela
 
-            lista.innerHTML = temItens ? htmlCarrinho : "";
+  /* ---------- eventos ---------- */
+  let buscaPendente = "";   // termo digitado antes de a pessoa informar o CEP
+  const buscarComCep = (termo) => {
+    if (!termo.trim()) return;
+    if (!S.estado.cep) { buscaPendente = termo; abrirCep(); return; }
+    S.buscar(termo);
+  };
+  $("formBusca").addEventListener("submit", (ev) => { ev.preventDefault(); buscarComCep($("campoBusca").value); });
+  document.querySelectorAll(".sugestoes button").forEach((b) => b.addEventListener("click", () => { $("campoBusca").value = b.dataset.termo; buscarComCep(b.dataset.termo); }));
+  document.addEventListener("click", (ev) => {
+    const t = ev.target.closest("button"); if (!t) return;
+    const g = S.estado.busca.grupos, lista = S.estado.lista;
+    if (t.dataset.add !== undefined) S.adicionar(g[+t.dataset.add]);
+    else if (t.dataset.mais !== undefined) S.alterarQtd(g[+t.dataset.mais], 1);
+    else if (t.dataset.menos !== undefined) S.alterarQtd(g[+t.dataset.menos], -1);
+    else if (t.dataset.lmais !== undefined) S.alterarQtd(lista[+t.dataset.lmais].grupo, 1);
+    else if (t.dataset.lmenos !== undefined) S.alterarQtd(lista[+t.dataset.lmenos].grupo, -1);
+    else if (t.dataset.mercado !== undefined) {
+      escolhido = t.dataset.mercado; desenhar();
+      if (telaPequena.matches) $("cupom").scrollIntoView({ block: "start" });   // no celular o cupom fica lá embaixo
+    }
+    else if (t.id === "mostrar") { cupomCompleto = !cupomCompleto; desenhar(); }
+    else if (t.id === "verMais") { extras += 10; desenhar(); }
+    else if (t.id === "limpar") { cupomCompleto = false; S.limparLista(); }
+    else if (t.id === "tentar") S.buscar(S.estado.busca.termo);
+  });
 
-            if (temItens) {
-                areaTotal.innerHTML = `
-                    <button onclick="finalizarCompra()" class="w-full bg-green-600 text-white font-black py-4 rounded-xl hover:bg-green-700 transition shadow-lg text-lg flex justify-center items-center gap-2">
-                        <span>🏆</span> Fechar Cesta Mais Barata
-                    </button>
-                `;
-            } else {
-                areaTotal.innerHTML = "";
-            }
-        }
+  const janela = $("janelaCep");
+  const abrirCep = () => { $("erroCep").textContent = ""; $("campoCep").value = S.estado.cep ? U.formatarCep(S.estado.cep) : ""; janela.showModal(); $("campoCep").focus(); };
+  $("botaoCep").addEventListener("click", abrirCep);
+  $("cancelarCep").addEventListener("click", () => janela.close());
+  $("formCep").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const r = await S.definirCep($("campoCep").value);
+    if (!r.ok) { $("erroCep").textContent = r.motivo; return; }
+    janela.close();
+    if (buscaPendente) { const termo = buscaPendente; buscaPendente = ""; S.buscar(termo); }
+  });
 
-        function finalizarCompra() {
-            let totais =[];
-            for (let mercado in carrinho) {
-                if (carrinho[mercado].length > 0) {
-                    let sum = carrinho[mercado].reduce((acc, item) => acc + calcularPrecoItem(item).total, 0);
-                    let qtd = carrinho[mercado].reduce((acc, item) => acc + item.quantidade, 0);
-                    totais.push({ mercado: mercado, total: sum, qtdItens: qtd });
-                }
-            }
-            if (totais.length === 0) return;
-            totais.sort((a, b) => a.total - b.total);
-            const vencedor = totais[0];
-
-            let mensagem = `🏆 MERCADO CAMPEÃO: ${vencedor.mercado}\n💰 Valor Total: R$ ${vencedor.total.toFixed(2)} (${vencedor.qtdItens} produtos)\n\n--- Comparativo Final ---\n`;
-            totais.forEach(t => { mensagem += `🏪 ${t.mercado}: R$ ${t.total.toFixed(2)}\n`; });
-            alert(mensagem);
-        }
-
-        function irParaCarrinho() {
-            document.getElementById('ancoraCarrinho').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // --- A MÁGICA DE SINCRONIZAÇÃO DO CATÁLOGO ---
-        // Essa função "pinta" os botões na tela baseados na memória do carrinho
-        function sincronizarBotoesCatalogo() {
-            const containers = document.querySelectorAll('.acao-produto-container');
-            
-            containers.forEach(container => {
-                const produtoEncoded = container.getAttribute('data-produto');
-                const mercado = container.getAttribute('data-mercado');
-                const produtoInfo = JSON.parse(decodeURIComponent(produtoEncoded));
-                
-                const qtdNoCarrinho = getQuantidadeNoCarrinho(produtoInfo.nome, mercado);
-
-                if (qtdNoCarrinho === 0) {
-                    // Botão Padrão "Adicionar"
-                    container.innerHTML = `
-                        <button onclick="adicionarNovoAoCarrinho('${produtoEncoded}', '${mercado}')" 
-                                class="w-full sm:w-auto shrink-0 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white px-4 py-2 md:py-3 rounded-xl text-sm font-bold shadow-sm transition border border-transparent">
-                            Adicionar
-                        </button>
-                    `;
-                } else {
-                    // Controles Numéricos de Quantidade
-                    container.innerHTML = `
-                        <div class="flex items-center justify-between bg-white border-2 border-blue-500 rounded-xl h-full w-full sm:w-32 shadow-sm overflow-hidden">
-                            <button onclick="alterarQtdCatalogo('${produtoEncoded}', '${mercado}', -1)" class="w-10 py-2 flex items-center justify-center text-blue-700 font-bold hover:bg-blue-50 transition">-</button>
-                            <span class="font-black text-blue-900 w-full text-center text-sm">${qtdNoCarrinho}</span>
-                            <button onclick="alterarQtdCatalogo('${produtoEncoded}', '${mercado}', 1)" class="w-10 py-2 flex items-center justify-center text-blue-700 font-bold hover:bg-blue-50 transition">+</button>
-                        </div>
-                    `;
-                }
-            });
-        }
-
-        async function buscarProdutos() {
-            const termoBusca = document.getElementById('inputBusca').value;
-            if (!termoBusca) return alert("Digite um produto para buscar!");
-
-            const cepAtivo = localStorage.getItem("user_cep");
-            if (!cepAtivo) { abrirModalCep(); return; }
-
-            const divResultados = document.getElementById('resultados');
-            const divLoading = document.getElementById('loading');
-
-            divResultados.innerHTML = "";
-            divLoading.classList.remove('hidden');
-
-            // Se a resposta demorar, avisa o motivo provável em vez de deixar a tela parada
-            const textoLoading = document.getElementById('loadingDetalhe');
-            textoLoading.innerText = "Lendo do banco de dados.";
-            const avisoDemora = setTimeout(() => {
-                textoLoading.innerText = "O servidor estava em repouso e está acordando. A primeira busca pode levar até 1 minuto.";
-            }, 8000);
-
-            try {
-                const resposta = await fetch(`${URL_API}/comparar?cep=${encodeURIComponent(cepAtivo)}&item=${encodeURIComponent(termoBusca)}`);
-                const dados = await resposta.json();
-
-                divLoading.classList.add('hidden');
-
-                if (dados.carrinho_comparativo.length === 0) {
-                    divResultados.innerHTML = "<p class='text-center text-gray-500 text-lg'>Nenhum produto encontrado.</p>";
-                    return;
-                }
-
-                dados.carrinho_comparativo.forEach(grupo => {
-                    const produtosEncoded = encodeURIComponent(JSON.stringify(grupo.opcoes_de_compra));
-
-                    let opcoesHTML = grupo.opcoes_de_compra.map(opcao => {
-                        const opcaoEncoded = encodeURIComponent(JSON.stringify(opcao));
-                        // Inserimos a "âncora" acao-produto-container para a Sincronização Dinâmica
-                        return `
-                            <div class="bg-gray-50 p-3 md:p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:bg-gray-100 transition">
-                                <div class="overflow-hidden w-full">
-                                    <p class="font-bold text-[10px] md:text-xs text-gray-500 uppercase tracking-wider mb-1">${opcao.supermercado}</p>
-                                    <p class="text-sm font-semibold text-gray-800 leading-tight w-full line-clamp-2" title="${opcao.nome}">${opcao.nome}</p>
-                                    <div class="flex items-baseline gap-2 mt-1">
-                                        <p class="text-xl font-black text-blue-600">R$ ${opcao.preco_varejo.toFixed(2)}</p>
-                                        <p class="text-[10px] text-gray-500 font-medium">Atacado a partir de ${opcao.quantidade_atacado}un <span class="text-green-600 font-bold">(R$ ${opcao.preco_atacado.toFixed(2)})</span></p>
-                                    </div>
-                                </div>
-                                <div class="acao-produto-container w-full sm:w-auto shrink-0 flex items-center justify-end" data-mercado="${opcao.supermercado}" data-produto="${opcaoEncoded}">
-                                    <!-- Os botões serão injetados aqui pela função sincronizarBotoesCatalogo() -->
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-
-                    divResultados.innerHTML += `
-                        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-200">
-                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4 pb-3 border-b">
-                                <h3 class="text-lg md:text-xl font-extrabold text-gray-800 w-full md:w-2/3 leading-tight">${grupo.produto_base}</h3>
-                                <button onclick="adicionarTodos(event, '${produtosEncoded}')" 
-                                        class="w-full md:w-auto shrink-0 bg-purple-100 text-purple-700 hover:bg-purple-600 hover:text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition flex items-center justify-center gap-1 border border-transparent">
-                                    <span>⚡</span> Add em Todos
-                                </button>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                ${opcoesHTML}
-                            </div>
-                        </div>
-                    `;
-                });
-
-                // Após desenhar a tela de busca, liga a sincronização visual!
-                sincronizarBotoesCatalogo();
-
-            } catch (erro) {
-                divLoading.classList.add('hidden');
-                divResultados.innerHTML = `<p class="text-center text-red-500 bg-red-50 p-4 rounded-xl border">Erro: O servidor da API está demorando a responder. Tente novamente.</p>`;
-            } finally {
-                clearTimeout(avisoDemora);
-            }
-        }
-    </script>
+  S.iniciar();
+  if (!S.estado.cep) abrirCep();
+})();
+</script>
 </body>
 </html>
