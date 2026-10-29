@@ -77,6 +77,11 @@ h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02
 .sugestoes span { color: var(--tinta-2); font-size: 14px; }
 .sugestoes button { background: var(--branco); border: 1.5px solid var(--linha); border-radius: 999px; padding: 6px 15px; min-height: 40px; cursor: pointer; font-weight: 600; font-size: 14px; }
 .sugestoes button:hover { border-color: var(--tinta); }
+.modo { display: inline-flex; gap: 4px; margin-top: 14px; padding: 4px; background: var(--branco); border: 1.5px solid var(--linha); border-radius: 999px; }
+.modo button { min-height: 40px; padding: 8px 18px; border: 0; border-radius: 999px; background: none; cursor: pointer; font-weight: 700; font-size: 14.5px; }
+.modo button:hover { background: var(--calcada); }
+.modo button[aria-pressed="true"] { background: var(--tinta); color: var(--branco); }
+.modo-dica { margin: 8px 2px 0; font-size: 13.5px; line-height: 1.45; color: var(--tinta-2); max-width: 54ch; }
 
 /* painel do veredito */
 .painel { background: var(--tinta); color: var(--branco); border-radius: 28px; padding: 24px 26px 22px; display: flex; flex-direction: column; justify-content: center; min-height: 190px; }
@@ -137,6 +142,9 @@ h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02
 .pilula.menor .atacado { color: #3b3400; }
 .pilula.sem { border-style: dashed; color: var(--tinta-2); }
 .pilula.sem .valor { font-size: 14px; font-weight: 500; }
+.produto .qualquer { margin: -6px 0 0; font-size: 13px; color: var(--tinta-2); }
+.pilula .real { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 3px; font-size: 11.5px; line-height: 1.25; color: var(--tinta-2); }
+.pilula.menor .real { color: #3b3400; }
 .acao { margin-top: auto; }
 .acao .botao { width: 100%; }
 .passos { display: flex; align-items: center; justify-content: space-between; background: var(--tinta); color: var(--branco); border-radius: 999px; padding: 4px; }
@@ -174,6 +182,7 @@ h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02
 .linha .nome { font: 500 12.5px/1.45 var(--mono); }
 .linha .valor { font: 600 13.5px/1.2 var(--mono); text-align: right; white-space: nowrap; }
 .linha .un { font: 400 11px/1.35 var(--mono); color: var(--tinta-2); text-align: right; }
+.linha .real { display: block; margin-top: 4px; font: 400 11px/1.4 var(--mono); color: var(--tinta-2); }
 .linha.falta .nome, .linha.falta .valor, .linha.falta .un { color: var(--alerta); }
 .linha.falta .valor { font-weight: 500; font-size: 12.5px; }
 .quant { display: inline-flex; align-items: center; gap: 4px; }
@@ -204,11 +213,14 @@ h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02
 
 dialog { border: 0; padding: 0; background: transparent; max-width: calc(100vw - 28px); color: var(--tinta); }
 dialog::backdrop { background: rgba(24, 40, 72, .6); }
-.janela { background: var(--branco); width: min(430px, 100%); border-radius: 28px; padding: 28px 26px 24px; }
+.janela { background: var(--branco); width: min(430px, 100%); max-height: calc(100vh - 24px); overflow-y: auto; border-radius: 28px; padding: 28px 26px 24px; }
 .janela h2 { font: 800 24px/1.2 var(--titulo); margin: 0 0 8px; letter-spacing: -.01em; }
 .janela p { margin: 0 0 16px; color: var(--tinta-2); }
 .janela input { width: 100%; border: 2px solid var(--tinta); border-radius: 16px; padding: 14px 16px; font-size: 20px; letter-spacing: .06em; }
 .janela .erro { color: var(--alerta); min-height: 1.5em; margin: 8px 0 0; font-weight: 600; }
+.janela .cidades { margin: 14px 0 0; font-size: 14px; color: var(--tinta-2); }
+.janela .cidades summary { cursor: pointer; font-weight: 600; color: var(--tinta); padding: 6px 0; }
+.janela .cidades ul { margin: 6px 0 0; padding-left: 18px; columns: 2; column-gap: 18px; }
 .janela .acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
 
 /* ---------- tablet e celular: uma coluna ---------- */
@@ -243,6 +255,9 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   h1 { margin-top: 6px; }
   .apoio { margin-bottom: 18px; }
   .busca input { font-size: 16px; }   /* 16 px evita o zoom automático do iPhone ao focar o campo */
+  .modo { display: flex; }
+  .modo button { flex: 1; padding: 8px 8px; }
+  .janela .cidades ul { columns: 1; }
   .painel { border-radius: 24px; padding: 20px 20px 18px; }
   .barracas { grid-template-columns: 1fr 1fr; gap: 12px; }
   .balcao { padding: 22px 12px 12px; min-height: 164px; }
@@ -287,6 +302,11 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       <input id="campoBusca" type="search" placeholder="Busque um produto" autocomplete="off" enterkeyhint="search">
       <button class="botao" type="submit">Buscar</button>
     </form>
+    <div class="modo" role="group" aria-label="Como comparar os produtos">
+      <button type="button" data-modo="exato" aria-pressed="true">Produto exato</button>
+      <button type="button" data-modo="equivalente" aria-pressed="false">Produto equivalente</button>
+    </div>
+    <p class="modo-dica" id="modoDica"></p>
     <div class="sugestoes"><span>Comece por:</span>
       <button type="button" data-termo="arroz">Arroz</button>
       <button type="button" data-termo="café">Café</button>
@@ -312,10 +332,11 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 <dialog id="janelaCep">
   <form method="dialog" class="janela" id="formCep">
     <h2>Qual é o seu CEP?</h2>
-    <p>Informe o CEP de entrega para buscar os preços.</p>
+    <p>Informe o CEP de entrega para buscar os preços. Atendemos Belo Horizonte e a região metropolitana.</p>
     <label class="so-leitor" for="campoCep">CEP</label>
     <input id="campoCep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="postal-code">
     <p class="erro" id="erroCep" role="alert"></p>
+    <details class="cidades"><summary>Ver as cidades atendidas</summary><ul id="listaCidades"></ul></details>
     <div class="acoes">
       <button class="botao vazado" type="button" id="cancelarCep">Agora não</button>
       <button class="botao sol" type="submit">Salvar CEP</button>
@@ -342,11 +363,18 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     { id: "Super ABC", nome: "Super ABC", cor: "#1baf7a" },
   ];
 
+  // Cidades com dados (Belo Horizonte e região metropolitana). CEP de fora não é aceito.
+  const CIDADES_ATENDIDAS = [
+    "Belo Horizonte", "Betim", "Brumadinho", "Contagem", "Esmeraldas", "Ibirité", "Igarapé",
+    "Nova Lima", "Ribeirão das Neves", "Sabará", "Santa Luzia", "São Joaquim de Bicas", "Sarzedo", "Vespasiano",
+  ];
+
   const estado = {
     cep: "",              // só dígitos
     cidade: "",           // "Betim/MG"
+    modo: "exato",        // como a busca junta os produtos: "exato" (mesmo produto) ou "equivalente" (mesmo tipo e tamanho, qualquer marca)
     lista: [],            // [{ grupo, qtd }]
-    busca: { termo: "", status: "parado", grupos: [], aviso: "", atualizadoEm: "" },
+    busca: { termo: "", status: "parado", grupos: [], brutos: [], aviso: "", atualizadoEm: "" },   // brutos: o que a API devolveu; grupos: o que a tela mostra no modo atual
   };
   const ouvintes = [];
   const emitir = () => ouvintes.forEach((f) => f());
@@ -388,7 +416,25 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   // Preço de 1 unidade quando a quantidade da lista alcança a do atacado; senão, o preço normal.
   const precoUnitario = (opcao, qtd) =>
     opcao.quantidade_atacado > 1 && qtd >= opcao.quantidade_atacado ? opcao.preco_atacado : opcao.preco_varejo;
-  const opcaoDoMercado = (grupo, mercadoId) => grupo.opcoes_de_compra.find((o) => o.supermercado === mercadoId) || null;
+  // O produto que o mercado entregaria para essa quantidade. No grupo exato há um só por mercado; no equivalente,
+  // vale o que sai mais barato (já considerando o preço de atacado da quantidade pedida).
+  const opcaoDoMercado = (grupo, mercadoId, qtd = 1) => {
+    let melhor = null, custo = Infinity;
+    for (const o of grupo.opcoes_de_compra) {
+      if (o.supermercado !== mercadoId) continue;
+      const c = precoUnitario(o, qtd);
+      if (c < custo) { custo = c; melhor = o; }
+    }
+    return melhor;
+  };
+  // Identifica o grupo na lista. Um grupo exato e um equivalente nunca se confundem.
+  const idDoGrupo = (g) => (g.equivalente ? "eq:" + g.chave : "ex:" + g.produto_base);
+  // O grupo equivalente já tem um nome pronto ("Arroz branco tipo 1, 5 kg"); o exato vem do mercado e precisa de capitalização.
+  const nomeDoGrupo = (g) => (g.equivalente ? g.produto_base : nomeBonito(g.produto_base));
+  const cidadeAtendida = (cidade) => {
+    const [nome, uf] = String(cidade || "").split("/");
+    return uf === "MG" && CIDADES_ATENDIDAS.some((c) => semAcento(c) === semAcento(nome));
+  };
 
   /* ---------- armazenamento ---------- */
   const guardar = (k, v) => { try { localStorage.setItem(PREFIXO + k, JSON.stringify(v)); } catch (e) { /* modo privado */ } };
@@ -413,6 +459,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     try { cidade = await cidadeDoCep(cep); }
     catch (e) { return { ok: false, motivo: "Não deu para conferir o CEP agora. Confira a conexão e tente de novo." }; }
     if (!cidade) return { ok: false, motivo: "Não encontramos esse CEP. Confira os números e tente de novo." };
+    if (!cidadeAtendida(cidade)) return { ok: false, foraDaArea: true, motivo: `Não há dados para o CEP inserido. Ele fica em ${cidade}, e por enquanto só atendemos Belo Horizonte e a região metropolitana.` };
     estado.cep = cep; estado.cidade = cidade;
     guardar("cep", cep); guardar("cidade", cidade);
     emitir();
@@ -425,7 +472,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     termo = (termo || "").trim();
     if (!termo) return;
     const meu = ++numeroDaBusca, b = estado.busca;
-    b.termo = termo; b.status = "carregando"; b.aviso = ""; b.grupos = [];
+    b.termo = termo; b.status = "carregando"; b.aviso = ""; b.grupos = []; b.brutos = [];
     emitir();
     const aviso = setTimeout(() => {
       if (meu === numeroDaBusca && b.status === "carregando") {
@@ -446,18 +493,186 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       b.status = "erro";
       b.aviso = "Não deu para consultar os mercados agora. Confira a conexão e busque de novo.";
     } else {
-      b.grupos = grupos;
+      b.brutos = grupos;
       // a data mais antiga entre os preços exibidos: é a que vale para a tela toda
       const datas = grupos.flatMap((g) => g.opcoes_de_compra.map((o) => o.atualizado_em)).filter(Boolean).sort();
       b.atualizadoEm = datas[0] || "";
-      b.status = grupos.length ? "ok" : "vazio";
+      b.status = "ok";
+      derivarGrupos();
     }
     emitir();
   }
 
+  // Do que a API devolveu para o que a tela mostra, conforme o modo. Trocar de modo não consulta a API de novo.
+  function derivarGrupos() {
+    const b = estado.busca;
+    if (b.status !== "ok" && b.status !== "vazio") return;
+    b.grupos = estado.modo === "equivalente" ? agruparEquivalentes(b.brutos) : b.brutos;
+    b.status = b.grupos.length ? "ok" : "vazio";
+  }
+  function definirModo(modo) {
+    estado.modo = modo === "equivalente" ? "equivalente" : "exato";
+    guardar("modo", estado.modo);
+    derivarGrupos();
+    emitir();
+  }
+
+  /* @equivalencia-inicio */
+  /* ---------- produto equivalente ----------
+     "Equivalente" é o mesmo tipo de produto no mesmo tamanho, de qualquer marca. Cada família abaixo diz o que
+     diferencia um produto do outro (arroz parboilizado não é arroz branco; café solúvel não é café em pó) e o que
+     não importa (marca, embalagem, perfume). Na dúvida, não junta: o produto que não cabe em nenhuma regra só
+     aparece no modo "exato". Errar por juntar de menos é seguro; juntar o que não é equivalente engana a pessoa. */
+  const escolher = (t, regras, padrao) => { for (const [re, valor] of regras) if (re.test(t)) return valor; return padrao; };
+
+  // Primeira medida do nome, em gramas ou mililitros. tipo: "massa", "volume" ou "qualquer".
+  function medida(t, tipo) {
+    const m = t.match(/(\d+(?:[.,]\d+)?)\s*(kg|gr|g|ml|lt|litros?|l)\b/);
+    if (!m) return null;
+    const massa = m[2] === "kg" || m[2] === "g" || m[2] === "gr";
+    if ((tipo === "massa" && !massa) || (tipo === "volume" && massa)) return null;
+    let v = parseFloat(m[1].replace(",", "."));
+    if (m[2] === "kg" || !massa && m[2] !== "ml") v *= 1000;
+    return { massa, valor: Math.round(v) };
+  }
+  const textoMedida = ({ massa, valor }) => {
+    if (valor < 1000) return valor + (massa ? " g" : " ml");
+    return String(valor / 1000).replace(".", ",") + (massa ? " kg" : " L");
+  };
+
+  const FAMILIAS = [
+    { id: "arroz", comeca: /^arroz /, analisar: (t) => {
+      if (/carreteiro|galinhada|\bmix\b/.test(t)) return null;
+      const m = medida(t, "massa"); if (!m) return null;
+      const variedade = escolher(t, [[/parboiliz/, "parboilizado"], [/integral/, "integral"], [/arbor/, "arbório"], [/japon/, "japonês"], [/risot|carnaroli|italian/, "para risoto"], [/quebrado/, "quebrado"]], "branco");
+      const tipo = escolher(t, [[/fora de tipo/, "fora de tipo"], [/tipo 2|\bt2\b/, "tipo 2"]], "tipo 1");
+      return { partes: [variedade, tipo], m, rotulo: `Arroz ${variedade} ${tipo}` };
+    } },
+    { id: "feijao", comeca: /^feijao /, analisar: (t) => {
+      if (/pronto|tempero|caldinho/.test(t)) return null;
+      const m = medida(t, "massa"); if (!m) return null;
+      const variedade = escolher(t, [[/carioca/, "carioca"], [/\bpreto\b|\bpto\b/, "preto"], [/\bbranco\b|\bbco\b/, "branco"], [/fradinho/, "fradinho"], [/jalo/, "jalo"], [/vermelho/, "vermelho"], [/roxo/, "roxo"], [/rajado/, "rajado"], [/de corda/, "de corda"]], null);
+      if (!variedade) return null;
+      const tipo = escolher(t, [[/tipo 2/, "tipo 2"]], "tipo 1");
+      return { partes: [variedade, tipo], m, rotulo: `Feijão ${variedade} ${tipo}` };
+    } },
+    { id: "oleo", comeca: /^oleo /, analisar: (t) => {
+      if (/capilar|cabelo|corporal|bebe|bronz|sunless|babosa|amendoa|\bcoco\b|\buva\b|ricino|mosqueta|peroba|moveis|lubrificante|serum|finalizador|argan|queratina|tratamento|gergelim|eucalipto|avante|farmax|almotolia|oregano|cebola|alho/.test(t)) return null;
+      const m = medida(t, "qualquer"); if (!m) return null;
+      if (/bagaco/.test(t)) return null;   // "composto de bagaço de oliva" é outro produto
+      const tipo = escolher(t, [[/composto|misto|soja e oliva/, "composto"], [/soja/, "soja"], [/girassol/, "girassol"], [/milho/, "milho"], [/canola/, "canola"], [/algodao/, "algodão"]], null);
+      if (!tipo) return null;
+      return { partes: [tipo], m, rotulo: tipo === "composto" ? "Óleo composto de soja e oliva" : `Óleo de ${tipo}` };
+    } },
+    { id: "cafe", comeca: /^cafe /, analisar: (t) => {
+      if (/capsula|dolce gusto|nespresso/.test(t)) return null;
+      const m = medida(t, "massa"); if (!m) return null;
+      const forma = escolher(t, [[/com leite/, "com leite"], [/soluvel|liofilizado|granulado|instantaneo/, "solúvel"], [/em graos/, "em grãos"]], "em pó");
+      const forca = escolher(t, [[/descafeinado/, "descafeinado"], [/extra ?forte|\+ ?forte/, "extraforte"], [/liofilizado/, "liofilizado"], [/gourmet|premium|especial|superior|organico|prima qualit|estrada real/, "gourmet"], [/tradicional|tradicao/, "tradicional"]], "");
+      return { partes: [forma, forca], m, rotulo: `Café ${forma}${forca ? " " + forca : ""}` };
+    } },
+    { id: "manteiga", comeca: /^manteiga /, analisar: (t) => {
+      if (/karite|castanha|margarina|amanteigado|pipoca|biscoito|papel|tempero|coloracao/.test(t)) return null;
+      const m = medida(t, "massa"); if (!m) return null;
+      const sal = escolher(t, [[/sem sal/, "sem sal"], [/com sal|\bc sal\b|cristais de sal/, "com sal"]], null);
+      if (!sal) return null;
+      const tipo = escolher(t, [[/bufala/, "de búfala"], [/zero lactose|sem lactose/, "sem lactose"], [/\bextra\b|gastronomique/, "extra"]], "");
+      return { partes: [tipo, sal], m, rotulo: `Manteiga ${tipo ? tipo + " " : ""}${sal}` };
+    } },
+    { id: "acucar", comeca: /^acucar /, analisar: (t) => {
+      if (/sach|zero|sem acucar/.test(t)) return null;
+      const m = medida(t, "massa"); if (!m) return null;
+      const tipo = escolher(t, [[/confeiteiro|glace|glacucar|\bconf\b/, "de confeiteiro"], [/demerad|demerar|dourado/, "demerara"], [/mascavo/, "mascavo"], [/refinado/, "refinado"], [/cristal|cristaal/, "cristal"]], null);
+      if (!tipo) return null;
+      const extra = escolher(t, [[/organic/, "orgânico"], [/light|magro|\bfit\b|diet|lowcucar/, "light"]], "");
+      return { partes: [tipo, extra], m, rotulo: `Açúcar ${tipo}${extra ? " " + extra : ""}` };
+    } },
+    { id: "macarrao", comeca: /^macarrao /, analisar: (t) => {
+      if (/instant|miojo|lamen|noodles|yakisoba|yakissoba/.test(t)) return null;
+      const m = medida(t, "massa"); if (!m) return null;
+      const formato = escolher(t, [[/espaguetinho|spaghettini/, "espaguetinho"], [/espaguete|spaghetti/, "espaguete"], [/parafuso|fusilli/, "parafuso"], [/penne|\bpena\b/, "penne"], [/linguine/, "linguine"], [/fettuccine|fetuccine|fettucine/, "fettuccine"], [/talharim|tagliarinni|tagliatelle|ninho/, "talharim"], [/caracol/, "caracol"], [/alfabeto/, "alfabeto"], [/fidelinho/, "fidelinho"]], null);
+      if (!formato) return null;
+      const massa = escolher(t, [[/ovos/, "com ovos"], [/semola|semolao|grano duro|durum/, "de sêmola"]], "");
+      return { partes: [formato, massa], m, rotulo: `Macarrão ${formato}${massa ? " " + massa : ""}` };
+    } },
+    { id: "detergente", contem: /\bdetergente\b/, analisar: (t) => {
+      if (/sanitario|multiuso|uso geral|desengordurante|pastilha|bloco|limpador|cremoso/.test(t)) return null;
+      const m = medida(t, "qualquer"); if (!m) return null;
+      const forma = escolher(t, [[/\bgel\b/, "gel"], [/\bpo\b/, /louca|maquina/.test(t) ? "em pó para lava-louças" : "em pó"]], "líquido");
+      return { partes: [forma], m, rotulo: `Detergente ${forma}` };
+    } },
+    { id: "sabao", contem: /\bsabao\b/, analisar: (t) => {
+      if (/sabonete|shampoo|condicionador/.test(t)) return null;
+      if (/\d+ ?(barras?|unidades?|und)\b/.test(t) && /cada|barras? de/.test(t)) return null;   // pacote de barras: o tamanho é ambíguo
+      const m = medida(t, "qualquer"); if (!m) return null;
+      const forma = escolher(t, [[/liquido/, "líquido"], [/em po|\bpo\b/, "em pó"], [/barra|pedaco/, "em barra"], [/pasta/, "em pasta"]], null);
+      if (!forma) return null;
+      const roupa = escolher(t, [[/finas|delicad/, "para roupas delicadas"]], "");
+      return { partes: [forma, roupa], m, rotulo: `Sabão ${forma}${roupa ? " " + roupa : ""}` };
+    } },
+    { id: "amaciante", contem: /\bamaciante\b/, analisar: (t) => {
+      if (/carne|tempero|maggi|qualimax/.test(t)) return null;
+      const m = medida(t, "volume"); if (!m) return null;
+      const tipo = escolher(t, [[/concentrad/, "concentrado"]], "");
+      return { partes: [tipo], m, rotulo: `Amaciante${tipo ? " " + tipo : ""}` };
+    } },
+    { id: "papel", comeca: /^papel higienico /, analisar: (t) => {
+      const metros = t.match(/(\d+(?:[.,]\d+)?) ?(?:m|metros?)\b/);
+      const rolos = t.match(/leve ?(\d+)/) || t.match(/\bl(\d+)p\d+/) || t.match(/(\d+) ?rolos?/) || t.match(/\b(\d+) ?r\b/) || t.match(/\bcom ?(\d+)\b/) || t.match(/(\d+) ?(?:unidades?|und)\b/);
+      if (!metros || !rolos) return null;
+      const folha = escolher(t, [[/folha dupla|\bfd\b|\bf d\b/, "folha dupla"], [/folha tripla/, "folha tripla"], [/folha simples|\bfs\b|\bf s\b/, "folha simples"]], "");
+      const m = metros[1].replace(",", "."), n = rolos[1];
+      return { partes: [folha, m, n], rotulo: `Papel higiênico${folha ? " " + folha : ""}, ${n} ${+n === 1 ? "rolo" : "rolos"} de ${m.replace(".", ",")} m` };
+    } },
+  ];
+
+  // { chave, rotulo } do produto, ou null se ele não se encaixa em nenhuma regra.
+  function equivalencia(nome) {
+    const t = semAcento(String(nome)).replace(/[^a-z0-9+,. ]/g, " ").replace(/\s+/g, " ").trim();
+    if (/\b\d+ ?x ?\d+/.test(t)) return null;   // caixas e multipacotes ("24x40g")
+    for (const f of FAMILIAS) {
+      if (!(f.comeca ? f.comeca.test(t) : f.contem.test(t))) continue;
+      const r = f.analisar(t);
+      if (!r) return null;
+      return {
+        chave: [f.id, ...r.partes, r.m ? (r.m.massa ? r.m.valor + "g" : r.m.valor + "ml") : ""].join("|"),
+        rotulo: r.rotulo + (r.m ? ", " + textoMedida(r.m) : ""),
+      };
+    }
+    return null;
+  }
+
+  // Junta, entre os produtos devolvidos pela busca, os que são equivalentes. Cada grupo guarda todos os produtos
+  // candidatos; a comparação escolhe, em cada mercado, o que sai mais barato.
+  function agruparEquivalentes(brutos) {
+    const vistos = new Set(), mapa = new Map();
+    for (const g of brutos) {
+      for (const o of g.opcoes_de_compra) {
+        const id = o.id || o.supermercado + "|" + o.nome;
+        if (vistos.has(id)) continue;
+        vistos.add(id);
+        const e = equivalencia(o.nome);
+        if (!e) continue;
+        if (!mapa.has(e.chave)) mapa.set(e.chave, { produto_base: e.rotulo, equivalente: true, chave: e.chave, opcoes_de_compra: [] });
+        mapa.get(e.chave).opcoes_de_compra.push(o);
+      }
+    }
+    // Preço muito abaixo do normal do grupo é quase sempre erro de coleta (já vimos feijão de 1 kg a R$ 0,78). No modo
+    // equivalente, que escolhe o mais barato de cada mercado, um erro desses falsearia a comparação inteira.
+    for (const g of mapa.values()) {
+      const p = g.opcoes_de_compra.map((o) => o.preco_varejo).sort((a, b) => a - b);
+      if (p.length < 5) continue;
+      const mediana = p[Math.floor(p.length / 2)];
+      g.opcoes_de_compra = g.opcoes_de_compra.filter((o) => o.preco_varejo >= mediana * 0.45);
+    }
+    const mercados = (g) => new Set(g.opcoes_de_compra.map((o) => o.supermercado)).size;
+    return [...mapa.values()].sort((a, b) => mercados(b) - mercados(a) || a.produto_base.localeCompare(b.produto_base, "pt-BR"));
+  }
+  /* @equivalencia-fim */
+
   /* ---------- lista de compras ---------- */
   const salvarLista = () => guardar("lista", estado.lista);
-  const indiceNaLista = (grupo) => estado.lista.findIndex((i) => i.grupo.produto_base === grupo.produto_base);
+  const indiceNaLista = (grupo) => estado.lista.findIndex((i) => idDoGrupo(i.grupo) === idDoGrupo(grupo));
   const qtdNaLista = (grupo) => { const i = indiceNaLista(grupo); return i < 0 ? 0 : estado.lista[i].qtd; };
 
   function adicionar(grupo) {
@@ -482,11 +697,11 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     const linhasBase = estado.lista;
     const porMercado = MERCADOS.map((m) => {
       const linhas = linhasBase.map(({ grupo, qtd }) => {
-        const opcao = opcaoDoMercado(grupo, m.id);
+        const opcao = opcaoDoMercado(grupo, m.id, qtd);
         const unitario = opcao ? precoUnitario(opcao, qtd) : null;
         return { grupo, qtd, opcao, unitario, subtotal: opcao ? unitario * qtd : null, atacado: !!opcao && unitario === opcao.preco_atacado && opcao.preco_atacado < opcao.preco_varejo };
       });
-      const faltam = linhas.filter((l) => !l.opcao).map((l) => l.grupo.produto_base);
+      const faltam = linhas.filter((l) => !l.opcao).map((l) => nomeDoGrupo(l.grupo));
       const total = linhas.reduce((s, l) => s + (l.subtotal || 0), 0);
       return { mercado: m, linhas, faltam, completo: faltam.length === 0, total };
     });
@@ -514,6 +729,9 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     // "user_cep" e "user_cidade" são da versão anterior do site
     estado.cep = ler("cep", localStorage.getItem("user_cep") || "");
     estado.cidade = ler("cidade", localStorage.getItem("user_cidade") || "");
+    // um CEP guardado de outra cidade (ou sem cidade) não vale mais: a pessoa informa de novo
+    if (estado.cep && !cidadeAtendida(estado.cidade)) { estado.cep = ""; estado.cidade = ""; guardar("cep", ""); guardar("cidade", ""); }
+    estado.modo = ler("modo", "exato") === "equivalente" ? "equivalente" : "exato";
     const salva = ler("lista", null);
     if (Array.isArray(salva)) estado.lista = salva.filter((i) => i && i.grupo && Array.isArray(i.grupo.opcoes_de_compra) && i.qtd > 0);
     fetch(API + "/saude").catch(() => {}); // acorda o servidor enquanto a pessoa digita
@@ -526,9 +744,9 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   }
 
   window.Supermatch = {
-    estado, MERCADOS, mercadoPorId, aoMudar: (f) => ouvintes.push(f), iniciar,
-    definirCep, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo,
-    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, dataHora },
+    estado, MERCADOS, CIDADES_ATENDIDAS, cidadeAtendida, mercadoPorId, aoMudar: (f) => ouvintes.push(f), iniciar,
+    definirCep, definirModo, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo,
+    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora },
   };
 })();
 </script>
@@ -597,33 +815,40 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       el.innerHTML = `<div class="estado"><strong>Consultando os 4 mercados<span class="pontinhos"></span></strong>${U.esc(b.aviso || "Isso leva alguns segundos.")}</div>`;
     } else if (b.status === "erro") {
       el.innerHTML = `<div class="estado"><strong>Não deu para consultar agora</strong>${U.esc(b.aviso)}<br><br><button class="botao vazado" type="button" id="tentar">Buscar de novo</button></div>`;
+    } else if (b.status === "vazio" && b.brutos.length) {
+      // há produtos, mas nenhum se encaixa nas regras de equivalência
+      el.innerHTML = `<div class="estado"><strong>Nenhum produto equivalente para “${U.esc(b.termo)}”</strong>A comparação por equivalência vale para arroz, feijão, óleo, café, manteiga, açúcar, macarrão, detergente, sabão, amaciante e papel higiênico. Para outros itens, ou para uma marca específica, use Produto exato.<br><br><button class="botao vazado" type="button" data-modo="exato">Ver como produto exato</button></div>`;
     } else if (b.status === "vazio") {
       el.innerHTML = `<div class="estado"><strong>Nada encontrado para “${U.esc(b.termo)}”</strong>Tente uma palavra mais curta ou confira a escrita.</div>`;
     } else {
       const total = b.grupos.length, limite = Math.min(total, (celular.matches ? 4 : 6) + extras), resto = total - limite;
       const atualizado = U.dataHora(b.atualizadoEm);
-      el.innerHTML = `<div class="titulo-sec"><h2>${total} produtos para “${U.esc(b.termo)}”</h2><p>${atualizado ? "Preços de " + atualizado : ""}</p></div>
+      const rotuloTotal = S.estado.modo === "equivalente" ? (total === 1 ? "produto equivalente" : "produtos equivalentes") : (total === 1 ? "produto" : "produtos");
+      el.innerHTML = `<div class="titulo-sec"><h2>${total} ${rotuloTotal} para “${U.esc(b.termo)}”</h2><p>${atualizado ? "Preços de " + atualizado : ""}</p></div>
         <div class="produtos">${b.grupos.slice(0, limite).map(produto).join("")}</div>
         ${resto > 0 ? `<button class="mais-res" type="button" id="verMais" data-foco="verMais">Mostrar mais ${Math.min(10, resto)} produtos (faltam ${resto})</button>` : ""}`;
     }
   }
 
   function produto(g, i) {
-    const qtd = S.qtdNaLista(g), nome = U.esc(U.nomeBonito(g.produto_base));
-    const ofertas = [...g.opcoes_de_compra].sort((a, b) => a.preco_varejo - b.preco_varejo);
-    const menor = ofertas[0].preco_varejo;
-    const pilulas = S.MERCADOS.map((m) => ({ m, o: ofertas.find((x) => x.supermercado === m.id) }))
+    const qtd = S.qtdNaLista(g), nome = U.esc(U.nomeDoGrupo(g)), equivalente = !!g.equivalente;
+    // em cada mercado, o produto que sai mais barato (no grupo exato há um só)
+    const porMercado = S.MERCADOS.map((m) => ({ m, o: U.opcaoDoMercado(g, m.id, 1) }));
+    const precos = porMercado.filter((x) => x.o).map((x) => x.o.preco_varejo);
+    const menor = Math.min(...precos), comparavel = precos.length > 1;
+    const pilulas = porMercado
       .sort((a, b) => (a.o ? a.o.preco_varejo : 1e9) - (b.o ? b.o.preco_varejo : 1e9))
       .map(({ m, o }) => {
         if (!o) return `<li class="pilula sem"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">Não vende</span></li>`;
-        const e = o.preco_varejo === menor && ofertas.length > 1;
+        const e = o.preco_varejo === menor && comparavel;
         const at = o.quantidade_atacado > 1 && o.preco_atacado < o.preco_varejo ? `<span class="atacado">${U.moeda(o.preco_atacado)} a partir de ${o.quantidade_atacado} un.</span>` : "";
-        return `<li class="pilula${e ? " menor" : ""}"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">${U.moeda(o.preco_varejo)}</span>${at}</li>`;
+        const real = equivalente ? `<span class="real">${U.esc(U.nomeBonito(o.nome))}</span>` : "";
+        return `<li class="pilula${e ? " menor" : ""}"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">${U.moeda(o.preco_varejo)}</span>${at}${real}</li>`;
       }).join("");
     const acao = qtd
       ? `<div class="passos" role="group" aria-label="Quantidade na lista"><button type="button" data-foco="p-menos-${i}" data-menos="${i}" aria-label="Tirar uma unidade de ${nome}">−</button><span>${qtd} na lista</span><button type="button" data-foco="p-mais-${i}" data-mais="${i}" aria-label="Colocar mais uma unidade de ${nome}">+</button></div>`
       : `<button class="botao" type="button" data-foco="p-add-${i}" data-add="${i}" aria-label="Adicionar ${nome} à lista">Adicionar à lista</button>`;
-    return `<article class="produto"><h3>${nome}</h3><ul class="pilulas">${pilulas}</ul><div class="acao">${acao}</div></article>`;
+    return `<article class="produto"><h3>${nome}</h3>${equivalente ? `<p class="qualquer">Qualquer marca. Em cada mercado entra o mais barato.</p>` : ""}<ul class="pilulas">${pilulas}</ul><div class="acao">${acao}</div></article>`;
   }
 
   /* ---------- cupom ---------- */
@@ -672,16 +897,22 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   let ultimoVencedorNoCupom = null;
 
   function linha(l, i, sel) {
-    const nome = U.esc(U.nomeBonito(l.grupo.produto_base));
+    const nome = U.esc(U.nomeDoGrupo(l.grupo));
     const ctrl = `<span class="quant"><button type="button" data-foco="c-menos-${i}" data-lmenos="${i}" aria-label="Tirar uma unidade de ${nome}">−</button><output>${l.qtd}</output><button type="button" data-foco="c-mais-${i}" data-lmais="${i}" aria-label="Colocar mais uma unidade de ${nome}">+</button></span>`;
     if (!l.opcao) return `<li class="linha falta"><span class="nome">${nome}</span><span class="valor">sem preço</span>${ctrl}<span class="un">${U.esc(sel.mercado.nome)} não vende</span></li>`;
     const un = l.qtd > 1 ? `${l.qtd} × ${U.moeda(l.unitario)}${l.atacado ? ", atacado" : ""}` : l.atacado ? "preço de atacado" : "";
-    return `<li class="linha"><span class="nome">${nome}</span><span class="valor">${U.moeda(l.subtotal)}</span>${ctrl}<span class="un">${un}</span></li>`;
+    // item equivalente: o cupom diz qual produto aquele mercado entregaria
+    const real = l.grupo.equivalente ? `<span class="real">Qualquer marca. Leva: ${U.esc(U.nomeBonito(l.opcao.nome))}</span>` : "";
+    return `<li class="linha"><span class="nome">${nome}${real}</span><span class="valor">${U.moeda(l.subtotal)}</span>${ctrl}<span class="un">${un}</span></li>`;
   }
 
   function desenhar() {
     const e = S.estado;
     $("cepTexto").textContent = e.cep ? U.formatarCep(e.cep) + (e.cidade ? ", " + e.cidade : "") : "informe seu CEP";
+    document.querySelectorAll(".modo button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.modo === e.modo)));
+    $("modoDica").textContent = e.modo === "exato"
+      ? "Compara o mesmo produto, da mesma marca e do mesmo tamanho, nos mercados."
+      : "Compara produtos do mesmo tipo e tamanho, de qualquer marca; em cada mercado entra o mais barato. Busque pelo tipo (por exemplo, “arroz”), não pela marca.";
     U.preservarFoco(() => { desenharVeredito(); desenharBarracas(); desenharResultados(); desenharCupom(); });
   }
   S.aoMudar(desenhar);
@@ -704,6 +935,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     else if (t.dataset.menos !== undefined) S.alterarQtd(g[+t.dataset.menos], -1);
     else if (t.dataset.lmais !== undefined) S.alterarQtd(lista[+t.dataset.lmais].grupo, 1);
     else if (t.dataset.lmenos !== undefined) S.alterarQtd(lista[+t.dataset.lmenos].grupo, -1);
+    else if (t.dataset.modo !== undefined) { extras = 0; S.definirModo(t.dataset.modo); }
     else if (t.dataset.mercado !== undefined) {
       escolhido = t.dataset.mercado; desenhar();
       if (telaPequena.matches) $("cupom").scrollIntoView({ block: "start" });   // no celular o cupom fica lá embaixo
@@ -715,13 +947,14 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   });
 
   const janela = $("janelaCep");
-  const abrirCep = () => { $("erroCep").textContent = ""; $("campoCep").value = S.estado.cep ? U.formatarCep(S.estado.cep) : ""; janela.showModal(); $("campoCep").focus(); };
+  $("listaCidades").innerHTML = S.CIDADES_ATENDIDAS.map((c) => `<li>${U.esc(c)}</li>`).join("");
+  const abrirCep = () => { $("erroCep").textContent = ""; $("listaCidades").parentElement.open = false; $("campoCep").value = S.estado.cep ? U.formatarCep(S.estado.cep) : ""; janela.showModal(); $("campoCep").focus(); };
   $("botaoCep").addEventListener("click", abrirCep);
   $("cancelarCep").addEventListener("click", () => janela.close());
   $("formCep").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const r = await S.definirCep($("campoCep").value);
-    if (!r.ok) { $("erroCep").textContent = r.motivo; return; }
+    if (!r.ok) { $("erroCep").textContent = r.motivo; if (r.foraDaArea) $("listaCidades").parentElement.open = true; return; }
     janela.close();
     if (buscaPendente) { const termo = buscaPendente; buscaPendente = ""; S.buscar(termo); }
   });
