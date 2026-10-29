@@ -1,0 +1,11 @@
+# Publicação do site no Netlify (ligado a este repositório, branch main).
+# Estas configurações valem mais do que os campos "Build settings" da interface do Netlify.
+
+[build]
+  # O site é um arquivo só (site/index.html) e não tem etapa de montagem: sem comando de build.
+  publish = "site"
+
+  # Só publica quando algo dentro de site/ mudou. Este repositório muda muito por causa dos robôs e da
+  # documentação, e nada disso altera o site. Se o Netlify avisar "build canceled", é esta regra.
+  # (exit 0 = nada mudou, cancela; exit diferente de 0 = mudou, publica.)
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF site/"
