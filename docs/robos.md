@@ -21,7 +21,7 @@ e 32041000 (Contagem). Os sites mudam: se um robô começar a falhar, é aqui qu
 
 | Mercado | Como o robô informa o CEP | Sinal de que foi aceito | Quando não atende |
 |---|---|---|---|
-| **Atacadão** | "Informar localização" > "Entrega em Casa" > digita o CEP > número genérico `100` > Confirmar | O cabeçalho passa a dizer `Entregue pela Loja - <loja> para o CEP 32607-600` | O cabeçalho não muda e o robô aborta |
+| **Atacadão** | "Informar localização" > "Entrega em Casa" > digita o CEP > número genérico `100` > Confirmar (CEP único de cidade, sem rua, não pede número: o site mostra só "Confirme seu endereço") | O cabeçalho passa a dizer `Entregue pela Loja - <loja> para o CEP 32607-600` ou `Entregue pela <unidade> para o CEP 32315-010`; o CEP do cabeçalho tem de ser o pedido | O site abre "Ainda não atendemos essa região" (resposta definitiva) |
 | **Apoio** | Ícone do carrinho (`a.btn-top-cart`) abre "Informe seu CEP"; digita e clica em Buscar; escolhe "Quero receber" | O quadro mostra `Atendemos sua região` e `CEP informado 32607-600` | O quadro nunca aparece e o painel volta ao início |
 | **Supernosso** | Clica em "qual a forma de entrega?" > digita o CEP (tecla por tecla) > envia > escolhe o horário da entrega agendada | O cabeçalho passa a dizer `entrega no cep 32.607-600` | O site mostra "que pena, ainda não atendemos a sua região" |
 | **Super ABC** | Não localiza por CEP. O robô descobre a **cidade** do CEP (ViaCEP, com BrasilAPI de reserva) e escolhe uma unidade dessa cidade no seletor de lojas | O botão do cabeçalho passa a mostrar a unidade e a cidade (`ABC Atacado e Varejo Betim - Betim / MG`) | Não há unidade na cidade (Contagem, por exemplo) e o robô aborta |
@@ -41,6 +41,15 @@ e 32041000 (Contagem). Os sites mudam: se um robô começar a falhar, é aqui qu
   unidade, o robô escolhe a primeira da lista.
 - **Atacadão:** as lojas variam por CEP (Betim, Pampulha, Uberlândia), mas nos produtos testados
   os preços foram iguais.
+  - **CEP padrão no cabeçalho:** enquanto nenhum CEP é assumido, o site mostra `Entregue pela Loja - Vila Maria
+    para o CEP 02170-901` (São Paulo). A confirmação antiga aceitava qualquer cabeçalho "Entregue pela Loja"
+    desde que o CEP pedido aparecesse em algum ponto da página (por exemplo, no campo digitado), então CEPs
+    que o site não atende podiam ser dados como aceitos. Agora o CEP **ao lado de "para o CEP"** precisa ser o pedido.
+  - **Duas formas de cabeçalho:** `Entregue pela Loja - Pampulha` (loja própria) e `Entregue pela Contagem`
+    (entrega a partir de outra unidade, que atende parte de BH, Contagem e Betim). A confirmação antiga só
+    reconhecia a primeira e recusava CEPs que o site atendia.
+  - **Quem não é atendido:** o site abre "Ainda não atendemos essa região. No momento, nenhuma de nossas lojas
+    atende sua região para vendas online". É definitivo e não é repetido.
 - **Apoio, canal de vendas (a causa dos "Item indisponível"):** o Apoio vende por **canal de vendas**
   (parâmetro `sc` da URL; `salesChannel` do carrinho). No canal regional do CEP (**15 para Betim**) os
   produtos têm preço e estoque. No canal **1**, o padrão, todos aparecem como "Item indisponível" (a API
