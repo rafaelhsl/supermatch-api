@@ -37,21 +37,31 @@ def estruturar_produto_atacadao_json(texto_bruto):
         
     return produto
 
+# O cabeçalho do site diz "Entregue pela Loja - Betim para o CEP 32607-600" (loja própria) ou "Entregue pela Contagem
+# para o CEP 32315-010" (entrega a partir de outra unidade). Enquanto nenhum CEP é informado, ele mostra o CEP padrão do
+# site (02170-901, loja Vila Maria, em São Paulo): por isso só vale quando o CEP ao lado de "para o CEP" é o pedido.
+CABECALHO_JS = r"""(c) => { const m = document.body.innerText.match(/Entregue pela\s+([\s\S]{1,80}?)\s+para o CEP\s+(\d{5}-\d{3})/i); return !!m && m[2] === c; }"""
+# Quando nenhuma loja entrega no CEP, o site abre "Ainda não atendemos essa região".
+NAO_ATENDE_JS = r"""() => /ainda n[aã]o atendemos essa regi[aã]o/i.test(document.body.innerText)"""
+
 async def confirmar_localizacao(page, browser, cep, erro_saga):
-    """Confirma que o cabeçalho passou a dizer "Entregue pela Loja - <loja> para o CEP <cep>"."""
+    """Confirma que o site assumiu o CEP: o cabeçalho passa a dizer "Entregue pela <loja ou unidade> para o CEP <cep>"."""
     esperado = cep_com_hifen(cep)
-    confirmou = await esperar_na_pagina(
+    resposta = await esperar_na_pagina(
         page,
-        "(c) => /Entregue pela Loja/i.test(document.body.innerText) && document.body.innerText.includes(c)",
+        "(c) => (" + CABECALHO_JS + ")(c) || (" + NAO_ATENDE_JS + ")()",
         esperado,
         segundos=15,
     )
-    if not confirmou:
+    if resposta and await page.evaluate(NAO_ATENDE_JS):
+        await abortar(browser, "Atacadão", "o site informa que não atende a região deste CEP", definitiva=True)
+    if not resposta:
         detalhe = f" (erro ao informar o CEP: {str(erro_saga)[:80]})" if erro_saga else ""
-        await abortar(browser, "Atacadão", f"o cabeçalho do site não passou a mostrar 'Entregue pela Loja ... para o CEP {esperado}'{detalhe}")
+        await abortar(browser, "Atacadão", f"o cabeçalho do site não passou a mostrar 'Entregue pela ... para o CEP {esperado}'{detalhe}")
     texto = await page.evaluate("() => document.body.innerText")
-    achou = re.search(r"Entregue pela Loja\s*-\s*(.+?)\s+para o CEP", texto, re.S)
-    print(f"📍 [Atacadão] Localização confirmada: loja {achou.group(1).strip() if achou else '?'}, CEP {esperado}")
+    achou = re.search(r"Entregue pela\s+(.+?)\s+para o CEP\s+" + re.escape(esperado), texto, re.S)
+    unidade = re.sub(r"^Loja\s*-\s*", "loja ", achou.group(1).strip()) if achou else "?"
+    print(f"📍 [Atacadão] Localização confirmada: {unidade}, CEP {esperado}")
 
 async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
     print(f"🤖 [Atacadão] Iniciando robô invisível para buscar '{item_usuario}'...")
@@ -108,8 +118,12 @@ async def buscar_no_atacadao(cep_usuario: str, item_usuario: str):
 
             print("🏠 [Atacadão] Preenchendo Número...")
             num_input = page.locator("input[placeholder*='Ex:']").first
-            await num_input.wait_for(state='visible', timeout=5000)
-            await num_input.fill("100", force=True) # Número genérico para passar
+            try:
+                await num_input.wait_for(state='visible', timeout=5000)
+                await num_input.fill("100", force=True) # Número genérico para passar
+            except Exception:
+                # CEP único da cidade (sem rua, como o de São Joaquim de Bicas): o site não pede número, só "Confirme seu endereço"
+                print("   ℹ️ [Atacadão] Sem campo de número: seguindo para a confirmação do endereço")
             
             print("✅ [Atacadão] Confirmando...")
             btn_confirmar = page.locator("button:has-text('Confirmar')").first
