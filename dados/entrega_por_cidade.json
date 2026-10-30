@@ -1,0 +1,370 @@
+{
+ "gerado_em": "2026-10-30T10:59:47+00:00",
+ "observacao": "situacao: atende | nao_atende | parcial | duvidoso | sem_dados. Super ABC: unidade na cidade, não CEP.",
+ "cidades": {
+  "Belo Horizonte": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 9,
+    "ceps_testados": 9,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "atende",
+    "ceps_que_atendem": 9,
+    "ceps_testados": 9,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 9,
+    "ceps_testados": 9,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "atende",
+    "ceps_que_atendem": 9,
+    "ceps_testados": 9,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Betim": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 3,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "atende",
+    "ceps_que_atendem": 3,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 3,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "atende",
+    "ceps_que_atendem": 3,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Contagem": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 4,
+    "ceps_testados": 4,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "atende",
+    "ceps_que_atendem": 4,
+    "ceps_testados": 4,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 4,
+    "ceps_testados": 4,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 4,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Ribeirão das Neves": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 3,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "parcial",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 3,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Santa Luzia": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "parcial",
+    "ceps_que_atendem": 1,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Sabará": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "parcial",
+    "ceps_que_atendem": 1,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Vespasiano": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Ibirité": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Nova Lima": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 3,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 3,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 3,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Esmeraldas": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Igarapé": {
+   "Apoio Entrega": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Brumadinho": {
+   "Apoio Entrega": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "parcial",
+    "ceps_que_atendem": 1,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   }
+  },
+  "São Joaquim de Bicas": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "parcial",
+    "ceps_que_atendem": 1,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   }
+  },
+  "Sarzedo": {
+   "Apoio Entrega": {
+    "situacao": "atende",
+    "ceps_que_atendem": 2,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Atacadao": {
+    "situacao": "parcial",
+    "ceps_que_atendem": 1,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Supernosso": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   },
+   "Super ABC": {
+    "situacao": "nao_atende",
+    "ceps_que_atendem": 0,
+    "ceps_testados": 2,
+    "ceps_em_duvida": 0
+   }
+  }
+ }
+}

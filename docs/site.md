@@ -70,6 +70,6 @@ Para conferir as regras: `node tests/test_equivalencia.js` (precisa do Node). Os
 ## Limitações conhecidas
 
 - **Preços da lista envelhecem.** Ficam salvos como estavam quando o item entrou na lista, e os robôs atualizam o banco uma vez por dia. O cupom informa a data do preço mais antigo dele, mas ainda não busca preços novos ao reabrir a página.
-- **O CEP decide se a cidade é atendida, mas não quais mercados entregam nela.** Os quatro mercados aparecem para todas as 14 cidades, e isso nem sempre é verdade: o Super ABC não tem unidade em Contagem, e o Apoio muda de catálogo conforme a região. Falta levantar, cidade por cidade, quais mercados entregam.
+- **O CEP decide se a cidade é atendida, mas ainda não quais mercados entregam nela.** O site mostra os quatro mercados em todas as 14 cidades, e isso nem sempre é verdade: o Super ABC só tem unidade em BH e Betim, e o Atacadão atende só parte de várias cidades. O levantamento de quem entrega onde está em [`entrega_por_cidade.md`](entrega_por_cidade.md) (gerado por `levantar_entrega.py`); falta o site usá-lo. O Apoio também muda de catálogo conforme a região.
 - **Equivalência é por regras.** Cobre as 11 famílias que o banco tem hoje. Para outros produtos, só o modo exato funciona.
 - A busca por "óleo" ainda traz óleo capilar no modo exato; a sugestão da tela usa "óleo de soja".
