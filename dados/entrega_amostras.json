@@ -1,0 +1,242 @@
+[
+ {
+  "cidade": "Belo Horizonte",
+  "cep": "30130010",
+  "bairro": "Centro",
+  "logradouro": "Praça Sete de Setembro"
+ },
+ {
+  "cidade": "Belo Horizonte",
+  "cep": "30140008",
+  "bairro": "Savassi",
+  "logradouro": "Avenida Brasil"
+ },
+ {
+  "cidade": "Belo Horizonte",
+  "cep": "31340505",
+  "bairro": "Bandeirantes (Pampulha)",
+  "logradouro": "Avenida Otacílio Negrão de Lima"
+ },
+ {
+  "cidade": "Belo Horizonte",
+  "cep": "31610070",
+  "bairro": "Venda Nova",
+  "logradouro": "Avenida Vilarinho"
+ },
+ {
+  "cidade": "Belo Horizonte",
+  "cep": "30640070",
+  "bairro": "Barreiro",
+  "logradouro": "Avenida Afonso Vaz de Melo"
+ },
+ {
+  "cidade": "Belo Horizonte",
+  "cep": "31260500",
+  "bairro": "Suzana",
+  "logradouro": "Avenida Cristiano Machado"
+ },
+ {
+  "cidade": "Belo Horizonte",
+  "cep": "30431025",
+  "bairro": "Alto Barroca",
+  "logradouro": "Avenida Amazonas"
+ },
+ {
+  "cidade": "Belo Horizonte",
+  "cep": "30575180",
+  "bairro": "Buritis",
+  "logradouro": "Avenida Professor Mário Werneck"
+ },
+ {
+  "cidade": "Belo Horizonte",
+  "cep": "30285255",
+  "bairro": "Vera Cruz",
+  "logradouro": "Avenida dos Andradas"
+ },
+ {
+  "cidade": "Betim",
+  "cep": "32600055",
+  "bairro": "Centro",
+  "logradouro": "Avenida Amazonas"
+ },
+ {
+  "cidade": "Betim",
+  "cep": "32607600",
+  "bairro": "Teixeirinha",
+  "logradouro": "Rua Florinda Rodrigues"
+ },
+ {
+  "cidade": "Betim",
+  "cep": "32678166",
+  "bairro": "Granja Verde",
+  "logradouro": "Rua São Paulo"
+ },
+ {
+  "cidade": "Contagem",
+  "cep": "32041000",
+  "bairro": "Três Barras",
+  "logradouro": "Rua Valentim Costa Pacheco"
+ },
+ {
+  "cidade": "Contagem",
+  "cep": "32040030",
+  "bairro": "Centro",
+  "logradouro": "Rua Padre Rossini Cândido"
+ },
+ {
+  "cidade": "Contagem",
+  "cep": "32315010",
+  "bairro": "Eldorado",
+  "logradouro": "Avenida Canal"
+ },
+ {
+  "cidade": "Contagem",
+  "cep": "32210110",
+  "bairro": "Cidade Industrial",
+  "logradouro": "Avenida General David Sarnoff"
+ },
+ {
+  "cidade": "Ribeirão das Neves",
+  "cep": "33805276",
+  "bairro": "Tânia",
+  "logradouro": "Rua São Paulo"
+ },
+ {
+  "cidade": "Ribeirão das Neves",
+  "cep": "33900240",
+  "bairro": "São José (Justinópolis)",
+  "logradouro": "Rua São Paulo"
+ },
+ {
+  "cidade": "Ribeirão das Neves",
+  "cep": "33913480",
+  "bairro": "Menezes (Justinópolis)",
+  "logradouro": "Rua Minas Gerais"
+ },
+ {
+  "cidade": "Santa Luzia",
+  "cep": "33010000",
+  "bairro": "Centro",
+  "logradouro": "Rua Direita"
+ },
+ {
+  "cidade": "Santa Luzia",
+  "cep": "33120563",
+  "bairro": "São Benedito",
+  "logradouro": "Avenida Brasília"
+ },
+ {
+  "cidade": "Sabará",
+  "cep": "34505000",
+  "bairro": "Centro",
+  "logradouro": "Rua Dom Pedro II"
+ },
+ {
+  "cidade": "Sabará",
+  "cep": "34590050",
+  "bairro": "Nações Unidas",
+  "logradouro": "Avenida Brasil"
+ },
+ {
+  "cidade": "Vespasiano",
+  "cep": "33200356",
+  "bairro": "Centro",
+  "logradouro": "Rua Tiradentes"
+ },
+ {
+  "cidade": "Vespasiano",
+  "cep": "33200700",
+  "bairro": "Nova Granja",
+  "logradouro": "Rua São Paulo"
+ },
+ {
+  "cidade": "Ibirité",
+  "cep": "32405113",
+  "bairro": "Morada da Serra",
+  "logradouro": "Rua Pernambuco"
+ },
+ {
+  "cidade": "Ibirité",
+  "cep": "32415138",
+  "bairro": "São Pedro",
+  "logradouro": "Praça Santa Sé"
+ },
+ {
+  "cidade": "Nova Lima",
+  "cep": "34000132",
+  "bairro": "Centro",
+  "logradouro": "Avenida Rio Branco"
+ },
+ {
+  "cidade": "Nova Lima",
+  "cep": "34006031",
+  "bairro": "Vale do Sereno",
+  "logradouro": "Avenida Rei Pelé"
+ },
+ {
+  "cidade": "Nova Lima",
+  "cep": "34018010",
+  "bairro": "Alphaville - Lagoa dos Ingleses",
+  "logradouro": "Avenida Cisne"
+ },
+ {
+  "cidade": "Esmeraldas",
+  "cep": "32800060",
+  "bairro": "Centro",
+  "logradouro": "Avenida Juscelino Kubitschek de Oliveira"
+ },
+ {
+  "cidade": "Esmeraldas",
+  "cep": "32809472",
+  "bairro": "São Francisco de Assis",
+  "logradouro": "Avenida Brasília"
+ },
+ {
+  "cidade": "Igarapé",
+  "cep": "32510050",
+  "bairro": "Centro",
+  "logradouro": "Avenida Getúlio Vargas"
+ },
+ {
+  "cidade": "Igarapé",
+  "cep": "32516002",
+  "bairro": "Padre Eustáquio",
+  "logradouro": "Avenida Getúlio Vargas"
+ },
+ {
+  "cidade": "Brumadinho",
+  "cep": "32481000",
+  "bairro": "Do Carmo",
+  "logradouro": "Rua Padre Michel Callerot"
+ },
+ {
+  "cidade": "Brumadinho",
+  "cep": "32480172",
+  "bairro": "Santa Cruz",
+  "logradouro": "Rua Padre Eustáquio"
+ },
+ {
+  "cidade": "São Joaquim de Bicas",
+  "cep": "32920000",
+  "bairro": "",
+  "logradouro": ""
+ },
+ {
+  "cidade": "São Joaquim de Bicas",
+  "cep": "32920971",
+  "bairro": "Centro",
+  "logradouro": "Rua Primeiro de Maio"
+ },
+ {
+  "cidade": "Sarzedo",
+  "cep": "32450000",
+  "bairro": "",
+  "logradouro": ""
+ },
+ {
+  "cidade": "Sarzedo",
+  "cep": "32450971",
+  "bairro": "Centro",
+  "logradouro": "Rua dos Rodoviários"
+ }
+]

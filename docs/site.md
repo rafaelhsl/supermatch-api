@@ -16,6 +16,18 @@ Belo Horizonte, Betim, Brumadinho, Contagem, Esmeraldas, Ibirité, Igarapé, Nov
 - Um CEP já guardado no navegador é conferido de novo ao abrir a página; se a cidade não é atendida (ou não está guardada), a pessoa informa o CEP outra vez.
 - A regra vale só no site. A API continua respondendo para qualquer CEP de MG.
 
+### Quais mercados aparecem em cada cidade
+
+Os mercados nem sempre entregam na cidade toda. O site usa a tabela de [`entrega_por_cidade.md`](entrega_por_cidade.md) (levantada com os robôs, em CEPs reais) e mostra só o que entrega na cidade do CEP:
+
+- **Entrega:** o mercado aparece normalmente.
+- **Só em parte** (a entrega depende do bairro): o mercado aparece, com a marca "Só em parte da cidade" na barraca, um aviso fixo sob as barracas, um aviso no cupom dele e, quando é o mais barato, um aviso no painel principal. O site não tem como saber o bairro, então manda a pessoa conferir no site do mercado.
+- **Não entrega:** o mercado some da tela (barracas, resultados, comparação). Produto vendido só por mercados que não entregam ali também some.
+- **Nenhum mercado entrega** (hoje, Igarapé): o CEP é recusado com "Não há dados para o CEP inserido. Nenhum dos mercados que acompanhamos entrega em Igarapé/MG por enquanto."
+- Antes de informar o CEP, as quatro barracas aparecem. Ao trocar de cidade, tudo se refaz sem recarregar.
+
+A tabela mora dentro de `site/index.html` (bloco `ENTREGA_POR_CIDADE`, entre `@entrega-inicio` e `@entrega-fim`) e **não se edita à mão**: `python levantar_entrega.py --relatorio` reescreve o bloco a partir de `dados/entrega_por_cidade.json`. `node tests/test_entrega.js` falha se o site ficar desatualizado em relação ao levantamento.
+
 ## Produto exato e produto equivalente
 
 - **Exato** (padrão): cada resultado é um produto específico (marca e tamanho), como a API agrupa. Um mercado que não vende exatamente esse produto fica sem preço.
@@ -70,6 +82,8 @@ Para conferir as regras: `node tests/test_equivalencia.js` (precisa do Node). Os
 ## Limitações conhecidas
 
 - **Preços da lista envelhecem.** Ficam salvos como estavam quando o item entrou na lista, e os robôs atualizam o banco uma vez por dia. O cupom informa a data do preço mais antigo dele, mas ainda não busca preços novos ao reabrir a página.
-- **O CEP decide se a cidade é atendida, mas não quais mercados entregam nela.** Os quatro mercados aparecem para todas as 14 cidades, e isso nem sempre é verdade: o Super ABC não tem unidade em Contagem, e o Apoio muda de catálogo conforme a região. Falta levantar, cidade por cidade, quais mercados entregam.
+- **A entrega é decidida por cidade, mas o Atacadão (e talvez os outros) decide por bairro.** Onde o levantamento deu resultados diferentes dentro da cidade, o site só avisa ("Só em parte da cidade"). Uma amostra mais densa de CEPs (um por faixa de CEP) diria o bairro exato. A amostra atual tem de 2 a 9 CEPs por cidade.
+- **O Super ABC aparece só em BH e Betim**, porque só tem unidade lá; uma unidade vizinha pode entregar em outras cidades, mas o site dele não deixa conferir.
+- **O Apoio muda de catálogo conforme a região** (canal de vendas); a carga diária usa o canal de Betim.
 - **Equivalência é por regras.** Cobre as 11 famílias que o banco tem hoje. Para outros produtos, só o modo exato funciona.
 - A busca por "óleo" ainda traz óleo capilar no modo exato; a sugestão da tela usa "óleo de soja".
