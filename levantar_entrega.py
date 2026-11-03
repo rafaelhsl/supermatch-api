@@ -3,7 +3,8 @@
 Os sites não têm uma lista pública de onde entregam; a única forma de saber é informar um CEP e ver se o site o
 aceita. Por isso o levantamento usa os próprios robôs da carga (com a busca "arroz") em CEPs reais de bairros
 diferentes de cada cidade, e guarda o resultado em `dados/entrega_resultados.json`. Dele saem a tabela agregada
-`dados/entrega_por_cidade.json` e o documento `docs/entrega_por_cidade.md`.
+`dados/entrega_por_cidade.json`, o documento `docs/entrega_por_cidade.md` e o bloco `ENTREGA_POR_CIDADE` de `site/index.html`
+(é com ele que o site esconde os mercados que não entregam na cidade do CEP).
 
 Uso (a partir da pasta do projeto):
     python levantar_entrega.py                              # todas as cidades e mercados (leva cerca de uma hora)
@@ -31,6 +32,7 @@ AMOSTRAS = PASTA / "dados" / "entrega_amostras.json"
 RESULTADOS = PASTA / "dados" / "entrega_resultados.json"
 TABELA = PASTA / "dados" / "entrega_por_cidade.json"
 DOCUMENTO = PASTA / "docs" / "entrega_por_cidade.md"
+SITE = PASTA / "site" / "index.html"
 
 ITEM = "arroz"
 MERCADOS = ["Apoio Entrega", "Atacadao", "Supernosso", "Super ABC"]
@@ -290,6 +292,29 @@ def gerar_documento(tabela, resultados, amostras):
     return "\n".join(linhas) + "\n"
 
 
+MARCA_INICIO_SITE = "/* @entrega-inicio */"
+MARCA_FIM_SITE = "/* @entrega-fim */"
+
+
+def atualizar_site(tabela):
+    """Grava a situação de cada mercado em cada cidade dentro de site/index.html (o site é um arquivo só).
+
+    Só a situação vai para o site: atende, parcial (só em parte da cidade) ou nao_atende. Resultado
+    duvidoso ou sem dados o site trata como parcial: avisa em vez de esconder.
+    """
+    if not SITE.exists():
+        return False
+    texto = SITE.read_text(encoding="utf-8")
+    a, b = texto.find(MARCA_INICIO_SITE), texto.find(MARCA_FIM_SITE)
+    if a < 0 or b < a:
+        return False
+    compacta = {cidade: {mercado: info["situacao"] for mercado, info in por_mercado.items()} for cidade, por_mercado in tabela.items()}
+    bloco = json.dumps(compacta, ensure_ascii=False, indent=2).replace("\n", "\n  ")
+    novo = f"{MARCA_INICIO_SITE}\n  const ENTREGA_POR_CIDADE = {bloco};\n  {MARCA_FIM_SITE}"
+    SITE.write_text(texto[:a] + novo + texto[b + len(MARCA_FIM_SITE):], encoding="utf-8", newline="\n")
+    return True
+
+
 def gerar_relatorio():
     tabela, resultados, amostras = montar_tabela()
     gravar_json(TABELA, {
@@ -299,6 +324,8 @@ def gerar_relatorio():
     })
     DOCUMENTO.write_text(gerar_documento(tabela, resultados, amostras), encoding="utf-8")
     print(f"Tabela em {TABELA.relative_to(PASTA)} e documento em {DOCUMENTO.relative_to(PASTA)}")
+    if atualizar_site(tabela):
+        print(f"Site atualizado em {SITE.relative_to(PASTA)}")
 
 
 if __name__ == "__main__":

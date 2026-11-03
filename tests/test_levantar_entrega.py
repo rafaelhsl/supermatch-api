@@ -59,7 +59,33 @@ def teste_celula_e_documento():
     assert "Última sondagem: 2026-10-30" in doc
 
 
+def teste_atualizar_site():
+    import tempfile
+    tabela = {"Betim": {"Atacadao": {"situacao": "atende"}, "Super ABC": {"situacao": "nao_atende"}},
+              "Sabará": {"Atacadao": {"situacao": "parcial"}, "Super ABC": {"situacao": "nao_atende"}}}
+    antes = "<script>\n  /* @entrega-inicio */\n  const ENTREGA_POR_CIDADE = {};\n  /* @entrega-fim */\n  const resto = 1;\n</script>\n"
+    with tempfile.TemporaryDirectory() as pasta:
+        arquivo = Path(pasta) / "index.html"
+        arquivo.write_text(antes, encoding="utf-8")
+        original = le.SITE
+        le.SITE = arquivo
+        try:
+            assert le.atualizar_site(tabela) is True
+            depois = arquivo.read_text(encoding="utf-8")
+            assert le.atualizar_site(tabela) is True and arquivo.read_text(encoding="utf-8") == depois   # idempotente
+            sem_marca = Path(pasta) / "sem_marca.html"
+            sem_marca.write_text("<html></html>", encoding="utf-8")
+            le.SITE = sem_marca
+            assert le.atualizar_site(tabela) is False
+        finally:
+            le.SITE = original
+    assert '"Betim": {' in depois and '"Atacadao": "atende"' in depois and '"Sabará"' in depois      # só a situação vai para o site
+    assert "ceps_testados" not in depois
+    assert depois.count("@entrega-inicio") == 1 and depois.count("@entrega-fim") == 1 and "const resto = 1;" in depois
+
+
 if __name__ == "__main__":
     teste_situacao_da_cidade()
     teste_celula_e_documento()
-    print("ok: 2 testes passaram")
+    teste_atualizar_site()
+    print("ok: 3 testes passaram")
