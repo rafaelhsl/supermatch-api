@@ -5,7 +5,9 @@
 > lista de tabelas e volume. O banco está **igual ao script de criação**.
 
 - Projeto Supabase: `gtdvgdfalpsrnefzyfgu` (`https://gtdvgdfalpsrnefzyfgu.supabase.co`)
-- Tabelas no schema `public`: apenas **`produtos`** (confirmado).
+- Tabelas no schema `public`: apenas **`produtos`** (confirmado em 22/10/2026). O [histórico de preços](historico_de_precos.md)
+  acrescenta `catalogo`, `precos` e `coletas` (script em [`sql/historico_precos.sql`](sql/historico_precos.sql));
+  `produtos` continua sendo a foto do dia que a API e o site leem.
 - Quem acessa: o robô de carga ([`alimentar_banco.py`](../alimentar_banco.py)) escreve; a API
   ([`api_supabase.py`](../api_supabase.py)) lê. Ambos usam a variável de ambiente `SUPABASE_KEY`.
 
