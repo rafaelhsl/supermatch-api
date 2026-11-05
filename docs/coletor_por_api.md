@@ -2,7 +2,7 @@
 
 `coletor_vtex.py` busca produtos nas **APIs públicas que os próprios sites usam**, em vez de abrir um navegador e ler a primeira página de cada busca. Cada busca traz até 100 produtos por termo e mercado (os robôs leem de 20 a 30), com **marca, categoria e código de barras (EAN)**, que o robô não consegue ler.
 
-> **Estado:** só lê. Ainda não está ligado à carga diária, não grava em banco e não mexe em `produtos`. O próximo passo é ligá-lo à carga (ver o fim deste texto).
+> **Estado:** ligado à carga diária (`alimentar_banco.py`) para Apoio, Atacadão e Supernosso. O `coletor_vtex.py` em si só lê; quem grava no banco é a carga (veja [`banco_de_dados.md`](banco_de_dados.md) e [`robos.md`](robos.md#a-carga-e-as-falhas)).
 
 O Super ABC não tem API aberta (responde 403) e continua pelo robô (`Scraper_SuperABC.py`).
 
@@ -88,5 +88,5 @@ Executada no GitHub em 05/11/2026 ([run 42007495508](https://github.com/rafaelhs
 ## Próximos passos
 
 1. **SQL de migração**: [`sql/colunas_do_coletor.sql`](sql/colunas_do_coletor.sql) acrescenta a `produtos` as colunas `ean`, `marca`, `categoria`, `id_origem` e `termo` (todas vazias, sem risco para o que existe). A tabela `catalogo` do histórico já tem `ean`, `marca` e `categoria`.
-2. **Ligar à carga diária**: Apoio, Atacadão e Supernosso pelo coletor (o robô fica de reserva se a API falhar), Super ABC pelo robô nos 100 termos. O histórico de preços passa a usar `id_origem` como chave, ligando os produtos antigos pelo nome.
-3. **Agrupar por EAN** na API e no site, e levar as regras de equivalência do navegador para a carga.
+2. **Carga diária** (feito): Apoio, Atacadão e Supernosso pelo coletor, Super ABC pelo robô nos 100 termos, com coleta parcial. O histórico de preços usa `id_origem` como chave e religa os produtos antigos pelo nome ([`historico_de_precos.md`](historico_de_precos.md)). Se a API de um mercado falhar, ficam os dados do dia anterior; `coleta = robos` no workflow volta ao modo antigo.
+3. **Agrupar por EAN** na API e no site, e levar as regras de equivalência do navegador para a carga (ainda não feito).
