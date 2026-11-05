@@ -23,6 +23,13 @@ on:
           - sim
           - nao
         default: sim
+      coleta:
+        description: 'Como coletar: "api" (padrão: API pública para Apoio, Atacadão e Supernosso e robô para o Super ABC, 100 produtos) ou "robos" (modo antigo, só robôs, 11 itens, tudo ou nada)'
+        type: choice
+        options:
+          - api
+          - robos
+        default: api
 
 # --- A CORREÇÃO PARA O AVISO DO NODE.JS 24 ---
 env:
@@ -32,6 +39,7 @@ env:
 jobs:
   atualizar_banco_de_dados:
     runs-on: ubuntu-latest # O GitHub liga um Linux para nós
+    timeout-minutes: 150   # a carga com os 100 produtos leva 15 a 45 minutos (o Super ABC é o mais lento)
 
     steps:
     - name: Puxando o código do projeto
@@ -55,4 +63,6 @@ jobs:
         # Só têm valor quando a execução é disparada à mão; na agendada ficam vazios (todos os mercados, gravando)
         SO_MERCADOS: ${{ github.event.inputs.mercados }}
         SEM_GRAVAR: ${{ github.event.inputs.gravar == 'nao' && '1' || '' }}
+        # Na agendada o campo "coleta" é vazio: vale a coleta por API. "robos" volta ao modo antigo (COLETA_POR_API=0).
+        COLETA_POR_API: ${{ github.event.inputs.coleta == 'robos' && '0' || '1' }}
       run: python alimentar_banco.py

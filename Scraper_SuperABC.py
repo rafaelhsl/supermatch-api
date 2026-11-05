@@ -116,6 +116,11 @@ async def escolher_unidade(page, browser, mercado, cep):
     print(f"📍 [{mercado}] Unidade confirmada: {cabecalho.strip()}")
     await page.wait_for_timeout(2000)
 
+async def busca_sem_resultado(page):
+    """O site mostra "Ops... Nenhum produto foi encontrado para a busca realizada" quando o mercado não vende o que foi buscado."""
+    return await page.get_by_text("Nenhum produto foi encontrado", exact=False).count() > 0
+
+
 async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_usuario: str, cep_usuario: str = None):
     print(f"🤖 [{nome_mercado}] Iniciando robô invisível para buscar '{item_usuario}'...")
     
@@ -193,6 +198,15 @@ async def buscar_na_plataforma_regex(url_mercado: str, nome_mercado: str, item_u
             produto = estruturar_produto_regex_json(texto, nome_mercado)
             if produto:
                 lista_final_json.append(produto)
+
+        # Com a lista de 100 produtos, alguns o Super ABC não vende: o site avisa, e isso não é falha. Confere duas vezes
+        # (com uma espera no meio) para não confundir com a página ainda carregando.
+        if not lista_final_json and await busca_sem_resultado(page):
+            await page.wait_for_timeout(3000)
+            if await busca_sem_resultado(page):
+                await browser.close()
+                print(f"✅ [{nome_mercado}] '{item_usuario}': o site não encontrou nenhum produto (o mercado não vende isso).")
+                return []
 
         await exigir_produtos(browser, nome_mercado, lista_final_json, page)
         await browser.close()
