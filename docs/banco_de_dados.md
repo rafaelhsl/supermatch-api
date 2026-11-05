@@ -170,12 +170,23 @@ Riscos conhecidos desse fluxo:
 Endpoint `GET /comparar?cep=...&item=...` em [`api_supabase.py`](../api_supabase.py):
 
 1. Descobre a UF do CEP pelo ViaCEP (se falhar, usa `BR`).
-2. Carrega o **catálogo** da UF, ou seja, todos os produtos com `uf_cobertura` igual à UF do CEP ou
-   a `BR`, e o guarda **em memória por 10 minutos** (os preços só mudam na carga diária). A consulta
-   ao banco é paginada de 1000 em 1000 linhas, o limite do Supabase por requisição:
+2. Pega o **catálogo** da UF, ou seja, todos os produtos com `uf_cobertura` igual à UF do CEP ou
+   a `BR`, **em memória** (os preços só mudam na carga diária). Baixá-lo do banco leva uns 6 s com 8 mil
+   produtos, por isso:
+   - Passados 10 minutos, a busca **responde na hora com o catálogo que tem** e a atualização roda em
+     segundo plano; a busca seguinte já vê o novo. Só a primeira busca depois de o servidor acordar, sem
+     catálogo nenhum, espera o download.
+   - Só uma atualização por UF acontece por vez, mesmo com várias buscas chegando juntas.
+   - Se a atualização falhar (banco fora do ar), a API segue com o catálogo anterior e avisa no log.
+   - O servidor começa a carregar o catálogo ao ligar e quando o site chama `/saude`, então a primeira
+     busca depois de abrir o site já o encontra pronto.
+
+   A consulta ao banco é paginada de 1000 em 1000 linhas, o limite do Supabase por requisição, e pede só
+   as colunas que a API devolve ou usa (fica de fora `texto_original`, o texto bruto do robô):
 
 ```sql
-select *
+select id, supermercado, nome, marca, ean, categoria, id_origem, termo,
+       preco_varejo, preco_atacado, quantidade_atacado, uf_cobertura, atualizado_em
 from produtos
 where uf_cobertura in ('<UF do CEP>', 'BR')
 order by id
@@ -219,8 +230,10 @@ levava 15 s no Render para essa resposta.
 A resposta de `/comparar` tem os campos `status`, `cep`, `uf`, `item`, `mercados_consultados`, `ocultos` (quantos
 resultados ficaram de fora, veja o passo 3) e `carrinho_comparativo`.
 
-O endpoint `GET /saude` responde `{"status": "ok"}` sem consultar o banco. O site o chama ao abrir a
-página para acordar o servidor, que no plano gratuito do Render dorme após 15 minutos sem uso.
+O endpoint `GET /saude` responde `{"status": "ok"}` sem esperar o banco (só dispara o carregamento do catálogo
+em segundo plano, se preciso). O site o chama ao abrir a página para acordar o servidor, que no plano gratuito do
+Render dorme após 15 minutos sem uso; o acordar do servidor (cerca de 30 a 60 s) continua sendo o maior tempo de
+espera da primeira busca do dia.
 
 ## Diagnóstico rápido (reexecutável)
 
