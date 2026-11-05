@@ -1,0 +1,1828 @@
+{
+ "versao": 1,
+ "teto_por_termo": 100,
+ "termos": [
+  {
+   "termo": "arroz",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^arroz"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ arroz\\ e\\ feijao(?: > |$)",
+    "^mercearia\\ >\\ graos\\ >\\ arroz\\ branco(?: > |$)",
+    "^mercearia\\ >\\ graos\\ >\\ arroz\\ parboilizado(?: > |$)",
+    "^mercearia\\ >\\ arroz\\ >\\ arroz\\ tipo\\ 1(?: > |$)",
+    "^mercearia\\ >\\ arroz\\ >\\ arroz\\ para\\ risoto(?: > |$)",
+    "^mercearia\\ >\\ arroz(?: > |$)",
+    "^mercearia\\ >\\ arroz\\ >\\ arroz\\ parbolizado(?: > |$)",
+    "^padaria\\ >\\ rotisseria(?: > |$)",
+    "^mercearia\\ >\\ arroz\\ >\\ arroz\\ integral(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "arroz"
+   ]
+  },
+  {
+   "termo": "feijão",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^feijao"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ arroz\\ e\\ feijao(?: > |$)",
+    "^mercearia\\ >\\ graos\\ >\\ feijao(?: > |$)",
+    "^mercearia\\ >\\ conservas\\ e\\ enlatados\\ >\\ demais\\ conservas(?: > |$)",
+    "^mercearia\\ >\\ feijao\\ >\\ feijao\\ preto(?: > |$)",
+    "^mercearia\\ >\\ feijao\\ >\\ feijao\\ carioca(?: > |$)",
+    "^mercearia\\ >\\ feijao\\ >\\ feijao\\ roxo(?: > |$)",
+    "^mercearia\\ >\\ enlatados\\ e\\ conservas(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "feijão"
+   ]
+  },
+  {
+   "termo": "macarrão",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^(macarrao|espaguete|spaghetti|penne|parafuso|fusilli|talharim|fettuccine|fetuccine|linguine|conchinha|gravatinha|rigatoni|ave maria|cabelo de anjo)"
+   ],
+   "nome_exclui": [
+    "instantane|lamen|miojo|noodle|sopa|pastel|lasanha|nhoque|capeletti|tortellini|rondelli|molho|recheio|pizza|bolo|queijo ralado|pure"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "macarrão"
+   ]
+  },
+  {
+   "termo": "macarrão instantâneo",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^(?=.*(macarrao|lamen|miojo|noodle))(?=.*(instantane|lamen|miojo|noodle))"
+   ],
+   "nome_exclui": [
+    "^sopa|caldo|achocolatado|leite"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "macarrão instantâneo",
+    "lámen",
+    "miojo"
+   ]
+  },
+  {
+   "termo": "farinha de trigo",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^farinha(?=.*\\btrigo)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ farinhas\\ e\\ fermentos(?: > |$)",
+    "^mercearia\\ >\\ farinhas\\ >\\ farinha\\ de\\ trigo\\ tradicional(?: > |$)",
+    "^mercearia\\ >\\ farinhas\\ >\\ farinha\\ especial(?: > |$)",
+    "^mercearia\\ >\\ farinhas\\ >\\ farinhas\\ de\\ trigo(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "farinha de trigo"
+   ]
+  },
+  {
+   "termo": "farinha de mandioca",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^farinha(?=.*\\bmandioca)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ farinhas\\ >\\ farinha\\ de\\ mandioca(?: > |$)",
+    "^mercearia\\ >\\ farinhas\\ >\\ farinhas\\ de\\ mandioca(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "farinha de mandioca"
+   ]
+  },
+  {
+   "termo": "fubá",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^fuba|\\bfuba\\b"
+   ],
+   "nome_exclui": [
+    "bolo|mistura|biscoito|pao"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "fubá"
+   ]
+  },
+  {
+   "termo": "sal",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^sal\\b"
+   ],
+   "nome_exclui": [
+    "de frutas|\\beno\\b|condimento|realcador|tempero"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "sal"
+   ]
+  },
+  {
+   "termo": "açúcar",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^acucar"
+   ],
+   "nome_exclui": [
+    "sem acucar|zero|adocante|sache|\\d+ ?x ?\\d+ ?g"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "açúcar"
+   ]
+  },
+  {
+   "termo": "óleo",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^oleo\\b"
+   ],
+   "nome_exclui": [
+    "capilar|cabelo|motor|lub|corporal|amendoa|bebe|essencial|argan|massagem|bronze|maquina|spray|silicone|johnson|cheirinho|hidrat|automotivo"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "óleo"
+   ]
+  },
+  {
+   "termo": "azeite",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^azeite"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "azeite"
+   ]
+  },
+  {
+   "termo": "vinagre",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^vinagre"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ temperos\\ e\\ especiarias(?: > |$)",
+    "^mercearia\\ >\\ azeites,\\ oleos\\ e\\ vinagres\\ >\\ vinagre\\ e\\ aceto\\ balsamico(?: > |$)",
+    "^mercearia\\ >\\ vinagres(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "vinagre"
+   ]
+  },
+  {
+   "termo": "molho de tomate",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^molho(?=.*\\btomate)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ molhos\\ e\\ condimentos(?: > |$)",
+    "^mercearia\\ >\\ massas\\ e\\ molhos\\ >\\ molho\\ de\\ tomate(?: > |$)",
+    "^mercearia\\ >\\ molhos\\ e\\ condimentos\\ >\\ molho\\ de\\ tomate(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "molho de tomate"
+   ]
+  },
+  {
+   "termo": "extrato de tomate",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^extrato(?=.*\\btomate)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ molhos\\ e\\ condimentos(?: > |$)",
+    "^mercearia\\ >\\ massas\\ e\\ molhos\\ >\\ molho\\ de\\ tomate(?: > |$)",
+    "^mercearia\\ >\\ molhos\\ e\\ condimentos\\ >\\ extrato\\ de\\ tomate(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "extrato de tomate"
+   ]
+  },
+  {
+   "termo": "milho verde",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "milho verde"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "milho verde"
+   ]
+  },
+  {
+   "termo": "ervilha",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^ervilha"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ enlatados\\ e\\ conservas(?: > |$)",
+    "^mercearia\\ >\\ conservas\\ e\\ enlatados\\ >\\ ervilha(?: > |$)",
+    "^congelados\\ e\\ resfriados\\ >\\ vegetais(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "ervilha"
+   ]
+  },
+  {
+   "termo": "sardinha em lata",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "sardinha"
+   ],
+   "nome_exclui": [
+    "racao|gato|cao"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "sardinha"
+   ]
+  },
+  {
+   "termo": "atum",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^atum"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ enlatados\\ e\\ conservas(?: > |$)",
+    "^mercearia\\ >\\ conservas\\ e\\ enlatados\\ >\\ atum\\ e\\ sardinha(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "atum"
+   ]
+  },
+  {
+   "termo": "biscoito cream cracker",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "cream cracker"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "biscoito cream cracker"
+   ]
+  },
+  {
+   "termo": "biscoito maisena",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "maisena|maizena"
+   ],
+   "nome_exclui": [
+    "farinha|amido|mingau|creme|achocolatado"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "biscoito"
+   ]
+  },
+  {
+   "termo": "biscoito recheado",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^biscoito(?=.*\\brecheado)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ biscoitos\\ e\\ snacks(?: > |$)",
+    "^mercearia\\ >\\ biscoitos\\ >\\ biscoito\\ recheado(?: > |$)",
+    "^mercearia\\ >\\ biscoitos\\ >\\ biscoito\\ doce(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "biscoito recheado"
+   ]
+  },
+  {
+   "termo": "aveia",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^aveia"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^hortifruti\\ >\\ frutas(?: > |$)",
+    "^padaria\\ e\\ matinais\\ >\\ aveias\\ e\\ cereais\\ >\\ aveia(?: > |$)",
+    "^viver\\ bem\\ >\\ farinhas\\ e\\ graos\\ >\\ aveias(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "aveia"
+   ]
+  },
+  {
+   "termo": "maionese",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^maionese"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ temperos\\ e\\ especiarias(?: > |$)",
+    "^mercearia\\ >\\ temperos\\ e\\ condimentos\\ >\\ maionese(?: > |$)",
+    "^mercearia\\ >\\ molhos\\ e\\ condimentos\\ >\\ maionese(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "maionese"
+   ]
+  },
+  {
+   "termo": "ketchup",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^ketchup"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ temperos\\ e\\ especiarias(?: > |$)",
+    "^mercearia\\ >\\ temperos\\ e\\ condimentos\\ >\\ ketchup(?: > |$)",
+    "^mercearia\\ >\\ molhos\\ e\\ condimentos\\ >\\ ketchup(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "ketchup"
+   ]
+  },
+  {
+   "termo": "achocolatado",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^achocolatado"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ aveias,\\ cereais\\ e\\ matinais(?: > |$)",
+    "^mercearia\\ >\\ cafes,\\ chas\\ e\\ achocolatados\\ >\\ achocolatado\\ em\\ po(?: > |$)",
+    "^mercearia\\ >\\ cafes,\\ chas\\ e\\ achocolatados\\ >\\ capsula(?: > |$)",
+    "^mercearia\\ >\\ achocolatados\\ e\\ cacau\\ em\\ po(?: > |$)",
+    "^mercearia\\ >\\ cafes\\ >\\ cafe\\ em\\ \\ capsulas(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "achocolatado"
+   ]
+  },
+  {
+   "termo": "leite condensado",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^leite(?=.*\\bcondensado)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ alimentos\\ infantis(?: > |$)",
+    "^mercearia\\ >\\ confeitaria\\ >\\ leite\\ condensado\\ e\\ mistura\\ lactea(?: > |$)",
+    "^mercearia\\ >\\ confeitaria\\ >\\ leite\\ condensado(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "leite condensado"
+   ]
+  },
+  {
+   "termo": "creme de leite",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^creme(?=.*\\bleite)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ alimentos\\ infantis(?: > |$)",
+    "^mercearia\\ >\\ confeitaria\\ >\\ creme\\ culinario\\ e\\ de\\ leite(?: > |$)",
+    "^mercearia\\ >\\ confeitaria\\ >\\ creme\\ de\\ leite(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "creme de leite"
+   ]
+  },
+  {
+   "termo": "caldo de galinha",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "caldo(?=.*galinha)|caldo de galinha"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "caldo de galinha"
+   ]
+  },
+  {
+   "termo": "tempero completo",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "tempero(?=.*complet)|tempero completo"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "tempero completo"
+   ]
+  },
+  {
+   "termo": "fermento em pó",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "fermento(?=.*\\b(po|quimico)\\b)|fermento em po"
+   ],
+   "nome_exclui": [
+    "biologico|fresco|seco"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "fermento"
+   ]
+  },
+  {
+   "termo": "gelatina",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^gelatina"
+   ],
+   "nome_exclui": [
+    "capilar|cabelo|cacho|salon|skala|facial|fixador|bala|jujuba|goma"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "gelatina"
+   ]
+  },
+  {
+   "termo": "cereal matinal",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^cereal(?=.*\\bmatinal)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ aveias,\\ cereais\\ e\\ matinais(?: > |$)",
+    "^padaria\\ e\\ matinais\\ >\\ aveias\\ e\\ cereais\\ >\\ cereal\\ matinal(?: > |$)",
+    "^mercearia\\ >\\ cereal(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "cereal matinal"
+   ]
+  },
+  {
+   "termo": "farofa",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "^farofa"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ farinhas\\ e\\ fermentos(?: > |$)",
+    "^mercearia\\ >\\ farinhas\\ >\\ farofa(?: > |$)",
+    "^viver\\ bem\\ >\\ farinhas\\ e\\ graos\\ >\\ farofa(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "farofa"
+   ]
+  },
+  {
+   "termo": "pipoca",
+   "grupo": "Mercearia",
+   "nome_inclui": [
+    "pipoca"
+   ],
+   "nome_exclui": [
+    "salgadinho|chips|popcorner|camarao"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "pipoca"
+   ]
+  },
+  {
+   "termo": "café",
+   "grupo": "Café, chá e matinais",
+   "nome_inclui": [
+    "^cafe"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ cafes\\ e\\ chas(?: > |$)",
+    "^mercearia\\ >\\ cafes,\\ chas\\ e\\ achocolatados\\ >\\ cafe\\ torrado\\ e\\ moido(?: > |$)",
+    "^mercearia\\ >\\ cafes,\\ chas\\ e\\ achocolatados\\ >\\ capsula(?: > |$)",
+    "^mercearia\\ >\\ cafes,\\ chas\\ e\\ achocolatados\\ >\\ cafe\\ soluvel(?: > |$)",
+    "^mercearia\\ >\\ cafes,\\ chas\\ e\\ achocolatados\\ >\\ cappuccino(?: > |$)",
+    "^mercearia\\ >\\ cafes,\\ chas\\ e\\ achocolatados\\ >\\ cafe\\ em\\ graos(?: > |$)",
+    "^mercearia\\ >\\ cafes\\ >\\ cafe\\ em\\ \\ grao(?: > |$)",
+    "^mercearia\\ >\\ cafes\\ >\\ cafe\\ em\\ \\ capsulas(?: > |$)",
+    "^mercearia\\ >\\ cafes\\ >\\ cafe\\ soluvel(?: > |$)",
+    "^mercearia\\ >\\ cafes\\ >\\ cafe\\ em\\ \\ po(?: > |$)",
+    "^frios\\ e\\ laticinios\\ >\\ leites\\ e\\ bebidas\\ lacteas(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "café"
+   ]
+  },
+  {
+   "termo": "chá",
+   "grupo": "Café, chá e matinais",
+   "nome_inclui": [
+    "^cha"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ cafes\\ e\\ chas(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ sucos\\ e\\ chas(?: > |$)",
+    "^mercearia\\ >\\ cafes,\\ chas\\ e\\ achocolatados\\ >\\ cha(?: > |$)",
+    "^bebidas\\ >\\ chas\\ prontos\\ >\\ cha\\ mate(?: > |$)",
+    "^mercearia\\ >\\ chas(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ chas(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "chá"
+   ]
+  },
+  {
+   "termo": "pão de forma",
+   "grupo": "Café, chá e matinais",
+   "nome_inclui": [
+    "^pao(?=.*\\bforma)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^padaria\\ e\\ rotisseria\\ >\\ paes\\ e\\ bolos\\ industrializados(?: > |$)",
+    "^padaria\\ e\\ matinais\\ >\\ paes\\ e\\ torradas\\ >\\ pao\\ de\\ forma(?: > |$)",
+    "^padaria\\ e\\ matinais\\ >\\ paes\\ e\\ torradas\\ >\\ pao\\ integral(?: > |$)",
+    "^padaria\\ >\\ paes(?: > |$)",
+    "^viver\\ bem\\ >\\ padaria\\ >\\ paes(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "pão de forma"
+   ]
+  },
+  {
+   "termo": "pão de hambúrguer",
+   "grupo": "Café, chá e matinais",
+   "nome_inclui": [
+    "pao(?=.*hamburguer)|hamburguer(?=.*\\bpao\\b)"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "pão de hambúrguer"
+   ]
+  },
+  {
+   "termo": "margarina",
+   "grupo": "Café, chá e matinais",
+   "nome_inclui": [
+    "^margarina"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "margarina"
+   ]
+  },
+  {
+   "termo": "geleia",
+   "grupo": "Café, chá e matinais",
+   "nome_inclui": [
+    "^geleia"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^mercearia\\ >\\ aveias,\\ cereais\\ e\\ matinais(?: > |$)",
+    "^mercearia\\ >\\ doces\\ e\\ geleias(?: > |$)",
+    "^mercearia\\ >\\ temperos\\ e\\ especiarias(?: > |$)",
+    "^padaria\\ e\\ matinais\\ >\\ mel,\\ geleias\\ e\\ pates\\ >\\ geleia(?: > |$)",
+    "^mercearia\\ >\\ geleias(?: > |$)",
+    "^viver\\ bem\\ >\\ biscoitos\\ e\\ snacks(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "geleia"
+   ]
+  },
+  {
+   "termo": "leite integral",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^leite(?=.*integral)"
+   ],
+   "nome_exclui": [
+    "\\bpo\\b|em po|condensado|creme|achocolatado|fermentado|coco|infantil|formula|aptamil|\\bnan\\b"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "leite integral"
+   ]
+  },
+  {
+   "termo": "leite desnatado",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^leite(?=.*desnatado)"
+   ],
+   "nome_exclui": [
+    "\\bpo\\b|em po|condensado|iogurte|creme|achocolatado|infantil|formula|fermentado"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "leite desnatado"
+   ]
+  },
+  {
+   "termo": "leite em pó",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^leite(?=.*\\bpo\\b)"
+   ],
+   "nome_exclui": [
+    "condensado|achocolatado|infantil|formula|aptamil|\\bnan\\b"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "leite em pó"
+   ]
+  },
+  {
+   "termo": "iogurte",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^iogurte"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^frios\\ e\\ laticinios\\ >\\ iogurtes(?: > |$)",
+    "^viver\\ bem\\ >\\ complementos\\ e\\ suplementos(?: > |$)",
+    "^frios\\ e\\ congelados\\ >\\ lacteos\\ >\\ iogurte(?: > |$)",
+    "^viver\\ bem\\ >\\ veganos(?: > |$)",
+    "^viver\\ bem\\ >\\ bebidas\\ vegetais\\ >\\ bebida\\ proteica(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "iogurte"
+   ]
+  },
+  {
+   "termo": "requeijão",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^requeijao"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "requeijão"
+   ]
+  },
+  {
+   "termo": "manteiga",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^manteiga"
+   ],
+   "nome_exclui": [
+    "cacau|karite|corporal|hidrat|pipoca|amendoim|castanha|amendoa|capilar|cabelo"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "manteiga"
+   ]
+  },
+  {
+   "termo": "ovos",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^ovos"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^hortifruti\\ >\\ ovos(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "ovos"
+   ]
+  },
+  {
+   "termo": "queijo ralado",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^(queijo|parmesao)(?=.*ralado)"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "queijo ralado"
+   ]
+  },
+  {
+   "termo": "queijo mussarela",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^queijo(?=.*mussarela)|^mussarela"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "mussarela"
+   ]
+  },
+  {
+   "termo": "queijo prato",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^queijo(?=.*\\bprato\\b)"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "queijo prato"
+   ]
+  },
+  {
+   "termo": "presunto",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "^presunto"
+   ],
+   "nome_exclui": [
+    "pizza|sanduiche|empanado|torrada|hamburguer|biscoito|salgadinho|chips"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "presunto"
+   ]
+  },
+  {
+   "termo": "mortadela",
+   "grupo": "Laticínios e frios",
+   "nome_inclui": [
+    "mortadela"
+   ],
+   "nome_exclui": [
+    "pizza|sanduiche|salgadinho|chips"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "mortadela"
+   ]
+  },
+  {
+   "termo": "frango congelado",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "^(frango (inteiro|a passarinho|em pedacos|congelado)|coxa|sobrecoxa|asa|meio da asa|coxinha da asa|passarinho|figado de frango|moela)"
+   ],
+   "nome_exclui": [
+    "empanad|nugget|steak|hamburguer|mortadela|salsicha|linguica|torta|pizza|folhado|pao|caldo|tempero|molho|salgad|lasanha|recheado|bolinho"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "frango"
+   ]
+  },
+  {
+   "termo": "peito de frango",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "^(file|filezinho|peito|file de peito|peito de frango)(?=.*(peito|frango))"
+   ],
+   "nome_exclui": [
+    "empanado|nugget|caldo|tempero|vegano|molho|defumado|recheado|presunto|peito de peru"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "peito"
+   ]
+  },
+  {
+   "termo": "carne moída",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "^carne (bovina |suina )?moida"
+   ],
+   "nome_exclui": [
+    "vegetal|vegano|escondidinho|prato pronto"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "carne moída"
+   ]
+  },
+  {
+   "termo": "linguiça",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "^linguica"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^acougue\\ >\\ salsichas\\ e\\ linguicas(?: > |$)",
+    "^carnes,\\ aves\\ e\\ peixes\\ >\\ linguicas,\\ salsichas\\ e\\ chouricos\\ >\\ linguica(?: > |$)",
+    "^aves,\\ carnes\\ e\\ peixes\\ >\\ salsichas,\\ linguicas\\ e\\ embutidos(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "linguiça"
+   ]
+  },
+  {
+   "termo": "salsicha",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "^salsicha"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^acougue\\ >\\ salsichas\\ e\\ linguicas(?: > |$)",
+    "^carnes,\\ aves\\ e\\ peixes\\ >\\ linguicas,\\ salsichas\\ e\\ chouricos\\ >\\ salsicha(?: > |$)",
+    "^aves,\\ carnes\\ e\\ peixes\\ >\\ salsichas,\\ linguicas\\ e\\ embutidos(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "salsicha"
+   ]
+  },
+  {
+   "termo": "hambúrguer",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "^hamburguer"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^congelados\\ e\\ resfriados\\ >\\ lanches\\ e\\ massas\\ congelados(?: > |$)",
+    "^frios\\ e\\ congelados\\ >\\ hamburgueres\\ >\\ hamburguer\\ bovino(?: > |$)",
+    "^frios\\ e\\ congelados\\ >\\ hamburgueres\\ >\\ hamburguer\\ misto(?: > |$)",
+    "^congelados\\ e\\ resfriados\\ >\\ lanches\\ e\\ comidas\\ congeladas(?: > |$)",
+    "^viver\\ bem\\ >\\ veganos(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "hambúrguer"
+   ]
+  },
+  {
+   "termo": "bacon",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "^bacon"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^carnes,\\ aves\\ e\\ peixes\\ >\\ secas,\\ salgadas\\ e\\ defumadas\\ >\\ bacon(?: > |$)",
+    "^aves,\\ carnes\\ e\\ peixes\\ >\\ salsichas,\\ linguicas\\ e\\ embutidos(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "bacon"
+   ]
+  },
+  {
+   "termo": "empanado de frango",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "empanado|nugget|steak de frango|frango empanado"
+   ],
+   "nome_exclui": [
+    "peixe|vegano|soja|bolinho|coxinha|presunto|queijo|mistura|aneis|cebola|tirinhas|salmao|camarao"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "frango",
+    "empanado"
+   ]
+  },
+  {
+   "termo": "filé de tilápia",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "tilapia"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "tilápia"
+   ]
+  },
+  {
+   "termo": "batata frita congelada",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "^batata(?=.*\\bfrita)(?=.*\\bcongelada)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^congelados\\ e\\ resfriados\\ >\\ vegetais(?: > |$)",
+    "^frios\\ e\\ congelados\\ >\\ legumes\\ e\\ vegetais\\ >\\ batata\\ congelada(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "batata frita congelada"
+   ]
+  },
+  {
+   "termo": "sorvete",
+   "grupo": "Carnes e congelados",
+   "nome_inclui": [
+    "^sorvete"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^congelados\\ e\\ resfriados\\ >\\ sorvete,\\ acai\\ e\\ sobremesas(?: > |$)",
+    "^frios\\ e\\ congelados\\ >\\ sorvetes\\ e\\ acai\\ >\\ sorvete(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "sorvete"
+   ]
+  },
+  {
+   "termo": "água mineral",
+   "grupo": "Bebidas",
+   "nome_inclui": [
+    "^agua(?=.*\\bmineral)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ aguas\\ minerais(?: > |$)",
+    "^bebidas\\ >\\ aguas\\ >\\ agua\\ com\\ gas(?: > |$)",
+    "^bebidas\\ >\\ aguas\\ >\\ agua\\ sem\\ gas(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ aguas\\ minerais\\ >\\ agua\\ com\\ gas(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ aguas\\ minerais\\ >\\ agua\\ sem\\ gas(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "água mineral"
+   ]
+  },
+  {
+   "termo": "refrigerante",
+   "grupo": "Bebidas",
+   "nome_inclui": [
+    "^refrigerante"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ refrigerantes(?: > |$)",
+    "^bebidas\\ >\\ refrigerantes\\ >\\ refrigerante\\ de\\ sabor(?: > |$)",
+    "^bebidas\\ >\\ refrigerantes\\ >\\ refrigerante\\ cola(?: > |$)",
+    "^bebidas\\ >\\ refrigerantes\\ >\\ refrigerante\\ guarana(?: > |$)",
+    "^bebidas\\ >\\ refrigerantes\\ >\\ refrigerante\\ sem\\ acucar(?: > |$)",
+    "^bebidas\\ >\\ aguas\\ >\\ tonica\\ e\\ saborizada(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ refrigerantes\\ >\\ refrigerante\\ zero(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "refrigerante"
+   ]
+  },
+  {
+   "termo": "suco",
+   "grupo": "Bebidas",
+   "nome_inclui": [
+    "^suco"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ sucos\\ e\\ chas(?: > |$)",
+    "^bebidas\\ >\\ sucos\\ e\\ refrescos\\ >\\ suco\\ pronto(?: > |$)",
+    "^bebidas\\ >\\ sucos\\ e\\ refrescos\\ >\\ suco\\ integral(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ sucos\\ >\\ sucos\\ naturais(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ sucos\\ >\\ sucos\\ integrais(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ sucos\\ >\\ sucos\\ concentrados(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ sucos\\ >\\ sucos\\ em\\ \\ po(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "suco"
+   ]
+  },
+  {
+   "termo": "detergente",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^(?=.*\\bdetergente)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ cozinha(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ banheiro(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda(?: > |$)",
+    "^limpeza\\ >\\ limpeza\\ de\\ cozinha\\ >\\ detergente(?: > |$)",
+    "^limpeza\\ >\\ limpeza\\ de\\ cozinha\\ >\\ lava\\ louca(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ cozinha\\ >\\ detergentes\\ e\\ lava\\ loucas(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ banheiro\\ >\\ desodorizador\\ banheiro(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "detergente"
+   ]
+  },
+  {
+   "termo": "sabão em pó",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^(sabao|lava roupas?)(?=.*\\b(em po|po)\\b)|^sabao em po"
+   ],
+   "nome_exclui": [
+    "barra|liquido|amaciante|multiuso|delicad"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "lava roupas em pó",
+    "sabão em pó"
+   ]
+  },
+  {
+   "termo": "sabão líquido",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^(sabao|lava roupas?)(?=.*liquid)"
+   ],
+   "nome_exclui": [
+    "barra|amaciante|multiuso|louca|maos|corpo"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "líquido"
+   ]
+  },
+  {
+   "termo": "sabão em barra",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^sabao em barra|^sabao (?=.*\\bbarra\\b)"
+   ],
+   "nome_exclui": [
+    "sabonete|coco$"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "sabão em barra"
+   ]
+  },
+  {
+   "termo": "amaciante",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^(?=.*\\bamaciante)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ roupas(?: > |$)",
+    "^limpeza\\ >\\ limpeza\\ de\\ roupas\\ >\\ amaciante(?: > |$)",
+    "^mercearia\\ >\\ temperos\\ e\\ condimentos\\ >\\ tempero\\ pronto\\ e\\ caldo(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ roupas\\ >\\ amaciantes(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "amaciante"
+   ]
+  },
+  {
+   "termo": "água sanitária",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^(?=.*\\bagua)(?=.*\\bsanitaria)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda(?: > |$)",
+    "^limpeza\\ >\\ limpeza\\ de\\ banheiro\\ >\\ agua\\ sanitaria\\ e\\ cloro(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda\\ >\\ agua\\ sanitaria\\ e\\ cloro(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "água sanitária"
+   ]
+  },
+  {
+   "termo": "desinfetante",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^(?=.*\\bdesinfetante)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ banheiro(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda(?: > |$)",
+    "^limpeza\\ >\\ limpeza\\ de\\ banheiro\\ >\\ desinfetante\\ sanitario(?: > |$)",
+    "^limpeza\\ >\\ limpeza\\ de\\ casa\\ >\\ alcool\\ e\\ removedor(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ banheiro\\ >\\ desinfetantes(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "desinfetante"
+   ]
+  },
+  {
+   "termo": "esponja",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^esponja|esponja"
+   ],
+   "nome_exclui": [
+    "banho|animais|corporal|maquiagem|facial|bolo"
+   ],
+   "categorias": [
+    "^utilidades\\ e\\ bazar\\ >\\ utensilios\\ domesticos(?: > |$)",
+    "^limpeza\\ >\\ limpeza\\ de\\ cozinha\\ >\\ esponja\\ e\\ la\\ de\\ aco(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ cozinha\\ >\\ esponjas\\ e\\ palha\\ de\\ aco(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "esponja"
+   ]
+  },
+  {
+   "termo": "saco de lixo",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^(?=.*\\bsaco)(?=.*\\blixo)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda(?: > |$)",
+    "^utilidades\\ domesticas\\ >\\ organizacao\\ e\\ limpeza\\ >\\ saco\\ de\\ lixo(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda\\ >\\ sacos\\ de\\ lixo(?: > |$)",
+    "^visualizar\\ mais\\ produtos(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "saco de lixo"
+   ]
+  },
+  {
+   "termo": "papel toalha",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "papel toalha|toalha de papel"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "papel toalha"
+   ]
+  },
+  {
+   "termo": "limpador multiuso",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^(?=.*\\blimpador)(?=.*\\bmultiuso)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda(?: > |$)",
+    "^limpeza\\ >\\ limpeza\\ de\\ casa\\ >\\ limpador\\ perfumado\\ e\\ de\\ uso\\ geral(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda\\ >\\ multiuso(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "limpador multiuso"
+   ]
+  },
+  {
+   "termo": "álcool",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^alcool"
+   ],
+   "nome_exclui": [
+    "vodka|cerveja|bebida|perfume|essencia"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "álcool"
+   ]
+  },
+  {
+   "termo": "inseticida",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "^(?=.*\\binseticida)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda(?: > |$)",
+    "^limpeza\\ >\\ limpeza\\ de\\ casa\\ >\\ inseticida(?: > |$)",
+    "^produtos\\ de\\ limpeza\\ >\\ para\\ casa\\ toda\\ >\\ antipragas(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "inseticida"
+   ]
+  },
+  {
+   "termo": "desengordurante",
+   "grupo": "Limpeza",
+   "nome_inclui": [
+    "desengordurante|limpa fogao|tira gordura"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|alimento|bebida|mercearia|lacteo|iogurte|temperos|enlatados|infantil|bebe|automotiv|padaria|congelad|banho|bucha"
+   ],
+   "consultas": [
+    "desengordurante"
+   ]
+  },
+  {
+   "termo": "papel higiênico",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "^(?=.*\\bpapel)(?=.*\\bhigienico)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^higiene\\ e\\ beleza\\ >\\ papel\\ higienico\\ e\\ lencos(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ papel\\ higienico\\ >\\ folha\\ dupla(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ papel\\ higienico\\ >\\ folha\\ simples(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "papel higiênico"
+   ]
+  },
+  {
+   "termo": "sabonete",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "^(?=.*\\bsabonete)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^higiene\\ e\\ beleza\\ >\\ cuidado\\ com\\ o\\ corpo(?: > |$)",
+    "^categorizar(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ sabonetes\\ >\\ sabonete\\ em\\ barra(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ sabonetes\\ >\\ sabonete\\ liquido(?: > |$)",
+    "^higiene\\ e\\ beleza\\ >\\ sabonetes\\ >\\ sabonete\\ em\\ \\ barra(?: > |$)",
+    "^higiene\\ e\\ beleza\\ >\\ sabonetes\\ >\\ sabonete\\ liquido(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "sabonete"
+   ]
+  },
+  {
+   "termo": "shampoo",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "^(?=.*\\bshampoo)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^higiene\\ e\\ beleza\\ >\\ cuidado\\ com\\ os\\ cabelos(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ cabelo\\ >\\ shampoo(?: > |$)",
+    "^pet\\ shop\\ >\\ higiene\\ e\\ limpeza\\ >\\ shampoo\\ e\\ condicionador(?: > |$)",
+    "^higiene\\ e\\ beleza\\ >\\ cuidado\\ com\\ os\\ cabelos\\ >\\ shampoos(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "shampoo"
+   ]
+  },
+  {
+   "termo": "condicionador",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "^(?=.*\\bcondicionador)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^higiene\\ e\\ beleza\\ >\\ cuidado\\ com\\ os\\ cabelos(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ cabelo\\ >\\ condicionador(?: > |$)",
+    "^higiene\\ e\\ beleza\\ >\\ cuidado\\ com\\ os\\ cabelos\\ >\\ condicionadores(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "condicionador"
+   ]
+  },
+  {
+   "termo": "creme dental",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "^(?=.*\\bcreme)(?=.*\\bdental)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^higiene\\ e\\ beleza\\ >\\ higiene\\ bucal(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ higiene\\ bucal\\ >\\ creme\\ dental(?: > |$)",
+    "^higiene\\ e\\ beleza\\ >\\ higiene\\ bucal\\ >\\ creme\\ e\\ gel\\ dental(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "creme dental"
+   ]
+  },
+  {
+   "termo": "escova de dente",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "escova dental|escova de dente|escova de dentes"
+   ],
+   "nome_exclui": [
+    "refil|eletrica|^kit"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "escova"
+   ]
+  },
+  {
+   "termo": "desodorante",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "desodorante"
+   ],
+   "nome_exclui": [
+    "ambiente|sanitario|banheiro|desodorizador|bucal|oral|vaso|geladeira|calcado|sapato|hidratante|deo-hidratante"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "desodorante"
+   ]
+  },
+  {
+   "termo": "absorvente",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "^(?=.*\\babsorvente)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^higiene\\ e\\ beleza\\ >\\ higiene\\ intima(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ higiene\\ intima\\ >\\ absorvente(?: > |$)",
+    "^higiene\\ e\\ beleza\\ >\\ higiene\\ intima\\ >\\ absorventes\\ com\\ abas(?: > |$)",
+    "^higiene\\ e\\ beleza\\ >\\ higiene\\ intima\\ >\\ absorventes\\ o\\.b\\.(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "absorvente"
+   ]
+  },
+  {
+   "termo": "fralda",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "^(?=.*\\bfralda)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^higiene\\ e\\ beleza\\ >\\ infantil(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ bebes\\ >\\ fralda\\ xg(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ bebes\\ >\\ fralda\\ g(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ bebes\\ >\\ fralda\\ xxg(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ bebes\\ >\\ fralda\\ m(?: > |$)",
+    "^higiene\\ e\\ perfumaria\\ >\\ bebes\\ >\\ fralda\\ p(?: > |$)",
+    "^higiene\\ e\\ beleza\\ >\\ infantil\\ >\\ fraldas(?: > |$)",
+    "^higiene\\ e\\ beleza\\ >\\ higiene\\ intima\\ >\\ fralda\\ adulto(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "fralda"
+   ]
+  },
+  {
+   "termo": "hidratante",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "hidratante"
+   ],
+   "nome_exclui": [
+    "capilar|cabelo|labial|facial|rosto|maos|unha|bebe|infantil|solar|protetor|shampoo|condicionador|mascara|sabonete|desodorante|deo|fralda|esmalte|removedor"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "hidratante"
+   ]
+  },
+  {
+   "termo": "enxaguante bucal",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "enxaguante|antisseptico bucal|listerine|colutorio"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "bucal"
+   ]
+  },
+  {
+   "termo": "fio dental",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "fio dental|fita dental"
+   ],
+   "nome_exclui": [
+    "^kit"
+   ],
+   "categorias": [],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "dental"
+   ]
+  },
+  {
+   "termo": "lenço umedecido",
+   "grupo": "Higiene",
+   "nome_inclui": [
+    "lenco(s)? umedecido|lenco umidecido|toalha umedecida"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "categorias_proibidas": [
+    "alimento|mercearia|bebida|enlatados|temperos|limpeza de |limpadores|padaria|automotiv|congelad|iogurte"
+   ],
+   "consultas": [
+    "lenço umedecido"
+   ]
+  },
+  {
+   "termo": "cerveja",
+   "grupo": "Opcionais",
+   "nome_inclui": [
+    "^(?=.*\\bcerveja)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^bebidas\\ alcoolicas\\ >\\ cervejas(?: > |$)",
+    "^bebidas\\ >\\ cervejas\\ >\\ cerveja\\ pilsen(?: > |$)",
+    "^bebidas\\ >\\ cervejas\\ >\\ cerveja\\ puro\\ malte(?: > |$)",
+    "^bebidas\\ >\\ cervejas\\ >\\ cerveja\\ especial(?: > |$)",
+    "^bebidas\\ >\\ cervejas\\ >\\ cerveja\\ sem\\ alcool(?: > |$)",
+    "^bebidas\\ >\\ cervejas\\ >\\ cerveja\\ ipa(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "cerveja"
+   ]
+  },
+  {
+   "termo": "vinho",
+   "grupo": "Opcionais",
+   "nome_inclui": [
+    "^(?=.*\\bvinho)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^bebidas\\ alcoolicas\\ >\\ vinhos\\ e\\ espumantes(?: > |$)",
+    "^bebidas\\ alcoolicas\\ >\\ destilados(?: > |$)",
+    "^bebidas\\ >\\ vinhos\\ >\\ vinho\\ importado(?: > |$)",
+    "^bebidas\\ >\\ vinhos\\ >\\ vinho\\ nacional(?: > |$)",
+    "^bebidas\\ alcoolicas\\ >\\ vinhos\\ >\\ vinhos\\ tintos(?: > |$)",
+    "^visualizar\\ mais\\ produtos(?: > |$)",
+    "^bebidas\\ alcoolicas\\ >\\ vinhos\\ >\\ vinhos\\ brancos(?: > |$)",
+    "^bebidas\\ alcoolicas\\ >\\ vinhos\\ >\\ vinhos\\ rose(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "vinho"
+   ]
+  },
+  {
+   "termo": "energético",
+   "grupo": "Opcionais",
+   "nome_inclui": [
+    "^(?=.*\\benergetico)"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ energeticos\\ e\\ isotonicos(?: > |$)",
+    "^bebidas\\ >\\ energeticos\\ e\\ isotonicos\\ >\\ energetico(?: > |$)",
+    "^bebidas\\ nao\\ alcoolicas\\ >\\ energeticos(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
+   ],
+   "consultas": [
+    "energético"
+   ]
+  },
+  {
+   "termo": "ração para cães",
+   "grupo": "Opcionais",
+   "nome_inclui": [
+    "\\bracao\\b"
+   ],
+   "nome_exclui": [
+    "gato|felino"
+   ],
+   "categorias": [],
+   "consultas": [
+    "ração"
+   ]
+  },
+  {
+   "termo": "ração para gatos",
+   "grupo": "Opcionais",
+   "nome_inclui": [
+    "\\bracao\\b"
+   ],
+   "nome_exclui": [
+    "\\bcaes\\b|\\bcao\\b|cachorro|canino"
+   ],
+   "categorias": [],
+   "consultas": [
+    "ração para gatos"
+   ]
+  },
+  {
+   "termo": "leite infantil",
+   "grupo": "Opcionais",
+   "nome_inclui": [
+    "formula infantil|leite infantil|composto lacteo|\\bnan\\b|aptamil|nestogeno|similac|ninho fases|neocate"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "consultas": [
+    "infantil"
+   ]
+  },
+  {
+   "termo": "papinha",
+   "grupo": "Opcionais",
+   "nome_inclui": [
+    "papinha|papa de"
+   ],
+   "nome_exclui": [],
+   "categorias": [],
+   "consultas": [
+    "papinha"
+   ]
+  }
+ ]
+}

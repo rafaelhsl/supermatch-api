@@ -1,0 +1,52 @@
+name: Coletor por API (teste, não grava em banco)
+
+# Só leitura: roda o coletor por API (coletor_vtex.py) com a lista inteira e guarda o resultado como arquivo da execução.
+# Serve para conferir, do servidor do GitHub, se as APIs públicas dos mercados respondem como respondem no computador.
+# Não usa segredo nenhum e não escreve no Supabase.
+on:
+  workflow_dispatch:
+    inputs:
+      termos:
+        description: 'Só estes termos da lista (separados por vírgula). Vazio = os 100.'
+        required: false
+        default: ''
+  # Temporário, para testar esta branch antes do merge (o GitHub só deixa disparar à mão o que já está na main).
+  push:
+    branches: [coletor-por-api]
+    paths: ['.github/workflows/coletor-api.yml']
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+    - name: Puxando o código do projeto
+      uses: actions/checkout@v4
+
+    - name: Configurando o Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Coletando pelas APIs (sem banco)
+      env:
+        TERMOS: ${{ github.event.inputs.termos }}
+      run: |
+        if [ -n "$TERMOS" ]; then
+          python coletor_vtex.py --termos "$TERMOS" --saida coleta.json | tee relatorio.txt
+        else
+          python coletor_vtex.py --saida coleta.json | tee relatorio.txt
+        fi
+
+    - name: Guardando o resultado
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coleta-por-api
+        path: |
+          coleta.json
+          relatorio.txt
+        if-no-files-found: ignore
