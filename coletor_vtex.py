@@ -56,6 +56,7 @@ class ClienteHttp:
     def __init__(self, pausa=0.2, tentativas=4, espera=2.0, timeout=40):
         self.pausa, self.tentativas, self.espera, self.timeout = pausa, tentativas, espera, timeout
         self.chamadas = 0
+        self.avisos = []          # falhas que não derrubam o termo (ex.: produtos que ficaram sem EAN)
 
     def _enviar(self, url, corpo=None, cabecalhos=None):
         dados = json.dumps(corpo).encode("utf-8") if corpo is not None else None
@@ -89,6 +90,13 @@ class ClienteHttp:
 
 
 # ============================== utilidades ==============================
+
+def _avisar(http, texto):
+    """Registra uma falha parcial no cliente (se ele guarda avisos) e mostra na tela."""
+    if hasattr(http, "avisos"):
+        http.avisos.append(texto)
+    print(f"AVISO {texto}", flush=True)
+
 
 def ean_valido(texto):
     """Só dígitos, com 8, 12, 13 ou 14 posições e sem repetição óbvia. Códigos internos (ex.: '8200') são descartados."""
@@ -268,17 +276,35 @@ def preco_e_atacado_do_no(no):
 
 
 def eans_do_atacadao(http, ids_de_produto):
-    """productId -> EAN, buscando até 50 produtos por chamada no catálogo."""
+    """productId -> EAN, buscando até 50 produtos por chamada no catálogo.
+
+    O EAN é um dado a mais: se o catálogo do Atacadão devolver erro (já devolveu 500 vários minutos seguidos), o lote é
+    dividido ao meio e tentado de novo; o que ainda assim falhar fica sem EAN, com um aviso, e o termo segue.
+    """
     base = MERCADOS["Atacadao"]["base"]
     eans = {}
-    for lote in paginar_ids(sorted(set(ids_de_produto))):
+
+    def buscar(lote, nivel=0):
         url = f"{base}/api/catalog_system/pub/products/search/?" + "&".join(f"fq=productId:{i}" for i in lote)
-        for produto in http.get_json(url):
+        try:
+            produtos = http.get_json(url)
+        except ErroDeColeta as erro:
+            if nivel < 2 and len(lote) > 1:
+                meio = len(lote) // 2
+                buscar(lote[:meio], nivel + 1)
+                buscar(lote[meio:], nivel + 1)
+            else:
+                _avisar(http, f"Atacadão: {len(lote)} produto(s) ficaram sem EAN porque o catálogo falhou ({str(erro)[:80]})")
+            return
+        for produto in produtos:
             for item in produto.get("items", []):
                 ean = ean_valido(item.get("ean"))
                 if ean:
                     eans[str(produto.get("productId"))] = ean
                     break
+
+    for lote in paginar_ids(sorted(set(ids_de_produto))):
+        buscar(lote)
     return eans
 
 
@@ -422,7 +448,7 @@ def principal(argv=None):
 
     resultado, erros = coletar(http, mercados, termos, teto, ao_terminar)
     total = sum(len(l) for por_termo in resultado.values() for l in por_termo.values())
-    print(f"\n{total} linhas em {time.time() - inicio:.0f}s, {http.chamadas} chamadas, {len(erros)} erro(s)")
+    print(f"\n{total} linhas em {time.time() - inicio:.0f}s, {http.chamadas} chamadas, {len(erros)} erro(s), {len(http.avisos)} aviso(s)")
     for mercado, termo, erro in erros:
         print(f"  ERRO {mercado} / {termo}: {erro}")
     if args.saida:

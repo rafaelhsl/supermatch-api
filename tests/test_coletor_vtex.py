@@ -189,6 +189,32 @@ def teste_atacadao_graphql_e_ean():
     assert len([ch for ch in http.chamadas if "graphql" in ch[1]]) == 1                       # totalCount alcançado: não pede mais páginas
 
 
+def teste_ean_do_atacadao_divide_o_lote_e_segue_sem_ean():
+    ids = [str(1000 + i) for i in range(8)]
+    chamadas = []
+
+    def resposta(url, corpo):
+        pedidos = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)["fq"]
+        chamadas.append(len(pedidos))
+        if len(pedidos) > 4 or "productId:1003" in pedidos:      # lote grande falha; o id 1003 falha sempre
+            raise c.ErroDeColeta("HTTP 500")
+        return [{"productId": p.split(":")[1], "items": [{"ean": "78910001001" + p[-2:]}]} for p in pedidos]
+
+    http = HttpFalso(resposta)
+    http.avisos = []
+    eans = c.eans_do_atacadao(http, ids)
+    # lote de 8 falha -> 4+4; o primeiro (com 1003) falha -> 2+2; o par (1002, 1003) falha de novo e desiste: só esses dois ficam sem EAN
+    assert sorted(eans) == ["1000", "1001", "1004", "1005", "1006", "1007"], sorted(eans)
+    assert http.avisos == [http.avisos[0]] and "2 produto(s) ficaram sem EAN" in http.avisos[0]
+    assert chamadas[0] == 8                                                         # primeiro tenta o lote inteiro
+
+
+def teste_ean_do_atacadao_sem_erro_nao_avisa():
+    http = HttpFalso(lambda url, corpo: [{"productId": "1", "items": [{"ean": "7896006711155"}]}])
+    http.avisos = []
+    assert c.eans_do_atacadao(http, ["1"]) == {"1": "7896006711155"} and http.avisos == []
+
+
 def teste_atacadao_pagina_ate_o_total():
     todos = [no_graphql(1000 + i, f"Produto {i}", [(1, 3.0)]) for i in range(120)]
 
