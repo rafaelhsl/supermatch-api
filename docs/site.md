@@ -86,4 +86,4 @@ Para conferir as regras: `node tests/test_equivalencia.js` (precisa do Node). Os
 - **O Super ABC aparece só em BH e Betim**, porque só tem unidade lá; uma unidade vizinha pode entregar em outras cidades, mas o site dele não deixa conferir.
 - **O Apoio muda de catálogo conforme a região** (canal de vendas); a carga diária usa o canal de Betim.
 - **Equivalência é por regras.** Cobre as 11 famílias que o banco tem hoje. Para outros produtos, só o modo exato funciona.
-- A busca por "óleo" ainda traz óleo capilar no modo exato; a sugestão da tela usa "óleo de soja".
+- A busca prioriza o que é do produto digitado: "óleo" não traz mais óleo capilar nem sardinha em óleo quando há óleos de cozinha suficientes (ver [`banco_de_dados.md`](banco_de_dados.md#como-os-dados-saem)). A API informa quantos resultados ficaram de fora (`ocultos`), mas o site ainda não mostra esse número.

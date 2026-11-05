@@ -185,9 +185,28 @@ limit 1000 offset <0, 1000, 2000, ...>;
 3. Filtra o catálogo em memória ([`busca.py`](../busca.py)): ignora maiúsculas e acentos e exige que
    o nome contenha **todas** as palavras digitadas, em qualquer ordem. Palavras de ligação (`de`,
    `da`, `do`, `e`, `com`, `para`, `em`) são ignoradas, então `óleo de soja` também acha
-   `Óleo Soja Liza`.
-4. Passa o resultado para `cruzar_multiplos_produtos`, que agrupa produtos equivalentes de mercados
-   diferentes (nome parecido, mesma medida, mesmas tags) e aponta o mais barato de cada grupo.
+   `Óleo Soja Liza`. Os resultados têm duas faixas:
+   - **principais**: o `termo` do produto (coluna `termo`, ex.: `arroz`) tem as palavras digitadas, ou o
+     nome **começa** por elas (`Arroz Branco Camil…`). Palavras de até 3 letras valem inteiras (`sal` não
+     acha `salsicha`); as de 4 ou mais valem como começo (`arro` acha `arroz`);
+   - **só citam**: a palavra aparece no meio do nome (`Condicionador… Arroz Preto`, `Sardinha em Óleo`).
+
+   Havendo 3 ou mais principais, só eles voltam; o resto vira `ocultos` na resposta. Com menos de 3
+   (uma marca como `ninho`, um produto fora da lista), voltam todos, principais primeiro, e `ocultos` é 0.
+   A resposta traz no máximo 400 produtos (a busca de uma letra casava 6,6 mil e o agrupamento levava
+   24 s); os que passam disso também entram em `ocultos`.
+4. Passa o resultado para `cruzar_multiplos_produtos` ([`Comparador_inteligente.py`](../Comparador_inteligente.py)),
+   que agrupa o mesmo produto de mercados diferentes e aponta o mais barato de cada grupo:
+   1. **Mesmo código de barras (`ean`) = mesmo produto**, sem adivinhar pelo nome. O EAN é comparado sem os zeros
+      à esquerda (`0630941446201` = `630941446201`). Só não junta se as medidas do nome discordarem.
+   2. **EAN diferente, nome praticamente idêntico** (pontuação de similaridade 95 ou mais), mesma medida e
+      mesmas tags, **em mercados diferentes**: junta. O mesmo produto às vezes tem um EAN em cada mercado (o do
+      Apoio costuma diferir nos últimos dígitos). `Heineken Zero` e `Heineken` (pontuação ~86) ficam separados.
+   3. **Sem EAN** (o robô do Super ABC não o lê): entra no grupo mais parecido pelo nome, como sempre foi
+      (mesma medida, mesmas tags, similaridade a partir de 75).
+   O grupo traz `ean` quando tem um. Em dados reais de 05/11/2026 (6,7 mil produtos), o número de grupos
+   comparáveis (com 2 ou mais mercados) nas 15 buscas mais comuns subiu de 321 para 475, e os grupos que
+   misturavam EANs diferentes por nome parecido (Skol com Kaiser, Fanta com Guaraná, Coca Zero com Coca) deixaram de existir.
 5. Ordena os grupos: primeiro os vendidos em mais mercados (os que permitem comparar), depois por
    ordem alfabética.
 
@@ -196,6 +215,9 @@ vogais do termo por `_`** para ignorar acentos. Em palavras curtas isso virava u
 com quase tudo: `óleo` virava `_l__` e devolvia 583 produtos, só 83 deles com óleo, com o arroz no
 topo. O comparador também fazia a conta de nome, medida e tags de cada grupo a cada produto, o que
 levava 15 s no Render para essa resposta.
+
+A resposta de `/comparar` tem os campos `status`, `cep`, `uf`, `item`, `mercados_consultados`, `ocultos` (quantos
+resultados ficaram de fora, veja o passo 3) e `carrinho_comparativo`.
 
 O endpoint `GET /saude` responde `{"status": "ok"}` sem consultar o banco. O site o chama ao abrir a
 página para acordar o servidor, que no plano gratuito do Render dorme após 15 minutos sem uso.
