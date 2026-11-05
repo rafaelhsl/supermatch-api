@@ -37,6 +37,35 @@ def estruturar_produto_regex_json(texto_bruto, supermercado_nome):
         "texto_original": texto_bruto
     }
 
+def resumo_do_erro(erro, limite=300):
+    """Mensagem do erro numa linha só. O Playwright põe o motivo real ("intercepts pointer events", "not visible"...) no 'Call log'."""
+    return " ".join(str(erro).split())[:limite]
+
+
+async def abrir_lista_de_unidades(page):
+    """Abre a lista de unidades e devolve o campo de busca dela.
+
+    O site (Angular) às vezes demora a montar o botão, ou ignora um clique dado antes de estar pronto
+    (a carga de 04/11 perdeu 'Arroz' e 'Cafe' assim, nas duas tentativas). Por isso espera o botão aparecer
+    e, se o campo não surgir, clica de novo, sem clicar de novo quando a lista já abriu (clicar fecha).
+    """
+    botao = page.locator("div.trocar-loja").first
+    busca = page.locator("input[placeholder*='Buscar por loja' i]").first
+    await botao.wait_for(state="visible", timeout=30000)
+    ultimo_erro = None
+    for _ in range(3):
+        if await busca.is_visible():
+            return busca
+        await botao.click(timeout=15000)
+        try:
+            await busca.wait_for(state="visible", timeout=8000)
+            return busca
+        except Exception as erro:
+            ultimo_erro = erro
+            await page.wait_for_timeout(2000)
+    raise ultimo_erro
+
+
 async def escolher_unidade(page, browser, mercado, cep):
     """Escolhe a unidade do Super ABC que fica na cidade do CEP.
 
@@ -50,13 +79,11 @@ async def escolher_unidade(page, browser, mercado, cep):
     cidade_norm = sem_acento(cidade)
 
     try:
-        await page.locator("div.trocar-loja").first.click(timeout=8000)  # abre a lista de unidades
-        busca = page.locator("input[placeholder*='Buscar por loja' i]").first
-        await busca.wait_for(state="visible", timeout=8000)
+        busca = await abrir_lista_de_unidades(page)
         await busca.fill(cidade)
         await page.wait_for_timeout(2000)
     except Exception as erro:
-        await abortar(browser, mercado, f"não consegui abrir a lista de unidades ({str(erro)[:90]})")
+        await abortar(browser, mercado, f"não consegui abrir a lista de unidades ({resumo_do_erro(erro)})")
 
     # Só vale unidade cujo endereço termina em "<cidade> - <UF>": a busca também acha ruas e bairros com o mesmo nome.
     unidades = page.locator("div.loja")
@@ -75,7 +102,7 @@ async def escolher_unidade(page, browser, mercado, cep):
     try:
         await escolhida.locator("button").first.click(timeout=8000)
     except Exception as erro:
-        await abortar(browser, mercado, f"não consegui selecionar a unidade de {cidade} ({str(erro)[:90]})")
+        await abortar(browser, mercado, f"não consegui selecionar a unidade de {cidade} ({resumo_do_erro(erro)})")
 
     # Confirmação: o botão do cabeçalho passa a mostrar a unidade e "<cidade> / <UF>".
     cabecalho = ""
