@@ -87,6 +87,6 @@ Executada no GitHub em 05/11/2026 ([run 42007495508](https://github.com/rafaelhs
 
 ## Próximos passos
 
-1. **SQL de migração**: colunas novas em `produtos` (`ean`, `marca`, `categoria`, `id_origem`) e em `catalogo`, para você rodar no Supabase.
+1. **SQL de migração**: [`sql/colunas_do_coletor.sql`](sql/colunas_do_coletor.sql) acrescenta a `produtos` as colunas `ean`, `marca`, `categoria`, `id_origem` e `termo` (todas vazias, sem risco para o que existe). A tabela `catalogo` do histórico já tem `ean`, `marca` e `categoria`.
 2. **Ligar à carga diária**: Apoio, Atacadão e Supernosso pelo coletor (o robô fica de reserva se a API falhar), Super ABC pelo robô nos 100 termos. O histórico de preços passa a usar `id_origem` como chave, ligando os produtos antigos pelo nome.
 3. **Agrupar por EAN** na API e no site, e levar as regras de equivalência do navegador para a carga.

@@ -10,10 +10,6 @@ on:
         description: 'Só estes termos da lista (separados por vírgula). Vazio = os 100.'
         required: false
         default: ''
-  # Temporário, para testar esta branch antes do merge (o GitHub só deixa disparar à mão o que já está na main).
-  push:
-    branches: [coletor-por-api]
-    paths: ['.github/workflows/coletor-api.yml', 'coletor_vtex.py', 'dados/lista_de_produtos.json']
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
