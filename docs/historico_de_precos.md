@@ -16,7 +16,15 @@ Medido em 03/11/2026, comparando a coleta de 29/10 com a de agora: 19% dos produ
 | `precos` | O preço vigente em um intervalo: `desde`, `ate` (vazio = vale até hoje), varejo, atacado, quantidade do atacado, `praca` (a região da coleta). Só um preço vigente por produto e praça. |
 | `coletas` | O que cada carga fez, por dia, mercado e praça: `ok`, `parcial` ou `falhou`, com o número de itens. |
 
-`produtos` não serve de chave para o histórico porque a carga a recria todo dia e seus ids mudam. `chave_origem` é, **por enquanto**, um resumo do nome normalizado (sem acento, sem pontuação, em minúsculas); quando o coletor por API entrar, vira o id do produto no catálogo do mercado, e a ligação entre as duas chaves sai pelo nome.
+`produtos` não serve de chave para o histórico porque a carga a recria todo dia e seus ids mudam. `chave_origem` tem dois formatos:
+
+- `v:productId:itemId`: o id do produto no catálogo do mercado, quando o coletor por API o traz (Apoio, Atacadão e Supernosso);
+- `n:…`: um resumo do nome normalizado (sem acento, sem pontuação, em minúsculas), para o produto que não tem id (Super ABC, que vem do robô).
+
+**Religação.** Os produtos que o histórico já guardava pelo nome (`n:…`) e passam a chegar com o id do mercado são **religados**: a
+mesma linha de `catalogo` troca a chave para `v:…` e ganha EAN, marca e categoria, e o histórico de preços continua de onde
+estava (não nasce um produto novo). A ligação sai pelo nome normalizado. Se num dia só o robô trouxer um produto (sem id), ele é
+reencontrado pelo nome e continua sendo o mesmo.
 
 ## Como cada carga grava
 
@@ -32,6 +40,7 @@ Regras que protegem o histórico:
 
 - **O "dia" é o de Brasília**, não o de UTC.
 - **Falha não vira ausência.** Se a coleta de um mercado falha, `coletas` registra `falhou` e nada mais acontece com os produtos dele. As "3 cargas" contam só as `ok`.
+- **Coleta parcial** (faltaram alguns termos, mas até 10% deles): os produtos que vieram são registrados normalmente, `coletas` registra `parcial`, **nenhum produto é dado como saído** e o dia não conta entre as "3 cargas completas". Um `parcial` nunca sobrescreve um `ok` do mesmo dia.
 - **Nunca se apaga** o preço de um dia passado. O histórico só cresce.
 - **Se o histórico falhar** (por exemplo, as tabelas ainda não existem), a carga diária **não falha**: vira um aviso destacado, "Histórico de preços não gravado", na execução do GitHub.
 - Nomes repetidos no mesmo mercado viram um produto só, com o menor preço.

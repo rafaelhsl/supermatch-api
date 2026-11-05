@@ -33,7 +33,7 @@ class RepositorioMemoria:
         self.proximo = 1
 
     def carregar_catalogo(self, mercado):
-        return {c["chave_origem"]: {"id": c["id"], "ativo": c["ativo"], "ultimo_dia": c["ultimo_dia"]} for c in self.catalogo if c["supermercado"] == mercado}
+        return {c["chave_origem"]: {"id": c["id"], "nome": c["nome"], "ativo": c["ativo"], "ultimo_dia": c["ultimo_dia"]} for c in self.catalogo if c["supermercado"] == mercado}
 
     def carregar_precos_abertos(self, mercado, praca):
         ids = {c["id"] for c in self.catalogo if c["supermercado"] == mercado}
@@ -42,10 +42,17 @@ class RepositorioMemoria:
     def inserir_catalogo(self, mercado, itens, dia_):
         criados = {}
         for i in itens:
-            self.catalogo.append({"id": self.proximo, "supermercado": mercado, "chave_origem": i["chave"], "nome": i["nome"], "primeiro_dia": dia_, "ultimo_dia": dia_, "ativo": True})
-            criados[i["chave"]] = {"id": self.proximo, "ativo": True, "ultimo_dia": dia_}
+            self.catalogo.append({"id": self.proximo, "supermercado": mercado, "chave_origem": i["chave"], "nome": i["nome"], "ean": i.get("ean"),
+                                  "marca": i.get("marca"), "categoria": i.get("categoria"), "primeiro_dia": dia_, "ultimo_dia": dia_, "ativo": True})
+            criados[i["chave"]] = {"id": self.proximo, "nome": i["nome"], "ativo": True, "ultimo_dia": dia_}
             self.proximo += 1
         return criados
+
+    def religar(self, pares):
+        for i, chave, item in pares:
+            for c in self.catalogo:
+                if c["id"] == i:
+                    c.update(chave_origem=chave, ean=item.get("ean"), marca=item.get("marca"), categoria=item.get("categoria"))
 
     def atualizar_visto(self, ids, dia_):
         for c in self.catalogo:
@@ -386,6 +393,68 @@ def teste_lotes():
     assert r.novos == 0 and r.mudaram == 100
     assert len([p for p in falso.tabelas["precos"] if p["ate"] is None]) == 2500
     assert len(falso.tabelas["precos"]) == 2600
+
+
+def prodv(nome, varejo, id_origem, ean="7896006711155", atacado=None, qtd=1, marca="Marca", categoria="Mercearia > Grãos"):
+    """Produto como o coletor por API entrega: com id do mercado, EAN, marca e categoria."""
+    return {"nome": nome, "preco_varejo": varejo, "preco_atacado": atacado if atacado is not None else varejo, "quantidade_atacado": qtd,
+            "id_origem": id_origem, "ean": ean, "marca": marca, "categoria": categoria}
+
+
+def teste_id_do_mercado_religa_o_produto_e_mantem_o_historico():
+    for repo in (RepositorioMemoria(), h.RepositorioSupabase(SupabaseFalso())):
+        mercado = "M"
+        # dia 0: o histórico antigo guardava pelo nome (robô)
+        h.registrar_mercado(repo, mercado, [prod("Arroz Camil 5kg", 24.9, 23.9, 6), prod("Feijão Preto 1kg", 8.0)], dia(0))
+        # dia 1: o coletor por API traz os mesmos produtos com id, EAN e marca; um preço mudou e há um produto novo
+        r = h.registrar_mercado(repo, mercado, [prodv("Arroz Camil 5kg", 24.9, "13743:13744", atacado=23.9, qtd=6),
+                                                prodv("Feijão Preto 1kg", 8.5, "14000:14001", ean="7896006744115"),
+                                                prodv("Sal 1kg", 3.0, "15000:15001", ean="7891000000017")], dia(1))
+        assert r.religados == 2 and r.novos == 1 and r.mudaram == 1, r
+        catalogo = repo.carregar_catalogo(mercado)
+        assert sorted(catalogo) == ["v:13743:13744", "v:14000:14001", "v:15000:15001"], sorted(catalogo)    # nenhum "n:" sobrou, nenhum produto duplicado
+        # o histórico de preços continua: o arroz não ganhou intervalo novo (preço igual), o feijão fechou ontem e abriu hoje
+        if isinstance(repo, RepositorioMemoria):
+            precos = resumo_precos(repo, mercado)
+            assert precos["Arroz Camil 5kg"] == [(dia(0), None, 24.9)], precos
+            assert precos["Feijão Preto 1kg"] == [(dia(0), dia(0), 8.0), (dia(1), None, 8.5)], precos
+            arroz = next(c for c in repo.catalogo if c["nome"] == "Arroz Camil 5kg")
+        else:
+            arroz = next(c for c in repo.banco.tabelas["catalogo"] if c["nome"] == "Arroz Camil 5kg")
+        assert arroz["ean"] == "7896006711155" and arroz["marca"] == "Marca" and arroz["categoria"] == "Mercearia > Grãos"
+        # dia 2: a API caiu e só o robô de reserva traz o arroz (sem id): continua sendo o mesmo produto
+        r = h.registrar_mercado(repo, mercado, [prod("Arroz Camil 5kg", 24.9, 23.9, 6)], dia(2), status="parcial")
+        assert r.novos == 0 and r.religados == 0 and r.status == "parcial", r
+        assert sorted(repo.carregar_catalogo(mercado)) == ["v:13743:13744", "v:14000:14001", "v:15000:15001"]
+
+
+def teste_coleta_parcial_nao_da_produto_como_saido():
+    memoria, falso = RepositorioMemoria(), SupabaseFalso()
+    banco = h.RepositorioSupabase(falso)
+    completa = [prodv("Arroz", 20.0, "1:1"), prodv("Feijão", 8.0, "2:2"), prodv("Café", 15.0, "3:3")]
+    sem_cafe = completa[:2]
+    cargas = [(0, completa, "ok"), (1, completa, "ok"), (2, sem_cafe, "parcial"), (3, sem_cafe, "parcial"), (4, sem_cafe, "parcial"), (5, sem_cafe, "parcial")]
+    for n, produtos, status in cargas:
+        a = h.registrar_mercado(memoria, "M", produtos, dia(n), status=status)
+        b = h.registrar_mercado(banco, "M", produtos, dia(n), status=status)
+        assert a == b and a.inativados == 0, (n, a, b)                    # 4 dias parciais seguidos sem o café: ele não "saiu"
+    assert all(c["ativo"] for c in memoria.catalogo)
+    assert [v["status"] for _, v in sorted(memoria.coletas.items())] == ["ok", "ok", "parcial", "parcial", "parcial", "parcial"]
+    # dias parciais não contam como "cargas completas": é preciso 3 cargas ok seguidas sem o café para ele sair
+    for n in (6, 7):
+        assert h.registrar_mercado(memoria, "M", sem_cafe, dia(n)).inativados == 0
+    assert h.registrar_mercado(memoria, "M", sem_cafe, dia(8)).inativados == 1
+    # um dia parcial nunca sobrescreve o "ok" do mesmo dia
+    h.registrar_mercado(memoria, "M", sem_cafe, dia(8), status="parcial")
+    assert memoria.coletas[(dia(8), "M", "betim")]["status"] == "ok"
+
+
+def teste_status_invalido_e_recusado():
+    try:
+        h.registrar_mercado(RepositorioMemoria(), "M", [prod("Arroz", 20.0)], dia(0), status="falhou")
+    except ValueError:
+        return
+    raise AssertionError("status desconhecido deveria ser recusado")
 
 
 if __name__ == "__main__":

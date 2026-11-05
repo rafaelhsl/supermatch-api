@@ -25,7 +25,15 @@ tabela inteira é apagada e regravada.
 | `preco_atacado` | `numeric` (`decimal(10,2)`) | sim | scrapers | Preço unitário a partir de `quantidade_atacado`. Sem atacado, é igual a `preco_varejo` |
 | `quantidade_atacado` | `integer` | sim | scrapers | A partir de quantas unidades vale `preco_atacado`. Sem atacado, vale `1` |
 | `uf_cobertura` | `text` | sim | `alimentar_banco.py` | UF atendida pelo mercado: `MG` (Apoio, Supernosso, Super ABC) ou `BR` (Atacadão) |
-| `texto_original` | `text` | não | scrapers | Texto bruto do card do produto, guardado para depuração |
+| `texto_original` | `text` | não | scrapers | Texto bruto do card do produto, guardado para depuração (só o robô do Super ABC preenche) |
+| `ean` | `text` | não | coletor por API | Código de barras. O mesmo EAN é o mesmo produto em qualquer mercado. O robô do Super ABC não lê |
+| `marca` | `text` | não | coletor por API | Marca do produto |
+| `categoria` | `text` | não | coletor por API | Como o mercado classifica, ex.: `Mercearia > Grãos > Arroz` |
+| `id_origem` | `text` | não | coletor por API | Identidade do produto no mercado (`productId:itemId`); é a chave do histórico de preços |
+| `termo` | `text` | não | coletor por API e robô da lista | Termo da [lista de produtos](../dados/lista_de_produtos.json) que trouxe o item, ex.: `arroz`. Vazio nas linhas do modo antigo |
+
+As cinco últimas colunas vêm de [`sql/colunas_do_coletor.sql`](sql/colunas_do_coletor.sql). Sem elas a carga grava só as colunas
+antigas (e não aceita coleta parcial); a API e o site não usam as colunas novas.
 | `atualizado_em` | `timestamptz` | sim, automática | banco (`now()` em UTC) | Momento em que a linha foi inserida, ou seja, a hora da coleta |
 
 ### Regras que o banco garante e as que só o código assume
@@ -129,23 +137,25 @@ catálogo crescer a ponto de não caber em memória).
 [`alimentar_banco.py`](../alimentar_banco.py), disparado diariamente pelo workflow
 [`.github/workflows/main.yml`](../.github/workflows/main.yml):
 
-1. Para cada um dos 11 itens da lista (`Arroz`, `Feijao`, `Oleo`, `Cafe`, `Manteiga`, `Açucar`,
-   `Macarrao`, `Detergente`, `Sabao`, `Amaciante`, `Higienico`), roda os 4 robôs em paralelo com o
-   CEP fixo `32607600` (Betim). Cada robô informa o CEP **antes** de buscar e só segue se o site
-   confirmar a localização (veja [`robos.md`](robos.md)). Falha passageira repete o robô uma vez.
+1. Lê a lista de 100 produtos ([`dados/lista_de_produtos.json`](../dados/lista_de_produtos.json), até 100 por termo e
+   mercado). **Apoio Entrega, Atacadão e Supernosso** são coletados pela API pública
+   ([`coletor_por_api.md`](coletor_por_api.md)), em paralelo, no CEP fixo `32607600` (Betim). O **Super ABC**, que não
+   tem API aberta, é coletado pelo robô nos mesmos 100 termos (3 navegadores por vez), com o mesmo filtro de nome.
+   Cada robô informa o CEP **antes** de buscar e só segue se o site confirmar a localização (veja [`robos.md`](robos.md)).
 2. Define `uf_cobertura` e guarda tudo em memória, por mercado.
-3. Grava **um mercado por vez, e só os coletados por inteiro**: insere os produtos novos (em lotes de
-   200) e só então apaga os antigos do mesmo mercado (`atualizado_em` anterior ao início da carga).
-   Mercado com falha mantém os dados antigos.
-4. Imprime o resumo por mercado e, se algum falhou, termina com erro: o GitHub marca a execução como
-   falha e envia o e-mail de aviso.
+3. Grava **um mercado por vez**, conforme o resultado da coleta (veja [A carga e as falhas](robos.md#a-carga-e-as-falhas)):
+   insere os produtos novos (em lotes de 200) e só então apaga os antigos do mesmo mercado (`atualizado_em` anterior ao
+   início da carga). Em coleta parcial, as linhas antigas dos termos que falharam ficam.
+4. Registra o [histórico de preços](historico_de_precos.md) e imprime o resumo por mercado. Se algum mercado falhou, termina
+   com erro: o GitHub marca a execução como falha e envia o e-mail de aviso.
 
-`SEM_GRAVAR=1` roda tudo sem escrever no banco e sem precisar da chave.
+`SEM_GRAVAR=1` roda tudo sem escrever no banco e sem precisar da chave. `COLETA_POR_API=0` (ou a entrada `coleta = robos` do
+workflow, ao disparar à mão) volta ao modo antigo: os 4 robôs com os 11 itens `Arroz`, `Feijao`, `Oleo`, `Cafe`,
+`Manteiga`, `Açucar`, `Macarrao`, `Detergente`, `Sabao`, `Amaciante` e `Higienico`, tudo ou nada.
 
-Desde 27/10/2026 a carga completa passa no GitHub Actions com os 4 mercados e as 44 localizações
-(4 mercados x 11 buscas) confirmadas: cerca de 1.007 itens (Apoio 256, Atacadão 223, Supernosso 224,
-Super ABC 304). **A tabela passa de 1.000 linhas**, o limite de uma consulta do Supabase; a API já
-pagina o catálogo (veja [Como os dados saem](#como-os-dados-saem)).
+No modo antigo (27/10/2026) a carga tinha cerca de 1.007 itens (Apoio 256, Atacadão 223, Supernosso 224, Super ABC 304). Com a
+lista de 100 produtos a tabela passa de 8 mil linhas. **Passa de 1.000 linhas**, o limite de uma consulta do Supabase; a API
+já pagina o catálogo (veja [Como os dados saem](#como-os-dados-saem)).
 
 Riscos conhecidos desse fluxo:
 

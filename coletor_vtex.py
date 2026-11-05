@@ -362,10 +362,10 @@ def passa_no_filtro(linha, termo):
         return False
     if termo.get("nome_inclui") and not _casa(termo["nome_inclui"], nome):
         return False
-    caminho = " > ".join(sem_acento(p) for p in linha["categoria"].split(" > "))
+    caminho = " > ".join(sem_acento(p) for p in (linha.get("categoria") or "").split(" > "))
     if _casa(termo.get("categorias_proibidas"), caminho):
         return False
-    if termo.get("categorias"):
+    if termo.get("categorias") and caminho:       # linha do robô não traz categoria: só o nome decide
         return _casa(termo["categorias"], caminho)
     return True
 

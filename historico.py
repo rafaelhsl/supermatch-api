@@ -36,12 +36,18 @@ def normalizar_nome(nome):
 
 
 def chave_origem(nome):
-    """Identidade do produto dentro do mercado. Por enquanto vem do nome; quando o coletor por API entrar, vira o id do catálogo."""
+    """Identidade pelo nome ('n:…'), para o produto que não tem id do mercado (o que vem do robô)."""
     return "n:" + hashlib.sha1(normalizar_nome(nome).encode("utf-8")).hexdigest()[:20]
 
 
+def chave_do_produto(produto):
+    """Identidade do produto dentro do mercado: o id do catálogo do mercado ('v:productId:itemId') quando o coletor por API o traz; senão, o nome."""
+    id_origem = str(produto.get("id_origem") or "").strip()
+    return ("v:" + id_origem) if id_origem else chave_origem(produto["nome"])
+
+
 def preparar_itens(produtos):
-    """Produtos do robô -> ({chave: item}, duplicados). Descarta o que não tem preço; se o mesmo nome aparece duas vezes, fica o mais barato."""
+    """Produtos coletados -> ({chave: item}, duplicados). Descarta o que não tem preço; se a mesma chave aparece duas vezes, fica o mais barato."""
     itens, duplicados = {}, 0
     for p in produtos:
         try:
@@ -52,8 +58,12 @@ def preparar_itens(produtos):
             continue
         atacado = p.get("preco_atacado")
         item = {
-            "chave": chave_origem(p["nome"]),
+            "chave": chave_do_produto(p),
+            "legado": chave_origem(p["nome"]),          # a chave que o histórico antigo (por nome) usava para este produto
             "nome": str(p["nome"]).strip(),
+            "ean": p.get("ean") or None,
+            "marca": p.get("marca") or None,
+            "categoria": p.get("categoria") or None,
             "preco_varejo": varejo,
             "preco_atacado": round(float(atacado), 2) if atacado not in (None, "") else None,
             "quantidade_atacado": int(p.get("quantidade_atacado") or 1),
@@ -65,6 +75,41 @@ def preparar_itens(produtos):
                 continue
         itens[item["chave"]] = item
     return itens, duplicados
+
+
+def alinhar_chaves(itens, catalogo):
+    """Item sem id do mercado (vem do robô) cujo nome o catálogo já guarda sob outra chave: usa a chave que já existe.
+
+    Acontece depois que um produto foi religado ao id do mercado: no dia em que só o robô o traz, ele continua sendo o mesmo produto.
+    """
+    por_nome = {}
+    for chave, entrada in catalogo.items():
+        if entrada.get("nome"):
+            por_nome.setdefault(chave_origem(entrada["nome"]), chave)
+    alinhados = {}
+    for chave, item in itens.items():
+        destino = chave
+        if chave.startswith("n:") and chave not in catalogo and por_nome.get(chave) not in (None, *itens):
+            destino = por_nome[chave]
+        if destino not in alinhados:
+            alinhados[destino] = {**item, "chave": destino}
+    return alinhados
+
+
+def a_religar(itens, catalogo):
+    """Produtos que o catálogo guardava pelo nome ('n:…') e agora chegam com o id do mercado ('v:…'): passam a usar o id.
+
+    Troca a chave no `catalogo` (em memória) e devolve [(id do catálogo, chave nova, item)] para o banco, para o histórico de
+    preços continuar de onde estava em vez de recomeçar com um produto novo.
+    """
+    pares = []
+    for chave, item in itens.items():
+        legado = item.get("legado")
+        if chave.startswith("v:") and chave not in catalogo and legado in catalogo and legado not in itens:
+            entrada = catalogo.pop(legado)
+            catalogo[chave] = entrada
+            pares.append((entrada["id"], chave, item))
+    return pares
 
 
 def mesmo_preco(aberto, item):
@@ -129,18 +174,35 @@ class Resumo:
     reabertos: int = 0
     inativados: int = 0
     duplicados: int = 0
+    religados: int = 0
+    status: str = "ok"
 
     def linha(self):
-        return (f"{self.itens} itens: {self.novos} novos, {self.mudaram} com preço novo, {self.reabertos} que voltaram, "
-                f"{self.inativados} que saíram, {self.duplicados} nomes repetidos")
+        texto = (f"{self.itens} itens: {self.novos} novos, {self.mudaram} com preço novo, {self.reabertos} que voltaram, "
+                 f"{self.inativados} que saíram, {self.duplicados} repetidos")
+        if self.religados:
+            texto += f", {self.religados} religados ao id do mercado"
+        if self.status != "ok":
+            texto += f" [coleta {self.status}: quem não apareceu não conta como saído]"
+        return texto
 
 
-def registrar_mercado(repo, mercado, produtos, dia, praca="betim"):
-    """Registra no histórico a coleta completa de um mercado. Pode ser repetida no mesmo dia sem duplicar nada."""
+def registrar_mercado(repo, mercado, produtos, dia, praca="betim", status="ok"):
+    """Registra no histórico a coleta de um mercado. Pode ser repetida no mesmo dia sem duplicar nada.
+
+    status "ok": coleta completa. "parcial": faltou parte (alguns termos falharam); registra o que veio, mas o produto que não
+    apareceu não conta como "sumiu" e o dia não entra na contagem das 3 cargas completas.
+    """
+    if status not in ("ok", "parcial"):
+        raise ValueError(f"status inválido: {status}")
     itens, duplicados = preparar_itens(produtos)
     if not itens:
         raise ValueError("nenhum produto com nome e preço para registrar")
     catalogo = repo.carregar_catalogo(mercado)
+    itens = alinhar_chaves(itens, catalogo)
+    religados = a_religar(itens, catalogo)
+    if religados:
+        repo.religar(religados)
     abertos = repo.carregar_precos_abertos(mercado, praca)
 
     novos = separar_novos(itens, catalogo)
@@ -159,15 +221,17 @@ def registrar_mercado(repo, mercado, produtos, dia, praca="betim"):
         if entrada["id"] in vistos:
             entrada["ultimo_dia"], entrada["ativo"] = dia, True
 
-    repo.registrar_coleta(dia, mercado, praca, "ok", len(itens))
-    inativos = escolher_inativos(catalogo, repo.ultimos_dias_ok(mercado, praca, CARGAS_SEM_APARECER))
-    repo.inativar(inativos, praca)
+    repo.registrar_coleta(dia, mercado, praca, status, len(itens))
+    inativos = []
+    if status == "ok":
+        inativos = escolher_inativos(catalogo, repo.ultimos_dias_ok(mercado, praca, CARGAS_SEM_APARECER))
+        repo.inativar(inativos, praca)
 
     ids_fechar = set(plano.fechar)
     return Resumo(
         itens=len(itens), novos=len(ids_novos), mudaram=len(plano.fechar) + len(plano.corrigir),
         reabertos=sum(1 for i, _ in plano.abrir if i not in ids_fechar and i not in ids_novos),
-        inativados=len(inativos), duplicados=duplicados,
+        inativados=len(inativos), duplicados=duplicados, religados=len(religados), status=status,
     )
 
 
@@ -204,9 +268,9 @@ class RepositorioSupabase:
             inicio += 1000
 
     def carregar_catalogo(self, mercado):
-        linhas = self._paginado(lambda: self.banco.table("catalogo").select("id,chave_origem,ativo,ultimo_dia")
+        linhas = self._paginado(lambda: self.banco.table("catalogo").select("id,chave_origem,nome,ativo,ultimo_dia")
                                 .eq("supermercado", mercado).order("id"))
-        return {l["chave_origem"]: {"id": l["id"], "ativo": l["ativo"], "ultimo_dia": _data(l["ultimo_dia"])} for l in linhas}
+        return {l["chave_origem"]: {"id": l["id"], "nome": l["nome"], "ativo": l["ativo"], "ultimo_dia": _data(l["ultimo_dia"])} for l in linhas}
 
     def carregar_precos_abertos(self, mercado, praca):
         linhas = self._paginado(lambda: self.banco.table("precos")
@@ -219,11 +283,17 @@ class RepositorioSupabase:
         """Insere os produtos novos e devolve {chave: entrada} com os ids gerados."""
         criados = {}
         for lote in _em_lotes(itens):
-            linhas = [{"supermercado": mercado, "chave_origem": i["chave"], "nome": i["nome"], "primeiro_dia": dia.isoformat(),
-                       "ultimo_dia": dia.isoformat(), "ativo": True} for i in lote]
+            linhas = [{"supermercado": mercado, "chave_origem": i["chave"], "nome": i["nome"], "ean": i.get("ean"), "marca": i.get("marca"),
+                       "categoria": i.get("categoria"), "primeiro_dia": dia.isoformat(), "ultimo_dia": dia.isoformat(), "ativo": True} for i in lote]
             for l in self.banco.table("catalogo").insert(linhas).execute().data:
-                criados[l["chave_origem"]] = {"id": l["id"], "ativo": True, "ultimo_dia": dia}
+                criados[l["chave_origem"]] = {"id": l["id"], "nome": l["nome"], "ativo": True, "ultimo_dia": dia}
         return criados
+
+    def religar(self, pares):
+        """Produtos que eram guardados pelo nome passam a ser guardados pelo id do mercado (e ganham EAN, marca e categoria)."""
+        for i, chave, item in pares:
+            self.banco.table("catalogo").update({"chave_origem": chave, "ean": item.get("ean"), "marca": item.get("marca"),
+                                                 "categoria": item.get("categoria")}).eq("id", i).execute()
 
     def atualizar_visto(self, ids, dia):
         for lote in _em_lotes(ids):

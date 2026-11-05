@@ -337,6 +337,11 @@ def teste_lista_de_produtos_do_repositorio():
     assert not c.passa_no_filtro({"nome": "Shampoo com Óleo de Argan", "categoria": "Mercearia > Óleos", "peso_variavel": False}, oleo)
     racao = next(t for t in termos if t["termo"] == "ração para cães")
     assert not c.passa_no_filtro({"nome": "Coloração Permanente Imédia", "categoria": "Beleza", "peso_variavel": False}, racao)
+    gatos = next(t for t in termos if t["termo"] == "ração para gatos")
+    for nome, cao, gato in (("Ração Dog Chow Cães Adultos 1kg", True, False), ("Ração Friskies Gatos Adultos 1kg", False, True), ("Ração Dog Abc Carne 13kg", True, False),
+                            ("Ração Quatree Gourmet Adulto Gatos", False, True), ("Ração Filhote Sabor Frango", False, False)):
+        linha = {"nome": nome, "categoria": "", "peso_variavel": False}
+        assert c.passa_no_filtro(linha, racao) is cao and c.passa_no_filtro(linha, gatos) is gato, nome
 
 
 if __name__ == "__main__":

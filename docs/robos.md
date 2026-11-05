@@ -126,10 +126,25 @@ Betim; Apoio e Supernosso recusam Uberlândia; o Super ABC recusa Contagem (sem 
 
 ## A carga e as falhas
 
-- Cada mercado é gravado **só se foi coletado por inteiro**. Se um robô falhar, os dados antigos
-  daquele mercado ficam no banco (antes, a tabela era apagada no começo e uma falha deixava o
-  mercado vazio).
-- A gravação insere os produtos novos primeiro e só depois apaga os antigos do mesmo mercado
-  (`atualizado_em` anterior ao início da carga).
-- Se qualquer mercado falhar, a execução termina com erro: o GitHub marca a execução como falha,
-  mostra o motivo em destaque e envia o e-mail de aviso.
+Desde a carga pela API, só o **Super ABC** é coletado pelo robô (nos 100 termos da lista, 3 navegadores por vez); os outros três
+mercados vêm da [API pública](coletor_por_api.md). Os robôs do Apoio, do Atacadão e do Supernosso seguem no código e voltam a ser
+usados quando a carga é disparada à mão com `coleta = robos` (modo antigo, 11 itens, tudo ou nada).
+
+Cada mercado recebe um destes resultados:
+
+| Resultado | Quando | O que a carga faz |
+|---|---|---|
+| **ok** | nenhum termo falhou | grava tudo |
+| **parcial** | falharam até 10% dos termos (pelo menos 1) | grava o que veio, **mantém as linhas antigas dos termos que falharam**, registra `parcial` no histórico e deixa um aviso (`::warning`) na execução; a execução **não** fica vermelha |
+| **falhou** | falharam mais de 10% dos termos, ou nada veio | não grava, mantém os dados antigos do mercado, anota a falha no histórico e a execução termina com erro (e-mail de aviso) |
+
+- Termo sem resultado **não é falha**. O Super ABC responde "Ops... Nenhum produto foi encontrado para a busca realizada"
+  quando não vende o que foi buscado; o robô confere duas vezes (com uma espera) e devolve lista vazia. Já uma página sem
+  produtos e sem essa mensagem continua sendo falha passageira (página lida cedo demais) e repete, agora até 3 vezes.
+- A gravação insere os produtos novos primeiro e só depois apaga os antigos do mesmo mercado (`atualizado_em` anterior ao
+  início da carga), exceto os de termos que falharam.
+- **Sem robô de reserva automático.** Se a API de um mercado falhar, ficam os dados do dia anterior e a execução avisa. Trocar
+  2.000 produtos por 11 do robô estragaria a comparação (a lista da pessoa deixaria de achar quase tudo); preço de ontem é
+  melhor que produto nenhum.
+- Se as colunas novas de `produtos` ainda não existem (falta rodar `sql/colunas_do_coletor.sql`), a carga grava só as colunas
+  antigas, avisa, e uma coleta parcial vira "falhou" (apagaria as linhas dos termos que falharam).
