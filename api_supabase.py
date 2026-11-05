@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, Client
 
-from busca import filtrar, indexar, sem_acento
+from busca import buscar, indexar, sem_acento
 from Comparador_inteligente import cruzar_multiplos_produtos
 
 # --- 1. CONFIGURAÇÃO SEGURA DO BANCO ---
@@ -83,8 +83,10 @@ def buscar_e_comparar(cep: str, item: str):
 
     uf_cliente = obter_uf_pelo_cep(cep)
 
-    produtos_encontrados = filtrar(carregar_catalogo(uf_cliente), item)
-    print(f"🔍 '{item}': {len(produtos_encontrados)} produtos encontrados")
+    # Produtos "principais" da busca; os que só citam a palavra no meio do nome ficam de fora quando há principais
+    # suficientes (ver busca.py) e `ocultos` diz quantos foram.
+    produtos_encontrados, ocultos = buscar(carregar_catalogo(uf_cliente), item)
+    print(f"🔍 '{item}': {len(produtos_encontrados)} produtos encontrados ({ocultos} que só citam a palavra ficaram de fora)")
 
     relatorio_final = cruzar_multiplos_produtos([produtos_encontrados])
     # Grupos vendidos em mais mercados primeiro (são os que permitem comparar), depois ordem alfabética
@@ -97,6 +99,7 @@ def buscar_e_comparar(cep: str, item: str):
         "uf": uf_cliente,
         "item": item,
         "mercados_consultados": mercados_acionados,
+        "ocultos": ocultos,
         "carrinho_comparativo": relatorio_final
     }
 

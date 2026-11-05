@@ -1,9 +1,27 @@
-"""Busca de produtos no catálogo: ignora acentos e maiúsculas e exige todas as palavras digitadas."""
+"""Busca de produtos no catálogo: ignora acentos e maiúsculas e exige todas as palavras digitadas.
+
+Com o catálogo grande (cerca de 8 mil produtos), só "o nome contém a palavra" traz ruído: "arroz" acha condicionador com
+arroz preto e "óleo" acha xampu com óleo de argan. Por isso os resultados têm duas faixas:
+
+- **principais**: o produto é daquilo que foi digitado. O `termo` da lista de produtos (a coluna `termo`, ex.: `arroz`) tem as
+  palavras digitadas, ou o nome do produto **começa** por elas ("Arroz Branco Camil…");
+- **só citam**: a palavra aparece no meio do nome ("Condicionador … Arroz Preto").
+
+Havendo ao menos `MINIMO_DE_PRINCIPAIS` principais, só eles voltam e o resto é contado como oculto. Com poucos principais
+(a pessoa digitou uma marca, como "ninho", ou um produto que a lista não tem), voltam todos, para a busca nunca ficar vazia.
+"""
+import re
 import unicodedata
+from collections import namedtuple
 
 # Palavras que não ajudam a achar o produto e atrapalham quando o nome não as traz
 # ("óleo de soja" deve achar também "Óleo Soja Liza").
 PALAVRAS_DE_LIGACAO = {"de", "da", "do", "das", "dos", "e", "com", "para", "em"}
+MINIMO_DE_PRINCIPAIS = 3
+LIMITE_DE_RESULTADOS = 400        # a busca de "a" casava 6,6 mil produtos e o agrupamento levava 24 s
+TAMANHO_MINIMO_PARA_PREFIXO = 4   # "arro" acha "arroz"; "sal" não acha "salsicha"
+
+Entrada = namedtuple("Entrada", "nome palavras_do_nome palavras_do_termo produto")
 
 
 def sem_acento(texto):
@@ -20,13 +38,41 @@ def palavras_da_busca(item):
 
 
 def indexar(produtos):
-    """Calcula uma vez o nome sem acento de cada produto: [(nome_sem_acento, produto), ...]."""
-    return [(sem_acento(produto["nome"]), produto) for produto in produtos]
+    """Calcula uma vez o nome e o termo de cada produto, sem acento: [Entrada, ...]."""
+    return [Entrada(nome, re.findall(r"[a-z0-9]+", nome), re.findall(r"[a-z0-9]+", sem_acento(produto.get("termo") or "")), produto)
+            for produto in produtos for nome in [sem_acento(produto["nome"])]]
+
+
+def _e_a_palavra(digitada, palavra):
+    """A palavra digitada é essa palavra (ou, se for longa, o começo dela)."""
+    return palavra == digitada or (len(digitada) >= TAMANHO_MINIMO_PARA_PREFIXO and palavra.startswith(digitada))
+
+
+def _e_principal(palavras, entrada):
+    # 1) o termo da lista tem todas as palavras digitadas ("arroz" -> termo "arroz"; "leite" -> "leite em pó")
+    if entrada.palavras_do_termo and all(any(_e_a_palavra(p, w) for w in entrada.palavras_do_termo) for p in palavras):
+        return True
+    # 2) o nome começa pela primeira palavra digitada e traz as outras ("arroz integral" -> "Arroz Integral Tio João")
+    return bool(entrada.palavras_do_nome) and _e_a_palavra(palavras[0], entrada.palavras_do_nome[0]) \
+        and all(p in entrada.nome for p in palavras[1:])
+
+
+def buscar(catalogo_indexado, item, minimo_de_principais=MINIMO_DE_PRINCIPAIS, limite=LIMITE_DE_RESULTADOS):
+    """(produtos, ocultos): os produtos da busca, principais primeiro, e quantos ficaram de fora (só citam a palavra, ou passaram do limite)."""
+    palavras = palavras_da_busca(item)
+    if not palavras:
+        return [], 0
+    achados = [(e.produto, _e_principal(palavras, e)) for e in catalogo_indexado if all(p in e.nome for p in palavras)]
+    principais = [produto for produto, principal in achados if principal]
+    if len(principais) >= minimo_de_principais:
+        produtos, ocultos = principais, len(achados) - len(principais)
+    else:
+        produtos, ocultos = principais + [produto for produto, principal in achados if not principal], 0
+    if len(produtos) > limite:     # busca de uma letra ou de palavra comum: o agrupamento ficaria lento e ninguém lê 6 mil linhas
+        produtos, ocultos = produtos[:limite], ocultos + len(produtos) - limite
+    return produtos, ocultos
 
 
 def filtrar(catalogo_indexado, item):
-    """Produtos cujo nome contém todas as palavras de `item`, em qualquer ordem."""
-    palavras = palavras_da_busca(item)
-    if not palavras:
-        return []
-    return [produto for nome, produto in catalogo_indexado if all(p in nome for p in palavras)]
+    """Só os produtos de `buscar`."""
+    return buscar(catalogo_indexado, item)[0]
