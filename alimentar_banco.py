@@ -144,7 +144,7 @@ async def coletar_por_robo(mercado, alvos, paralelo=1, tolerancia=TOLERANCIA_DE_
     """
     uf = MERCADOS[mercado]
     semaforo = asyncio.Semaphore(paralelo)
-    coleta = Coleta(mercado, termos_total=len(alvos), tolerancia=tolerancia)
+    coleta = Coleta(mercado, termos_total=len({alvo[0] for alvo in alvos}), tolerancia=tolerancia)   # um termo pode ter mais de uma busca
 
     async def um(termo, texto, regras):
         async with semaforo:
@@ -158,7 +158,8 @@ async def coletar_por_robo(mercado, alvos, paralelo=1, tolerancia=TOLERANCIA_DE_
     vistos = set()
     for termo, regras, produtos, motivo in await asyncio.gather(*(um(*alvo) for alvo in alvos)):
         if produtos is None:
-            coleta.termos_falhos.append(termo)
+            if termo not in coleta.termos_falhos:
+                coleta.termos_falhos.append(termo)
             coleta.motivos.append(f"'{termo}': {motivo}")
             continue
         aproveitados = 0
@@ -281,8 +282,9 @@ def gravar_coletas(banco, coletas, inicio, dia):
 # ============================== a carga ==============================
 
 def alvos_da_lista(termos):
-    """O robô busca pelo nome do termo; o filtro do termo tira o ruído do resultado."""
-    return [(t["termo"], t["termo"], t) for t in termos]
+    """O robô busca pelo nome do termo, ou pelas `consultas_robo` dele quando o buscador do site não entende o nome da lista
+    (ex.: "sal" no Super ABC traz salame; "sal refinado" traz sal). O filtro do termo tira o ruído do resultado."""
+    return [(t["termo"], consulta, t) for t in termos for consulta in (t.get("consultas_robo") or [t["termo"]])]
 
 
 async def coletar_tudo(mercados):

@@ -46,6 +46,7 @@ Regras comuns:
 |---|---|
 | `termo`, `grupo` | O nome na lista e o grupo (Mercearia, Limpeza…). |
 | `consultas` | O que é enviado à busca. Uma frase inteira como "óleo de soja" quase não acha nada no Apoio (3 produtos, nenhum com estoque), enquanto "óleo" acha 50. Por isso a consulta costuma ser a palavra principal, e o filtro faz o resto. |
+| `consultas_robo` | Opcional: o que o **robô do Super ABC** busca, quando o buscador dele não entende o nome da lista. O buscador do Super ABC procura as palavras do nome do produto: "sal" traz salame e sanduíche, "sal refinado" traz sal; "escova de dente" não acha nada, "escova dental" acha 30. Sem este campo, o robô busca pelo nome do termo. O filtro do termo vale igual. |
 | `nome_inclui` | Expressão regular: o nome precisa casar. Nos alimentos, o nome precisa **começar** pelo tipo do produto ("Óleo de Soja Liza…"), o que tira "Shampoo com Óleo de Argan". |
 | `nome_exclui` | Expressão regular: se o nome casar, o produto sai (óleo "capilar", gelatina "capilar", leite "fermentado"…). |
 | `categorias_proibidas` | Se o caminho da categoria casar, o produto sai. Por grupo: um alimento não pode estar em "cuidado com os cabelos" nem em "limpeza". |

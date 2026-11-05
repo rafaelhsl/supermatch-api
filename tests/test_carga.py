@@ -183,6 +183,25 @@ def teste_coletar_por_robo():
     assert all(p["supermercado"] == "Super ABC" and p["uf_cobertura"] == "MG" and p["termo"] for p in coleta.produtos)
 
 
+def teste_termo_com_mais_de_uma_busca_conta_uma_vez():
+    termos = [{"termo": "sal", "consultas_robo": ["sal refinado", "sal grosso"]}, {"termo": "arroz"}]
+    assert ab.alvos_da_lista(termos) == [("sal", "sal refinado", termos[0]), ("sal", "sal grosso", termos[0]), ("arroz", "arroz", termos[1])]
+
+    async def robo(texto):
+        if texto.startswith("sal"):
+            raise FalhaNoRobo("Super ABC", f"caiu em {texto}")
+        return [{"nome": f"{texto} x", "preco_varejo": 1.0}]
+
+    anterior = ab.ROBOS
+    ab.ROBOS = {"Super ABC": robo}
+    try:
+        coleta = asyncio.run(ab.coletar_por_robo("Super ABC", ab.alvos_da_lista(termos)))
+    finally:
+        ab.ROBOS = anterior
+    assert coleta.termos_total == 2 and coleta.termos_falhos == ["sal"]            # o termo falha uma vez, mesmo com duas buscas caídas
+    assert len(coleta.motivos) == 2 and len(coleta.produtos) == 1
+
+
 def teste_coletar_por_robo_modo_antigo_nao_filtra_nem_marca_termo():
     async def robo(texto):
         return [{"nome": f"{texto} qualquer", "preco_varejo": 3.0}]
