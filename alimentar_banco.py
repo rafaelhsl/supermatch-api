@@ -41,7 +41,7 @@ ROBOS = {
     "Apoio Entrega": lambda item: com_novas_tentativas(buscar_no_apoio, cep_usuario=CEP_BASE, item_usuario=item, canal_de_vendas=CANAL_APOIO_BASE),
     "Atacadao": lambda item: com_novas_tentativas(buscar_no_atacadao, cep_usuario=CEP_BASE, item_usuario=item),
     "Supernosso": lambda item: com_novas_tentativas(buscar_no_supernosso, cep_usuario=CEP_BASE, item_usuario=item),
-    "Super ABC": lambda item: com_novas_tentativas(buscar_na_plataforma_regex, "https://superabconline.com.br/", "Super ABC", item, cep_usuario=CEP_BASE),
+    "Super ABC": lambda item: com_novas_tentativas(buscar_na_plataforma_regex, "https://superabconline.com.br/", "Super ABC", item, cep_usuario=CEP_BASE, tentativas=3),
 }
 
 # SO_MERCADOS="Apoio Entrega" (vários, separados por vírgula) roda a carga só desses mercados; vazio = todos.
