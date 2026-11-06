@@ -135,6 +135,9 @@ h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02
 .titulo-sec { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; margin: 0 0 14px; }
 .titulo-sec h2 { font: 800 21px/1.2 var(--titulo); margin: 0; letter-spacing: -.01em; }
 .titulo-sec p { margin: 0; font-size: 13.5px; color: var(--tinta-2); }
+.nota-busca { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: -4px 0 14px; padding: 9px 12px; border: 1.5px dashed var(--picote); border-radius: 12px; font-size: 13.5px; line-height: 1.4; color: var(--tinta-2); }
+.nota-busca .alternar { background: transparent; color: var(--tinta); border: 1.5px solid var(--tinta); border-radius: 999px; padding: 5px 14px; min-height: 36px; font: 700 13px/1 var(--texto); cursor: pointer; }
+.nota-busca .alternar:hover { background: var(--tinta); color: var(--branco); }
 .produtos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .produto { background: var(--branco); border: 1.5px solid var(--linha); border-radius: 22px; padding: 18px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
 .produto h3 { margin: 0; font-size: 16px; line-height: 1.3; font-weight: 700; min-height: 2.6em; }
@@ -492,7 +495,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     cidade: "",           // "Betim/MG"
     modo: "exato",        // como a busca junta os produtos: "exato" (mesmo produto) ou "equivalente" (mesmo tipo e tamanho, qualquer marca)
     lista: [],            // [{ grupo, qtd }]
-    busca: { termo: "", status: "parado", grupos: [], brutos: [], semEquivalentes: false, aviso: "", atualizadoEm: "" },   // brutos: o que a API devolveu; grupos: o que a tela mostra no modo atual
+    busca: { termo: "", status: "parado", grupos: [], brutos: [], semEquivalentes: false, aviso: "", atualizadoEm: "", todos: false, ocultosSoCitam: 0, soCitamPorMercado: {}, ocultosPeloLimite: 0 },   // brutos: o que a API devolveu; grupos: o que a tela mostra no modo atual
   };
   const ouvintes = [];
   const emitir = () => ouvintes.forEach((f) => f());
@@ -588,13 +591,37 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     return { ok: true, cidade };
   }
 
+  /* @ocultos-inicio */
+  /* ---------- resultados que só citam a palavra ----------
+     A API esconde o produto que apenas cita a palavra buscada ("Condicionador com Arroz Preto" em "arroz") quando há
+     produtos suficientes que são do que foi buscado. Daqui saem as frases que contam quantos foram escondidos (ou
+     mostrados) e oferecem alternar. Só contam os mercados que entregam na cidade, para o número bater com o que a tela
+     pode mostrar. Resposta de uma API antiga, sem esses campos, não gera nota nenhuma. */
+  const somarMercados = (porMercado, ativos) => Object.entries(porMercado || {}).reduce((soma, [mercado, n]) => soma + (ativos.has(mercado) ? Math.max(0, +n || 0) : 0), 0);
+  const produtosQueCitam = (n) => (n === 1 ? "produto que apenas cita" : "produtos que apenas citam");
+  function notasDaBusca(b, ativos) {
+    const notas = [], citam = somarMercados(b.soCitamPorMercado, ativos);
+    if (!b.todos && b.ocultosSoCitam > 0 && citam > 0) {
+      notas.push({ texto: `${citam} ${produtosQueCitam(citam)} “${b.termo}” ${citam === 1 ? "foi ocultado" : "foram ocultados"}.`, botao: "Mostrar também" });
+    } else if (b.todos && citam > 0) {
+      notas.push({ texto: `Mostrando também ${citam} ${produtosQueCitam(citam)} “${b.termo}”.`, botao: "Ocultar de novo" });
+    }
+    if (b.ocultosPeloLimite > 0) {
+      const n = b.ocultosPeloLimite;
+      notas.push({ texto: `Há mais ${n} ${n === 1 ? "produto" : "produtos"} além dos mostrados. Digite mais palavras para refinar a busca.` });
+    }
+    return notas;
+  }
+  /* @ocultos-fim */
+
   /* ---------- busca ---------- */
   let numeroDaBusca = 0;   // respostas atrasadas de uma busca antiga não podem sobrescrever a atual
-  async function buscar(termo) {
+  async function buscar(termo, { todos = false } = {}) {
     termo = (termo || "").trim();
     if (!termo) return;
     const meu = ++numeroDaBusca, b = estado.busca;
     b.termo = termo; b.status = "carregando"; b.aviso = ""; b.grupos = []; b.brutos = [];
+    b.todos = todos; b.ocultosSoCitam = 0; b.soCitamPorMercado = {}; b.ocultosPeloLimite = 0;
     emitir();
     const aviso = setTimeout(() => {
       if (meu === numeroDaBusca && b.status === "carregando") {
@@ -602,12 +629,13 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
         emitir();
       }
     }, 8000);
-    let grupos = null;
+    let grupos = null, dados = {};
     try {
-      const r = await fetch(`${API}/comparar?cep=${encodeURIComponent(estado.cep)}&item=${encodeURIComponent(termo)}`);
+      const r = await fetch(`${API}/comparar?cep=${encodeURIComponent(estado.cep)}&item=${encodeURIComponent(termo)}${todos ? "&todos=1" : ""}`);
       if (!r.ok) throw new Error("api " + r.status);
       const d = await r.json();
       grupos = Array.isArray(d.carrinho_comparativo) ? d.carrinho_comparativo : null;
+      dados = d;
     } catch (e) { grupos = null; }
     clearTimeout(aviso);
     if (meu !== numeroDaBusca) return;
@@ -616,6 +644,10 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       b.aviso = "Não deu para consultar os mercados agora. Confira a conexão e busque de novo.";
     } else {
       b.brutos = grupos;
+      // o que a API deixou de fora (ver notasDaBusca); uma API antiga, sem estes campos, é como se nada tivesse sido escondido
+      b.ocultosSoCitam = +dados.ocultos_so_citam || 0;
+      b.soCitamPorMercado = dados.so_citam_por_mercado && typeof dados.so_citam_por_mercado === "object" ? dados.so_citam_por_mercado : {};
+      b.ocultosPeloLimite = +dados.ocultos_pelo_limite || 0;
       // a data mais antiga entre os preços exibidos: é a que vale para a tela toda
       const datas = grupos.flatMap((g) => g.opcoes_de_compra.map((o) => o.atualizado_em)).filter(Boolean).sort();
       b.atualizadoEm = datas[0] || "";
@@ -874,6 +906,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   window.Supermatch = {
     estado, MERCADOS, mercadosAtivos, situacaoDeEntrega, CIDADES_ATENDIDAS, cidadeAtendida, mercadoPorId, aoMudar: (f) => ouvintes.push(f), iniciar,
     definirCep, definirModo, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo,
+    notasDaBusca: () => notasDaBusca(estado.busca, new Set(mercadosAtivos().map((m) => m.id))),
     util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora },
   };
 })();
@@ -961,7 +994,8 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       const total = b.grupos.length, limite = Math.min(total, (celular.matches ? 4 : 6) + extras), resto = total - limite;
       const atualizado = U.dataHora(b.atualizadoEm);
       const rotuloTotal = S.estado.modo === "equivalente" ? (total === 1 ? "produto equivalente" : "produtos equivalentes") : (total === 1 ? "produto" : "produtos");
-      el.innerHTML = `<div class="titulo-sec"><h2>${total} ${rotuloTotal} para “${U.esc(b.termo)}”</h2><p>${atualizado ? "Preços de " + atualizado : ""}</p></div>
+      const notas = S.notasDaBusca().map((n) => `<p class="nota-busca">${U.esc(n.texto)}${n.botao ? `<button type="button" class="alternar" id="alternarCitam" data-foco="alternarCitam">${U.esc(n.botao)}</button>` : ""}</p>`).join("");
+      el.innerHTML = `<div class="titulo-sec"><h2>${total} ${rotuloTotal} para “${U.esc(b.termo)}”</h2><p>${atualizado ? "Preços de " + atualizado : ""}</p></div>${notas}
         <div class="produtos">${b.grupos.slice(0, limite).map(produto).join("")}</div>
         ${resto > 0 ? `<button class="mais-res" type="button" id="verMais" data-foco="verMais">Mostrar mais ${Math.min(10, resto)} produtos (faltam ${resto})</button>` : ""}`;
     }
@@ -1081,7 +1115,8 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     else if (t.id === "mostrar") { cupomCompleto = !cupomCompleto; desenhar(); }
     else if (t.id === "verMais") { extras += 10; desenhar(); }
     else if (t.id === "limpar") { cupomCompleto = false; S.limparLista(); }
-    else if (t.id === "tentar") S.buscar(S.estado.busca.termo);
+    else if (t.id === "tentar") S.buscar(S.estado.busca.termo, { todos: S.estado.busca.todos });
+    else if (t.id === "alternarCitam") S.buscar(S.estado.busca.termo, { todos: !S.estado.busca.todos }).then(() => { const novo = $("alternarCitam"); if (novo) novo.focus(); });
   });
 
   const janela = $("janelaCep");

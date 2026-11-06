@@ -62,6 +62,25 @@ Princípios:
 
 Para conferir as regras: `node tests/test_equivalencia.js` (precisa do Node). Os casos vêm de nomes reais dos mercados.
 
+## Resultados que só citam a palavra
+
+A API esconde o produto que apenas cita a palavra buscada ("Condicionador com Arroz Preto" ao buscar "arroz") quando há
+produtos suficientes que são do que foi buscado (veja [`banco_de_dados.md`](banco_de_dados.md#como-os-dados-saem)). O site
+conta isso numa nota tracejada logo abaixo do título dos resultados:
+
+- **"13 produtos que apenas citam “arroz” foram ocultados."**, com o botão **Mostrar também**. O botão refaz a busca com
+  `todos=1`; a nota passa a **"Mostrando também 13 produtos que apenas citam “arroz”."**, com o botão **Ocultar de novo**.
+  Uma busca nova volta a esconder. O foco do teclado vai para o botão novo.
+- O número **só conta os mercados que entregam na cidade** do CEP (o Super ABC, por exemplo, não entrega fora de BH e Betim),
+  para bater com o que a tela pode mostrar. Se tudo o que foi escondido é de mercado que não entrega ali, não há nota.
+- Quando a busca passa do teto de 400 resultados: **"Há mais N produtos além dos mostrados. Digite mais palavras para refinar a busca."**,
+  sem botão.
+- Com uma API sem esses campos (antiga), não aparece nota nenhuma.
+- O texto da nota é escapado: um termo digitado com HTML aparece como texto.
+
+O texto e as contas ficam em `notasDaBusca` (bloco `@ocultos-inicio` / `@ocultos-fim` de `site/index.html`), testado por
+`node tests/test_ocultos.js`.
+
 ## Regras da comparação
 
 - Um mercado que não vende algum item da lista fica **incompleto**: seu total é parcial, aparece como "falta N itens" e ele nunca é apontado como o mais barato.
@@ -86,4 +105,4 @@ Para conferir as regras: `node tests/test_equivalencia.js` (precisa do Node). Os
 - **O Super ABC aparece só em BH e Betim**, porque só tem unidade lá; uma unidade vizinha pode entregar em outras cidades, mas o site dele não deixa conferir.
 - **O Apoio muda de catálogo conforme a região** (canal de vendas); a carga diária usa o canal de Betim.
 - **Equivalência é por regras.** Cobre as 11 famílias que o banco tem hoje. Para outros produtos, só o modo exato funciona.
-- A busca prioriza o que é do produto digitado: "óleo" não traz mais óleo capilar nem sardinha em óleo quando há óleos de cozinha suficientes (ver [`banco_de_dados.md`](banco_de_dados.md#como-os-dados-saem)). A API informa quantos resultados ficaram de fora (`ocultos`), mas o site ainda não mostra esse número.
+- A busca prioriza o que é do produto digitado: "óleo" não traz mais óleo capilar nem sardinha em óleo quando há óleos de cozinha suficientes (ver [`banco_de_dados.md`](banco_de_dados.md#como-os-dados-saem)). O site conta quantos resultados ficaram de fora e deixa mostrá-los (veja "Resultados que só citam a palavra").

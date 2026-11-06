@@ -90,6 +90,43 @@ def teste_limite_de_resultados():
     assert busca.buscar(catalogo, "arroz", limite=5)[1] == 10        # os que só citam (10) + nenhum a mais
 
 
+def teste_detalhe_dos_que_so_citam_por_mercado():
+    catalogo = busca.indexar(
+        [produto(f"Arroz Marca {i}", "arroz") for i in range(3)]
+        + [produto("Condicionador com Arroz Preto", "condicionador", mercado="Supernosso"), produto("Sopa de Arroz", "sopa", mercado="Super ABC"),
+           produto("Biscoito de Arroz", "biscoito", mercado="Supernosso")])
+    b = busca.buscar_detalhado(catalogo, "arroz")
+    assert len(b.produtos) == 3 and b.ocultos_so_citam == 3 and b.ocultos_pelo_limite == 0
+    assert b.so_citam_por_mercado == {"Supernosso": 2, "Super ABC": 1}                      # para o site contar só os mercados que entregam na cidade
+    assert busca.buscar(catalogo, "arroz") == (b.produtos, 3)                              # a forma antiga continua igual
+    assert all("so_cita" not in p for p in b.produtos)
+
+
+def teste_pedir_todos_traz_os_que_so_citam_marcados_sem_alterar_o_catalogo():
+    catalogo = busca.indexar([produto(f"Arroz Marca {i}", "arroz") for i in range(3)] + [produto("Condicionador com Arroz Preto", "condicionador")])
+    b = busca.buscar_detalhado(catalogo, "arroz", incluir_so_citam=True)
+    assert nomes(b.produtos) == ["Arroz Marca 0", "Arroz Marca 1", "Arroz Marca 2", "Condicionador com Arroz Preto"]
+    assert [p.get("so_cita") for p in b.produtos] == [None, None, None, True]               # só quem apenas cita vem marcado
+    assert b.ocultos_so_citam == 0 and b.so_citam_por_mercado == {"Apoio Entrega": 1}
+    assert all("so_cita" not in e.produto for e in catalogo)                               # o catálogo em memória não ganhou a marca
+
+
+def teste_poucos_principais_mostra_tudo_e_ainda_conta_os_que_so_citam():
+    catalogo = busca.indexar([produto("Arroz Camil", "arroz"), produto("Condicionador com Arroz Preto", "condicionador")])
+    b = busca.buscar_detalhado(catalogo, "arroz")
+    assert len(b.produtos) == 2 and b.ocultos_so_citam == 0 and b.so_citam_por_mercado == {"Apoio Entrega": 1}
+    assert b.produtos[1].get("so_cita") is True
+
+
+def teste_o_teto_conta_a_parte():
+    catalogo = busca.indexar([produto(f"Arroz Marca {i}", "arroz") for i in range(10)] + [produto("Sopa com Arroz", "sopa")])
+    b = busca.buscar_detalhado(catalogo, "arroz", limite=4)
+    assert len(b.produtos) == 4 and b.ocultos_so_citam == 1 and b.ocultos_pelo_limite == 6
+    assert busca.buscar(catalogo, "arroz", limite=4)[1] == 7
+    b = busca.buscar_detalhado(catalogo, "arroz", limite=4, incluir_so_citam=True)
+    assert b.ocultos_so_citam == 0 and b.ocultos_pelo_limite == 7
+
+
 def teste_acento_caixa_e_busca_vazia():
     catalogo = busca.indexar([produto(f"FEIJÃO CARIOCA {i}", "feijão") for i in range(3)])
     assert len(busca.buscar(catalogo, "Feijao")[0]) == 3 and len(busca.buscar(catalogo, "FEIJÃO")[0]) == 3

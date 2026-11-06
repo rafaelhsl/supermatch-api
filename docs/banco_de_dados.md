@@ -227,8 +227,18 @@ com quase tudo: `óleo` virava `_l__` e devolvia 583 produtos, só 83 deles com 
 topo. O comparador também fazia a conta de nome, medida e tags de cada grupo a cada produto, o que
 levava 15 s no Render para essa resposta.
 
-A resposta de `/comparar` tem os campos `status`, `cep`, `uf`, `item`, `mercados_consultados`, `ocultos` (quantos
-resultados ficaram de fora, veja o passo 3) e `carrinho_comparativo`.
+A resposta de `/comparar` tem os campos `status`, `cep`, `uf`, `item`, `mercados_consultados` e `carrinho_comparativo`, mais
+o que a busca deixou de fora (passo 3):
+
+| Campo | O que é |
+|---|---|
+| `ocultos` | Total que ficou de fora: os que só citam a palavra mais os que passaram do teto de 400. |
+| `ocultos_so_citam` | Quantos produtos que só citam a palavra foram escondidos. Vale 0 quando havia menos de 3 principais (voltaram todos) ou quando se pediu `todos=1`. |
+| `ocultos_pelo_limite` | Quantos passaram do teto de 400 resultados. |
+| `so_citam_por_mercado` | `{mercado: quantos}` dos produtos que só citam a palavra, escondidos ou não. O site soma só os mercados que entregam na cidade da pessoa. |
+
+O parâmetro opcional `todos=1` (`/comparar?cep=...&item=...&todos=1`) devolve também os que só citam a palavra. Cada opção
+desses vem marcada com `"so_cita": true`. É o que o botão "Mostrar também" do site pede.
 
 O endpoint `GET /saude` responde `{"status": "ok"}` sem esperar o banco (só dispara o carregamento do catálogo
 em segundo plano, se preciso). O site o chama ao abrir a página para acordar o servidor, que no plano gratuito do

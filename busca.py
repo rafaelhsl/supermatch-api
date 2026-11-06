@@ -12,7 +12,7 @@ Havendo ao menos `MINIMO_DE_PRINCIPAIS` principais, só eles voltam e o resto é
 """
 import re
 import unicodedata
-from collections import namedtuple
+from collections import Counter, namedtuple
 
 # Palavras que não ajudam a achar o produto e atrapalham quando o nome não as traz
 # ("óleo de soja" deve achar também "Óleo Soja Liza").
@@ -22,6 +22,9 @@ LIMITE_DE_RESULTADOS = 400        # a busca de "a" casava 6,6 mil produtos e o a
 TAMANHO_MINIMO_PARA_PREFIXO = 4   # "arro" acha "arroz"; "sal" não acha "salsicha"
 
 Entrada = namedtuple("Entrada", "nome palavras_do_nome palavras_do_termo produto")
+# produtos: o que volta; so_citam_por_mercado: {mercado: quantos} dos que só citam a palavra (escondidos ou não);
+# ocultos_so_citam: quantos desses ficaram escondidos; ocultos_pelo_limite: quantos passaram do teto de resultados.
+Busca = namedtuple("Busca", "produtos so_citam_por_mercado ocultos_so_citam ocultos_pelo_limite")
 
 
 def sem_acento(texto):
@@ -57,20 +60,28 @@ def _e_principal(palavras, entrada):
         and all(p in entrada.nome for p in palavras[1:])
 
 
-def buscar(catalogo_indexado, item, minimo_de_principais=MINIMO_DE_PRINCIPAIS, limite=LIMITE_DE_RESULTADOS):
-    """(produtos, ocultos): os produtos da busca, principais primeiro, e quantos ficaram de fora (só citam a palavra, ou passaram do limite)."""
+def buscar_detalhado(catalogo_indexado, item, minimo_de_principais=MINIMO_DE_PRINCIPAIS, limite=LIMITE_DE_RESULTADOS, incluir_so_citam=False):
+    """Os produtos da busca, principais primeiro, e o que ficou de fora (veja `Busca`).
+
+    Os que só citam a palavra voltam quando há menos de `minimo_de_principais` principais, ou quando `incluir_so_citam` pede
+    (o botão "Mostrar também" do site). Voltam como cópias marcadas com `so_cita: True`; o catálogo em memória não é alterado.
+    """
     palavras = palavras_da_busca(item)
     if not palavras:
-        return [], 0
+        return Busca([], {}, 0, 0)
     achados = [(e.produto, _e_principal(palavras, e)) for e in catalogo_indexado if all(p in e.nome for p in palavras)]
     principais = [produto for produto, principal in achados if principal]
-    if len(principais) >= minimo_de_principais:
-        produtos, ocultos = principais, len(achados) - len(principais)
-    else:
-        produtos, ocultos = principais + [produto for produto, principal in achados if not principal], 0
-    if len(produtos) > limite:     # busca de uma letra ou de palavra comum: o agrupamento ficaria lento e ninguém lê 6 mil linhas
-        produtos, ocultos = produtos[:limite], ocultos + len(produtos) - limite
-    return produtos, ocultos
+    so_citam = [produto for produto, principal in achados if not principal]
+    mostrar_so_citam = incluir_so_citam or len(principais) < minimo_de_principais
+    produtos = principais + ([{**produto, "so_cita": True} for produto in so_citam] if mostrar_so_citam else [])
+    pelo_limite = max(0, len(produtos) - limite)     # busca de uma letra ou de palavra comum: o agrupamento ficaria lento e ninguém lê 6 mil linhas
+    return Busca(produtos[:limite], dict(Counter(p["supermercado"] for p in so_citam)), 0 if mostrar_so_citam else len(so_citam), pelo_limite)
+
+
+def buscar(catalogo_indexado, item, minimo_de_principais=MINIMO_DE_PRINCIPAIS, limite=LIMITE_DE_RESULTADOS):
+    """(produtos, ocultos): os produtos da busca, principais primeiro, e quantos ficaram de fora (só citam a palavra, ou passaram do limite)."""
+    busca = buscar_detalhado(catalogo_indexado, item, minimo_de_principais, limite)
+    return busca.produtos, busca.ocultos_so_citam + busca.ocultos_pelo_limite
 
 
 def filtrar(catalogo_indexado, item):
