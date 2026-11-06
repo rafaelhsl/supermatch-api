@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, Client
 
-from busca import buscar, indexar, sem_acento
+from busca import buscar_detalhado, indexar, sem_acento
 from Comparador_inteligente import cruzar_multiplos_produtos
 
 # --- 1. CONFIGURAÇÃO SEGURA DO BANCO ---
@@ -144,15 +144,17 @@ def saude():
     return {"status": "ok"}
 
 @app.get("/comparar")
-def buscar_e_comparar(cep: str, item: str):
+def buscar_e_comparar(cep: str, item: str, todos: bool = False):
     print(f"\n📡 API Recebeu pedido ULTRA-RÁPIDO! Item: '{item}' | CEP: '{cep}'")
 
     uf_cliente = obter_uf_pelo_cep(cep)
 
     # Produtos "principais" da busca; os que só citam a palavra no meio do nome ficam de fora quando há principais
-    # suficientes (ver busca.py) e `ocultos` diz quantos foram.
-    produtos_encontrados, ocultos = buscar(carregar_catalogo(uf_cliente), item)
-    print(f"🔍 '{item}': {len(produtos_encontrados)} produtos encontrados ({ocultos} que só citam a palavra ficaram de fora)")
+    # suficientes (ver busca.py), a menos que se peça `todos=1`.
+    busca = buscar_detalhado(carregar_catalogo(uf_cliente), item, incluir_so_citam=todos)
+    produtos_encontrados = busca.produtos
+    ocultos = busca.ocultos_so_citam + busca.ocultos_pelo_limite
+    print(f"🔍 '{item}': {len(produtos_encontrados)} produtos encontrados ({ocultos} ficaram de fora)")
 
     relatorio_final = cruzar_multiplos_produtos([produtos_encontrados])
     # Grupos vendidos em mais mercados primeiro (são os que permitem comparar), depois ordem alfabética
@@ -166,6 +168,9 @@ def buscar_e_comparar(cep: str, item: str):
         "item": item,
         "mercados_consultados": mercados_acionados,
         "ocultos": ocultos,
+        "ocultos_so_citam": busca.ocultos_so_citam,
+        "ocultos_pelo_limite": busca.ocultos_pelo_limite,
+        "so_citam_por_mercado": busca.so_citam_por_mercado,
         "carrinho_comparativo": relatorio_final
     }
 

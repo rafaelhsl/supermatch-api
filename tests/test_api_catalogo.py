@@ -211,6 +211,27 @@ def teste_primeira_carga_com_falha_levanta_erro():
         limpar()
 
 
+# ============================== a resposta de /comparar ==============================
+
+def teste_resposta_traz_os_campos_dos_ocultos_e_aceita_todos():
+    import busca
+    produtos = [{"id": i, "nome": f"Arroz Marca {i}", "termo": "arroz", "supermercado": "Apoio Entrega", "preco_varejo": 5.0 + i, "ean": f"789000000000{i}"} for i in range(3)]
+    produtos += [{"id": 9, "nome": "Condicionador com Arroz Preto", "termo": "condicionador", "supermercado": "Supernosso", "preco_varejo": 20.0, "ean": "7891"}]
+    anteriores = (api.carregar_catalogo, api.obter_uf_pelo_cep)
+    api.carregar_catalogo = lambda uf: busca.indexar(produtos)
+    api.obter_uf_pelo_cep = lambda cep: "MG"
+    try:
+        r = api.buscar_e_comparar(cep="32607600", item="arroz")
+        assert r["ocultos"] == 1 and r["ocultos_so_citam"] == 1 and r["ocultos_pelo_limite"] == 0
+        assert r["so_citam_por_mercado"] == {"Supernosso": 1} and len(r["carrinho_comparativo"]) == 3
+        t = api.buscar_e_comparar(cep="32607600", item="arroz", todos=True)
+        assert t["ocultos"] == 0 and t["ocultos_so_citam"] == 0 and t["so_citam_por_mercado"] == {"Supernosso": 1}
+        opcoes = [o for g in t["carrinho_comparativo"] for o in g["opcoes_de_compra"]]
+        assert len(opcoes) == 4 and [o.get("so_cita") for o in opcoes].count(True) == 1     # o site sabe quais opções só citam
+    finally:
+        api.carregar_catalogo, api.obter_uf_pelo_cep = anteriores
+
+
 # ============================== aquecimento ==============================
 
 def teste_aquecer_catalogo_carrega_por_tras_e_so_quando_precisa():
