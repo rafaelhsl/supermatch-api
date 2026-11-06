@@ -13,6 +13,12 @@ def estruturar_produto_regex_json(texto_bruto, supermercado_nome):
     # Se o nome for muito curto, não é um produto válido
     if len(nome) < 4:
         return None
+
+    # Com poucos resultados, o bloco do cabeçalho da busca ("Você pesquisou por: "sabonete"") cabe no limite de tamanho e
+    # tem "R$" por perto, e o robô o lia como um produto. Nos termos de limpeza e higiene o filtro de nome o deixaria passar,
+    # porque o cabeçalho contém a palavra buscada.
+    if sem_acento(nome).startswith("voce pesquisou"):
+        return None
         
     # --- A MÁGICA DA TESOURA ---
     # Corta o texto na palavra "Preço por" e guarda só a primeira metade!
