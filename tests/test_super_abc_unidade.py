@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from Scraper_SuperABC import abrir_lista_de_unidades, resumo_do_erro  # noqa: E402
+from Scraper_SuperABC import abrir_lista_de_unidades, estruturar_produto_regex_json, resumo_do_erro  # noqa: E402
 
 
 class LocalizadorFalso:
@@ -85,6 +85,15 @@ def teste_desiste_depois_de_tres_cliques():
     else:
         raise AssertionError("devia falhar quando a lista nunca abre")
     assert pagina.cliques == 3
+
+
+def teste_cabecalho_da_busca_nao_e_produto():
+    cabecalho = 'Você pesquisou por: "sabonete" | 2 resultados | A partir de R$ 3,49'
+    assert estruturar_produto_regex_json(cabecalho, "Super ABC") is None
+    assert estruturar_produto_regex_json("VOCE PESQUISOU POR: sal | R$ 4,00", "Super ABC") is None
+    produto = estruturar_produto_regex_json("Sabonete Dove Original 90g | R$ 3,49 | Preço por Kg R$ 38,00", "Super ABC")
+    assert produto["nome"] == "Sabonete Dove Original 90g" and produto["preco_varejo"] == 3.49 and produto["supermercado"] == "Super ABC"
+    assert estruturar_produto_regex_json("Sabonete Dove | sem preço aqui", "Super ABC") is None          # sem preço não é produto
 
 
 def teste_resumo_do_erro():
