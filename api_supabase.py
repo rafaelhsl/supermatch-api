@@ -12,6 +12,7 @@ from supabase import create_client, Client
 
 from busca import buscar_detalhado, indexar, sem_acento
 from Comparador_inteligente import cruzar_multiplos_produtos
+from equivalencia import com_equivalencia, familias_equivalentes
 
 # --- 1. CONFIGURAÇÃO SEGURA DO BANCO ---
 SUPABASE_URL = "https://gtdvgdfalpsrnefzyfgu.supabase.co"
@@ -91,7 +92,11 @@ def baixar_catalogo(uf: str):
         if len(pagina) < TAMANHO_PAGINA:
             break
         inicio += TAMANHO_PAGINA
-    print(f"📦 Catálogo de {uf}+BR carregado do banco: {len(produtos)} produtos")
+    # A chave de equivalência ("mesmo tipo e tamanho, qualquer marca") sai pronta daqui, junto com o produto: o site só agrupa
+    # pelas chaves (ver equivalencia.py). Calcular o catálogo todo leva menos de 1 s.
+    produtos = com_equivalencia(produtos)
+    print(f"📦 Catálogo de {uf}+BR carregado do banco: {len(produtos)} produtos "
+          f"({sum(1 for p in produtos if 'chave_equivalencia' in p)} com equivalência)")
     return indexar(produtos)
 
 
@@ -171,6 +176,8 @@ def buscar_e_comparar(cep: str, item: str, todos: bool = False):
         "ocultos_so_citam": busca.ocultos_so_citam,
         "ocultos_pelo_limite": busca.ocultos_pelo_limite,
         "so_citam_por_mercado": busca.so_citam_por_mercado,
+        # Presente = os produtos trazem `chave_equivalencia`/`rotulo_equivalencia` (o site usa as chaves da API e não as suas).
+        "equivalencia_familias": familias_equivalentes(),
         "carrinho_comparativo": relatorio_final
     }
 

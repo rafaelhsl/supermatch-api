@@ -103,6 +103,27 @@ def teste_baixar_catalogo_pagina_e_pede_so_as_colunas_usadas():
     assert ("in", "uf_cobertura", ("MG", "BR")) in chamadas
 
 
+def teste_baixar_catalogo_calcula_a_chave_de_equivalencia_de_cada_produto():
+    banco = BancoFalso(0)
+    banco.linhas = [
+        {"id": 1, "nome": "Leite UHT Integral Itambé Caixa com Tampa 1l", "supermercado": "Supernosso", "termo": "leite"},
+        {"id": 2, "nome": "Leite Longa Vida Porto Alegre Integral 1L", "supermercado": "Super ABC", "termo": "leite"},
+        {"id": 3, "nome": "Leite UHT Desnatado Itambé Caixa com Tampa 1l", "supermercado": "Supernosso", "termo": "leite"},
+        {"id": 4, "nome": "Sabonete Dove Original 90g", "supermercado": "Supernosso", "termo": "sabonete"},
+    ]
+    anterior = api.supabase
+    api.supabase = banco
+    try:
+        catalogo = api.baixar_catalogo("MG")
+    finally:
+        api.supabase = anterior
+    por_id = {e.produto["id"]: e.produto for e in catalogo}
+    assert por_id[1]["chave_equivalencia"] == por_id[2]["chave_equivalencia"]                          # marcas e embalagens diferentes, mesmo produto
+    assert por_id[1]["chave_equivalencia"] != por_id[3]["chave_equivalencia"]                          # integral não é desnatado
+    assert por_id[1]["rotulo_equivalencia"] == "Leite integral, 1 L"
+    assert "chave_equivalencia" not in por_id[4] and "rotulo_equivalencia" not in por_id[4]            # fora de qualquer família: sem chave
+
+
 # ============================== o cache ==============================
 
 def teste_primeira_busca_baixa_e_as_seguintes_usam_o_cache():
@@ -228,6 +249,28 @@ def teste_resposta_traz_os_campos_dos_ocultos_e_aceita_todos():
         assert t["ocultos"] == 0 and t["ocultos_so_citam"] == 0 and t["so_citam_por_mercado"] == {"Supernosso": 1}
         opcoes = [o for g in t["carrinho_comparativo"] for o in g["opcoes_de_compra"]]
         assert len(opcoes) == 4 and [o.get("so_cita") for o in opcoes].count(True) == 1     # o site sabe quais opções só citam
+    finally:
+        api.carregar_catalogo, api.obter_uf_pelo_cep = anteriores
+
+
+def teste_resposta_leva_as_chaves_de_equivalencia_e_as_familias():
+    import busca
+    from equivalencia import com_equivalencia
+    produtos = com_equivalencia([
+        {"id": 1, "nome": "Sal Refinado Cisne Tradicional Pacote 1 Kg", "termo": "sal", "supermercado": "Apoio Entrega", "preco_varejo": 3.0},
+        {"id": 2, "nome": "Sal Refinado Globo Tradicional 1kg", "termo": "sal", "supermercado": "Atacadão", "preco_varejo": 2.5},
+        {"id": 3, "nome": "Sal Grosso Cisne 1kg", "termo": "sal", "supermercado": "Atacadão", "preco_varejo": 2.9},
+    ])
+    anteriores = (api.carregar_catalogo, api.obter_uf_pelo_cep)
+    api.carregar_catalogo = lambda uf: busca.indexar(produtos)
+    api.obter_uf_pelo_cep = lambda cep: "MG"
+    try:
+        r = api.buscar_e_comparar(cep="32607600", item="sal")
+        assert "sal" in r["equivalencia_familias"] and "arroz" in r["equivalencia_familias"]            # o site lista as famílias na mensagem
+        assert len(r["equivalencia_familias"]) == len(set(r["equivalencia_familias"]))
+        opcoes = {o["id"]: o for g in r["carrinho_comparativo"] for o in g["opcoes_de_compra"]}
+        assert opcoes[1]["chave_equivalencia"] == opcoes[2]["chave_equivalencia"] != opcoes[3]["chave_equivalencia"]
+        assert opcoes[1]["rotulo_equivalencia"].startswith("Sal")
     finally:
         api.carregar_catalogo, api.obter_uf_pelo_cep = anteriores
 

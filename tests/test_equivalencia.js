@@ -99,6 +99,22 @@ separam("Papel Higiênico Folha Dupla Abc 30m L12p11", "Papel Higiênico Folha D
   confere(gf.length === 1 && gf[0].opcoes_de_compra.every((o) => o.preco_varejo > 5), "preço de R$ 0,78 num grupo de R$ 10 a 12 é descartado como erro de coleta");
 }
 
+// ---- agrupamento com as chaves da API (equivalencia.py): o site não usa o motor próprio ----
+{
+  const mk = (id, supermercado, nome, preco, extra = {}) => ({ id, supermercado, nome, preco_varejo: preco, preco_atacado: preco, quantidade_atacado: 1, ...extra });
+  const sal = { chave_equivalencia: "sal|refinado|1000g", rotulo_equivalencia: "Sal refinado, 1 kg" };
+  const brutos = [
+    { produto_base: "a", opcoes_de_compra: [mk(1, "Atacadao", "Sal Refinado Cisne 1kg", 3, sal), mk(2, "Supernosso", "Sal Refinado Globo 1kg", 2.5, sal)] },
+    { produto_base: "b", opcoes_de_compra: [mk(3, "Super ABC", "Sal com Moedor Lemon Pepper 70g", 12), mk(1, "Atacadao", "Sal Refinado Cisne 1kg", 3, sal)] },    // sem chave: fica de fora; repetido conta uma vez
+    { produto_base: "c", opcoes_de_compra: [mk(4, "Apoio Entrega", "Arroz Branco Camil Tipo 1 5kg", 24.9)] },                                                          // o motor do site reconheceria, mas a API é quem manda
+  ];
+  const g = agruparEquivalentes(brutos, true);
+  confere(g.length === 1 && g[0].chave === "sal|refinado|1000g" && g[0].opcoes_de_compra.length === 2, `com a API, só o sal tem chave: ${JSON.stringify(g.map((x) => x.chave))}`);
+  confere(g[0].equivalente === true && g[0].produto_base === "Sal refinado, 1 kg", `rótulo vem da API: ${g[0].produto_base}`);
+  confere(agruparEquivalentes(brutos, false).length === 1 && agruparEquivalentes(brutos, false)[0].chave.startsWith("arroz|"), "sem a API nova, vale o motor do site (arroz sim, sal não)");
+  confere(agruparEquivalentes([{ produto_base: "x", opcoes_de_compra: [mk(9, "Supernosso", "Produto Sem Rótulo 1kg", 5, { chave_equivalencia: "x|1000g" })] }], true)[0].produto_base === "x|1000g", "chave sem rótulo: usa a chave como rótulo");
+}
+
 // ---- cidades ----
 ["Belo Horizonte/MG", "BELO HORIZONTE/MG", "Betim/MG", "Brumadinho/MG", "Contagem/MG", "Esmeraldas/MG", "Ibirité/MG", "Ibirite/MG", "Igarapé/MG", "Nova Lima/MG",
  "Ribeirão das Neves/MG", "Ribeirao das Neves/MG", "Sabará/MG", "Santa Luzia/MG", "São Joaquim de Bicas/MG", "Sarzedo/MG", "Vespasiano/MG"].forEach((c) => confere(cidadeAtendida(c), `deveria atender: ${c}`));

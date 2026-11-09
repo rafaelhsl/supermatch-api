@@ -237,6 +237,11 @@ o que a busca deixou de fora (passo 3):
 | `ocultos_pelo_limite` | Quantos passaram do teto de 400 resultados. |
 | `so_citam_por_mercado` | `{mercado: quantos}` dos produtos que só citam a palavra, escondidos ou não. O site soma só os mercados que entregam na cidade da pessoa. |
 
+A resposta traz ainda `equivalencia_familias`, a lista dos tipos de produto para os quais o modo "Produto equivalente" funciona
+(arroz, feijão, leite…). Cada opção de compra de uma família traz `chave_equivalencia` e `rotulo_equivalencia`; produto fora de
+qualquer família vem sem esses dois campos. A chave é calculada pela API ao carregar o catálogo (`equivalencia.py`), não fica
+no banco. Veja [`equivalencia.md`](equivalencia.md).
+
 O parâmetro opcional `todos=1` (`/comparar?cep=...&item=...&todos=1`) devolve também os que só citam a palavra. Cada opção
 desses vem marcada com `"so_cita": true`. É o que o botão "Mostrar também" do site pede.
 

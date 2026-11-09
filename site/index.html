@@ -495,7 +495,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     cidade: "",           // "Betim/MG"
     modo: "exato",        // como a busca junta os produtos: "exato" (mesmo produto) ou "equivalente" (mesmo tipo e tamanho, qualquer marca)
     lista: [],            // [{ grupo, qtd }]
-    busca: { termo: "", status: "parado", grupos: [], brutos: [], semEquivalentes: false, aviso: "", atualizadoEm: "", todos: false, ocultosSoCitam: 0, soCitamPorMercado: {}, ocultosPeloLimite: 0 },   // brutos: o que a API devolveu; grupos: o que a tela mostra no modo atual
+    busca: { termo: "", status: "parado", grupos: [], brutos: [], semEquivalentes: false, familiasEquivalentes: null, aviso: "", atualizadoEm: "", todos: false, ocultosSoCitam: 0, soCitamPorMercado: {}, ocultosPeloLimite: 0 },   // brutos: o que a API devolveu; grupos: o que a tela mostra no modo atual
   };
   const ouvintes = [];
   const emitir = () => ouvintes.forEach((f) => f());
@@ -621,7 +621,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     if (!termo) return;
     const meu = ++numeroDaBusca, b = estado.busca;
     b.termo = termo; b.status = "carregando"; b.aviso = ""; b.grupos = []; b.brutos = [];
-    b.todos = todos; b.ocultosSoCitam = 0; b.soCitamPorMercado = {}; b.ocultosPeloLimite = 0;
+    b.todos = todos; b.ocultosSoCitam = 0; b.soCitamPorMercado = {}; b.ocultosPeloLimite = 0; b.familiasEquivalentes = null;
     emitir();
     const aviso = setTimeout(() => {
       if (meu === numeroDaBusca && b.status === "carregando") {
@@ -648,6 +648,8 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       b.ocultosSoCitam = +dados.ocultos_so_citam || 0;
       b.soCitamPorMercado = dados.so_citam_por_mercado && typeof dados.so_citam_por_mercado === "object" ? dados.so_citam_por_mercado : {};
       b.ocultosPeloLimite = +dados.ocultos_pelo_limite || 0;
+      // a API nova manda a chave de equivalência de cada produto e a lista de famílias; uma API antiga, não (e o site usa o motor próprio)
+      b.familiasEquivalentes = Array.isArray(dados.equivalencia_familias) ? dados.equivalencia_familias.filter((f) => typeof f === "string") : null;
       // a data mais antiga entre os preços exibidos: é a que vale para a tela toda
       const datas = grupos.flatMap((g) => g.opcoes_de_compra.map((o) => o.atualizado_em)).filter(Boolean).sort();
       b.atualizadoEm = datas[0] || "";
@@ -666,7 +668,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     const visiveis = b.brutos
       .map((g) => ({ ...g, opcoes_de_compra: g.opcoes_de_compra.filter((o) => ativos.has(o.supermercado)) }))
       .filter((g) => g.opcoes_de_compra.length);
-    b.grupos = estado.modo === "equivalente" ? agruparEquivalentes(visiveis) : visiveis.sort((x, y) => y.opcoes_de_compra.length - x.opcoes_de_compra.length);
+    b.grupos = estado.modo === "equivalente" ? agruparEquivalentes(visiveis, b.familiasEquivalentes !== null) : visiveis.sort((x, y) => y.opcoes_de_compra.length - x.opcoes_de_compra.length);
     b.semEquivalentes = visiveis.length > 0 && b.grupos.length === 0;   // há produtos, mas nenhum se encaixa nas regras de equivalência
     b.status = b.grupos.length ? "ok" : "vazio";
   }
@@ -804,14 +806,16 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 
   // Junta, entre os produtos devolvidos pela busca, os que são equivalentes. Cada grupo guarda todos os produtos
   // candidatos; a comparação escolhe, em cada mercado, o que sai mais barato.
-  function agruparEquivalentes(brutos) {
+  // `doServidor`: a API (equivalencia.py) já mandou `chave_equivalencia` e `rotulo_equivalencia` em cada produto; sem chave, o
+  // produto não tem equivalente. Sem isso (API antiga), as chaves saem do motor `equivalencia` acima, só com as 11 famílias.
+  function agruparEquivalentes(brutos, doServidor = false) {
     const vistos = new Set(), mapa = new Map();
     for (const g of brutos) {
       for (const o of g.opcoes_de_compra) {
         const id = o.id || o.supermercado + "|" + o.nome;
         if (vistos.has(id)) continue;
         vistos.add(id);
-        const e = equivalencia(o.nome);
+        const e = doServidor ? (o.chave_equivalencia ? { chave: o.chave_equivalencia, rotulo: o.rotulo_equivalencia || o.chave_equivalencia } : null) : equivalencia(o.nome);
         if (!e) continue;
         if (!mapa.has(e.chave)) mapa.set(e.chave, { produto_base: e.rotulo, equivalente: true, chave: e.chave, opcoes_de_compra: [] });
         mapa.get(e.chave).opcoes_de_compra.push(o);
@@ -914,6 +918,8 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 <script>
 (function () {
   const S = Supermatch, U = S.util;
+  // as famílias do motor reserva do site (a API nova manda a lista completa, ver equivalencia_familias)
+  const FAMILIAS_DO_MOTOR_DO_SITE = ["arroz", "feijão", "óleo", "café", "manteiga", "açúcar", "macarrão", "detergente", "sabão", "amaciante", "papel higiênico"];
   const $ = (id) => document.getElementById(id);
   const SOL = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.4" fill="#182848"/><g stroke="#182848" stroke-width="1.6" stroke-linecap="round"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13"/></g></svg>';
   const SETA = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -987,7 +993,9 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       el.innerHTML = `<div class="estado"><strong>Não deu para consultar agora</strong>${U.esc(b.aviso)}<br><br><button class="botao vazado" type="button" id="tentar">Buscar de novo</button></div>`;
     } else if (b.status === "vazio" && b.semEquivalentes) {
       // há produtos, mas nenhum se encaixa nas regras de equivalência
-      el.innerHTML = `<div class="estado"><strong>Nenhum produto equivalente para “${U.esc(b.termo)}”</strong>A comparação por equivalência vale para arroz, feijão, óleo, café, manteiga, açúcar, macarrão, detergente, sabão, amaciante e papel higiênico. Para outros itens, ou para uma marca específica, use Produto exato.<br><br><button class="botao vazado" type="button" data-modo="exato">Ver como produto exato</button></div>`;
+      const familias = b.familiasEquivalentes && b.familiasEquivalentes.length ? b.familiasEquivalentes : FAMILIAS_DO_MOTOR_DO_SITE;
+      const lista = familias.length > 1 ? familias.slice(0, -1).join(", ") + " e " + familias[familias.length - 1] : familias.join("");
+      el.innerHTML = `<div class="estado"><strong>Nenhum produto equivalente para “${U.esc(b.termo)}”</strong>A comparação por equivalência vale para ${U.esc(lista)}. Para outros itens, ou para uma marca específica, use Produto exato.<br><br><button class="botao vazado" type="button" data-modo="exato">Ver como produto exato</button></div>`;
     } else if (b.status === "vazio") {
       el.innerHTML = `<div class="estado"><strong>Nada encontrado para “${U.esc(b.termo)}”</strong>Tente uma palavra mais curta ou confira a escrita.</div>`;
     } else {
