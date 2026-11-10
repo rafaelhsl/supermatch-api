@@ -39,7 +39,7 @@ As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.8
 | Café | forma (em pó, solúvel, em grãos, com leite) e força (tradicional, extraforte, gourmet, descafeinado, liofilizado) |
 | Manteiga | com sal ou sem sal (obrigatório no nome), e extra, de búfala ou sem lactose |
 | Açúcar | cristal, refinado, demerara, mascavo ou de confeiteiro, e orgânico ou light |
-| Macarrão | formato (espaguete, parafuso, penne, linguine, fettuccine…) e massa (com ovos, de sêmola) |
+| Macarrão | formato (espaguete, parafuso, penne, linguine, fettuccine…) e massa (com ovos, de sêmola). O instantâneo é outra família |
 | Detergente | líquido, gel, em pó, em pó para lava-louças |
 | Sabão | líquido, em pó, em barra, em pasta, e para roupas delicadas |
 | Amaciante | concentrado ou não |
@@ -79,6 +79,11 @@ As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.8
 | Papel toalha | rolo ou interfolhas, folha simples ou dupla, rolos e folhas (ver "Limites") |
 | Fralda | tamanho (RN a XXXG), calça ou comum, linha premium e quantidade de fraldas. Fora: geriátrica, de pano e sem tamanho ou quantidade no nome |
 | Absorvente | externo, interno ou protetor diário; com ou sem abas; suave, seca ou em gel; noturno ou dia e noite; tamanho; plus, ultrafino, longo, premium; quantidade. Fora: pacote com "grátis N" |
+| Macarrão instantâneo | formato (lámen em pacote, copo "Cup Noodles", yakissoba, talharim), **sabor** (obrigatório: galinha, galinha caipira, frango assado, carne, carne defumada, bacon, calabresa, picanha, costela, tomate, cheddar, nacho, parmegiana, bolonhesa, tradicional…), picante ou suave; peso do pacote. Fora: espaguete instantâneo sem tempero |
+| Achocolatado | em pó, granulado ou flocos crocantes; light, menos açúcar, 60% cacau, proteína, com malte, Alpino, sem lactose, vegano; peso. Fora: cápsulas e os líquidos (em ml) |
+| Geleia | **sabor** (obrigatório: morango, amora, frutas vermelhas, damasco, goiaba, uva, pimenta…), zero açúcar, gourmet, polonesa, agridoce; peso. Fora: geleia de mocotó e a sem sabor no nome |
+| Pipoca | de micro-ondas, pronta ou **milho para pipoca** (o grão). Micro-ondas e pronta pedem o sabor no nome (manteiga, manteiga de cinema, manteiga light, natural, bacon, cheddar, queijo, doce, temperada); o grão separa o premium; peso. Fora: saco de pipoca de festa, pipoqueira |
+| Caldo | sabor (obrigatório: galinha, galinha caipira, carne, legumes, costela, camarão, peixe, bacon) e menos sal; o peso separa os cubos (57 a 152 g) do pó profissional (1 kg), e "12 cubos" não é multipacote. Fora: Sazón (é tempero) e caldo líquido |
 
 ## Como acrescentar uma família
 
@@ -97,11 +102,11 @@ As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.8
 
 No catálogo de 05 a 09/11/2026 (7.836 produtos, 4 mercados):
 
-| | 11 famílias (as do site) | 39 famílias | 47 famílias |
-|---|---|---|---|
-| Produtos com chave | 981 (12,5%) | 2.606 (33,3%) | 3.161 (40,3%) |
-| Grupos | — | 800 | 1.115 |
-| Grupos comparáveis (2 mercados ou mais) | 114 | 396 | 521 |
+| | 11 famílias (as do site) | 39 famílias | 47 famílias | 52 famílias |
+|---|---|---|---|---|
+| Produtos com chave | 981 (12,5%) | 2.606 (33,3%) | 3.161 (40,3%) | 3.458 (44,1%) |
+| Grupos | — | 800 | 1.115 | 1.254 |
+| Grupos comparáveis (2 mercados ou mais) | 114 | 396 | 521 | 588 |
 
 Iogurte fragmenta de propósito (cada combinação de sabores é um grupo), por isso a cobertura dele é alta e a comparação, menor.
 
@@ -113,4 +118,4 @@ Iogurte fragmenta de propósito (cada combinação de sabores é um grupo), por 
 - **Marca e linha.** Em fralda, a linha premium (Premium Care, Supreme Care, Premium Protection) não junta com a comum, mas Pampers, Huggies e Personal da mesma linha juntam. Quem não quer trocar de marca usa o modo exato.
 - Fora das famílias declaradas nada é equivalente.
 - **Decidido: higiene pessoal e bebidas ficam sem equivalência**, só no modo exato. Shampoo, condicionador, sabonete, desodorante, creme dental, vinho, cerveja, suco, refrigerante e energético somam mais de 2 mil produtos, mas são diversos demais: cheiro, sabor e marca pesam na escolha, e "qualquer marca" enganaria. `tests/casos_equivalencia_novos.py` guarda a decisão (esses nomes têm de ficar em "fora"), para que uma regra futura mais ampla não os junte sem querer. Se a decisão mudar, comece por uma família estreita (por exemplo, creme dental de uma só variante e peso), não pela categoria inteira.
-- Candidatos mais simples que ainda faltam: macarrão instantâneo, achocolatado, geleia, pipoca e caldo.
+- Candidatos que ainda faltam, em ordem do que há no catálogo: cereal matinal, farofa, biscoito cream cracker e de maisena, ovos. Os que vendem a peso variável (queijo, presunto, frango, carne moída) não cabem: o preço por quilo mudaria a regra.
