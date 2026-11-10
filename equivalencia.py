@@ -256,10 +256,16 @@ class Dim:
     regras: tuple
     obrigatoria: bool = False      # sem nenhuma regra casando, o produto fica de fora (não dá para garantir a equivalência)
     padrao: str = ""               # valor quando nenhuma casa e a dimensão não é obrigatória
+    varios: bool = False           # vale TODA regra que casa ("bacon e picanha"), em ordem alfabética, e não só a primeira
 
 
-def dim(*regras, obrigatoria=False, padrao=""):
-    return Dim(tuple(regras), obrigatoria, padrao)
+def dim(*regras, obrigatoria=False, padrao="", varios=False):
+    return Dim(tuple(regras), obrigatoria, padrao, varios)
+
+
+def _todos(t, regras):
+    """Todos os valores cujas regras casam, sem repetir e em ordem alfabética ('camomila e hortelã'); vazio se nenhum casa."""
+    return " e ".join(sorted({valor for padrao, valor in regras if re.search(padrao, t)}))
 
 
 def declarar(id_, titulo, *, casa, exclui=None, medida_tipo="massa", dims=(), multipacote=True):
@@ -277,7 +283,10 @@ def declarar(id_, titulo, *, casa, exclui=None, medida_tipo="massa", dims=(), mu
                 return None
         valores = []
         for d in dims:
-            valor = escolher(t, d.regras, None if d.obrigatoria else d.padrao)
+            if d.varios:
+                valor = _todos(t, d.regras) or (None if d.obrigatoria else d.padrao)
+            else:
+                valor = escolher(t, d.regras, None if d.obrigatoria else d.padrao)
             if valor is None:
                 return None
             valores.append(valor)
@@ -437,6 +446,149 @@ FAMILIAS += [
     declarar("agua_mineral", "Água mineral", casa=_comeca(r"^agua mineral"), medida_tipo="volume",
              exclui=r"tonica|saborizada|sabor|limao|laranja|\bcoco\b|aromatizada|retorn",
              dims=[dim((r"sem gas|nao gaseificada", "sem gás"), (r"com gas|gaseificada", "com gás"), obrigatoria=True), dim((r"alcalina|ph ?\d", "alcalina"))]),
+]
+
+
+# ============================== terceira leva: contagem de unidades, carnes processadas e chá ==============================
+
+_UNIDADES = r"(\d+) ?(?:un|und|unid|unidades?)\b"
+_NAO_E_PRODUTO_UNICO = r"\b(kit|combo|fardo)\b|\bgratis\b|brinde"
+
+
+def _quantidade_do_pacote(t, minimo=6):
+    """Quantas unidades vêm no pacote: 'Leve 28 Pague 26' vale 28; '66 un' vale 66. None se não diz, ou se 'Leve 3 Pague 2' (são vários pacotes)."""
+    promocao = re.search(r"\bleve (\d+)\b", t)
+    if promocao:
+        n = int(promocao.group(1))
+        return str(n) if n >= minimo else None
+    achado = re.search(_UNIDADES, t) or re.search(r"\bcom (\d+)\b", t)
+    return achado.group(1) if achado else None
+
+
+def _fralda(t):
+    """Fralda descartável: tamanho (P, M, G, XG...), formato (calça ou comum) e fraldas no pacote. Marca e linha não contam."""
+    if re.search(_NAO_E_PRODUTO_UNICO + r"|geriatric|adult|incontinen|\bpano\b|\bpet\b|cachorro|treinamento", t):
+        return None
+    n = _quantidade_do_pacote(t)
+    sem_nascido = re.sub(r"recem[ -]?nascido", "rn", t)
+    tamanhos = set(re.findall(r"\b(rn|pp|p|m|g|gg|xg|xxg|xxxg)\b", sem_nascido))
+    if not tamanhos:                    # alguns nomes escrevem o tamanho por extenso
+        tamanhos = {sigla for palavra, sigla in (("extra grande", "xg"), ("grande", "g"), ("medio", "m"), ("pequeno", "p")) if re.search(r"\b" + palavra + r"\b", t)}
+        if "xg" in tamanhos:
+            tamanhos.discard("g")
+    if not n or len(tamanhos) != 1:
+        return None
+    tamanho = tamanhos.pop().upper()
+    formato = escolher(t, [(r"pants|calca", "calça")], "")
+    linha = escolher(t, [(r"premium|supreme", "premium")], "")
+    valores = [tamanho, formato, linha]
+    return _Analise(valores + [n], None, "Fralda" + "".join(" " + v for v in valores if v) + f", {n} unidades")
+
+
+def _absorvente(t):
+    """Absorvente: tipo (externo, interno, protetor diário), abas, cobertura (suave, seca, gel), uso (noturno), tamanho e quantidade."""
+    if re.search(_NAO_E_PRODUTO_UNICO + r"|geriatric|adult|incontinen|ducha|coletor|menstrual|calcinha|sabonete|cuidado intimo", t):
+        return None
+    n = _quantidade_do_pacote(t)
+    if not n:
+        return None
+    tipo = escolher(t, [(r"interno|tampao|\bo\.?b\.?\b", "interno"), (r"protetor", "protetor diário")], "externo")
+    abas = escolher(t, [(r"sem abas", "sem abas"), (r"abas", "com abas")], "")
+    pele = _todos(t, [(r"suave", "suave"), (r"\bseca\b|\bdry\b", "seca"), (r"\bgel\b", "em gel")])
+    uso = escolher(t, [(r"dia (e )?noite|noite (e )?dia", "dia e noite"), (r"noturn|noite|night", "noturno")], "")
+    linha = _todos(t, [(r"\bplus\b", "plus"), (r"ultra ?fin", "ultrafino"), (r"longo", "longo"), (r"premium", "premium")])
+    tamanho = escolher(t, [(r"\bmini\b", "mini"), (r"extra grande|\bxg\b|\bxxg\b", "extra grande"), (r"grande|\bg\b", "grande"), (r"medio|\bm\b|normal", "médio"),
+                           (r"pequeno|\bp\b", "pequeno"), (r"\bsuper\b", "super")], "")
+    valores = [tipo, abas, pele, uso, tamanho, linha]
+    return _Analise(valores + [n], None, "Absorvente" + "".join(" " + v for v in valores if v) + f", {n} unidades")
+
+
+def _papel_toalha(t):
+    """Papel toalha: rolo ou interfolhas, folha simples ou dupla, rolos e folhas. Quando o nome diz 'cada' ou 'de N folhas', as folhas
+    são por rolo e a conta é feita; quando diz só 'N folhas', a conta fica como está escrita (pode ser o total), então só junta com a mesma escrita."""
+    if re.search(_NAO_E_PRODUTO_UNICO + r"|\bpano\b|umedecid|\blimpeza\b", t):
+        return None
+    numero = r"(\d{1,3}(?:\.\d{3})+|\d+)"
+    folhas = re.search(numero + r" ?(?:folhas?|fls?|flhas?|toalhas?)\b", t)
+    interfolhas = re.search(r"interfolha", t)
+    if not folhas and interfolhas:
+        folhas = re.search(numero + r" ?(?:un|und|unidades?)\b", t)
+    if not folhas:
+        return None
+    promocao = re.search(r"\bleve (\d+)\b", t)       # "Leve 200 Pague 180 Folhas": o pacote traz 200
+    f = int(promocao.group(1)) if promocao else int(folhas.group(1).replace(".", ""))
+    rolos = re.search(r"(\d+) ?(?:rolos?|unidades?|und|un)\b", t) or re.search(r"\bc (\d+)\b", t)       # "120fls C/2" são 2 rolos
+    r = int(rolos.group(1)) if rolos and not interfolhas else 1
+    por_rolo = bool(re.search(numero + r" ?(?:folhas?|fls?|flhas?|toalhas?) cada\b", t) or re.search(r"rolos? de " + numero, t))
+    folha = escolher(t, [(r"folha dupla|\bf ?d\b", "folha dupla"), (r"folha simples|\bf ?s\b", "folha simples")], "")
+    if interfolhas:
+        return _Analise(["interfolhas", folha, str(f)], None, f"Papel toalha interfolhas{' ' + folha if folha else ''}, {f} folhas")
+    if por_rolo:
+        return _Analise(["rolo", folha, f"{r}x{f}"], None, f"Papel toalha{' ' + folha if folha else ''}, {r} {'rolo' if r == 1 else 'rolos'} de {f} folhas")
+    return _Analise(["rolo", folha, f"{r}:{f}"], None, f"Papel toalha{' ' + folha if folha else ''}, {r} {'rolo' if r == 1 else 'rolos'} com {f} folhas")
+
+
+_ERVAS_DO_CHA = [
+    (r"camomila", "camomila"), (r"erva[ -]?doce|funcho", "erva-doce"), (r"hortela", "hortelã"), (r"capim[ -]?cidreira", "capim-cidreira"),
+    (r"erva[ -]?cidreira|(?<!capim )\bcidreira\b", "erva-cidreira"), (r"maracuja", "maracujá"), (r"\bboldo\b", "boldo"), (r"hibisco", "hibisco"), (r"gengibre", "gengibre"),
+    (r"canela", "canela"), (r"\bmaca\b", "maçã"), (r"laranja", "laranja"), (r"limao", "limão"), (r"morango", "morango"), (r"frutas vermelhas", "frutas vermelhas"),
+    (r"pessego", "pêssego"), (r"lichia", "lichia"), (r"cavalinha", "cavalinha"), (r"dente de leao", "dente-de-leão"), (r"melissa", "melissa"), (r"carqueja", "carqueja"),
+    (r"espinheira", "espinheira-santa"), (r"\bmatte?\b", "mate"), (r"preto", "preto"), (r"verde", "verde"), (r"branco", "branco"), (r"jasmim", "jasmim"),
+    (r"cranberry", "cranberry"), (r"mirtilo|blueberry", "mirtilo"), (r"baunilha", "baunilha"), (r"\bmel\b", "mel"), (r"tostado", "tostado"),
+]
+
+
+def _cha(t):
+    """Chá: de sachê/folhas (ervas e tamanho em gramas) ou bebida pronta (sabor e volume). Misturas ('misto') ficam de fora: o nome corta os ingredientes."""
+    if re.search(_NAO_E_PRODUTO_UNICO + r"|\bmisto\b|capsula|instantaneo|soluvel|\bpo\b|granulado|latte|\bkit\b|\b[2-9] ?(caixas?|pacotes?|garrafas?|latas?)\b", t):
+        return None
+    ervas = _todos(t, _ERVAS_DO_CHA)
+    if not ervas:
+        return None
+    pronto = re.search(r"\bice\b|iced|pronto|garrafa|\bpet\b|\blata\b", t) is not None
+    if not pronto and re.search(r"\bmatte?\b", t) and medida(t, "volume", varrer=True) and not medida(t, "massa", varrer=True):
+        pronto = True                   # "Chá Matte Leão Limão 1,5L"
+    if pronto:
+        m = medida(t, "volume", varrer=True)
+        if not m:
+            return None
+        zero = escolher(t, [(r"\bzero\b|sem (adicao de )?acucar|light|diet", "zero açúcar")], "")
+        versao = _todos(t, [(r"\bnatural\b", "natural"), (r"\boriginal\b", "original")])     # "Matte Leão Natural" e "Original" são versões diferentes
+        valores = [ervas, versao, zero]
+        return _Analise(["pronto"] + valores, m, "Chá pronto" + "".join(" " + v for v in valores if v))
+    m = medida(t, "massa", varrer=True)
+    if not m:
+        return None
+    return _Analise(["sache", ervas], m, f"Chá {ervas}")
+
+
+_CARNES_A_EXCLUIR = _NAO_E_PRODUTO_UNICO + r"|vegetal|vegano|vegana|plant|molho|tempero|\bpao\b|sanduiche|pizza|recheio|empanado"
+
+FAMILIAS += [
+    declarar("gelatina", "Gelatina", casa=_comeca(r"^gelatina"), exclui=r"dentadura|beijos|\bfini\b|pronta|\bpote\b|\bcopo\b|colageno|bovina|capsula",
+             dims=[dim((r"sem sabor|incolor|neutra|\bnatural\b", "sem sabor"), (r"morango", "morango"), (r"\buva\b", "uva"), (r"abacaxi", "abacaxi"), (r"cereja", "cereja"),
+                       (r"limao", "limão"), (r"framboesa", "framboesa"), (r"maracuja", "maracujá"), (r"laranja", "laranja"), (r"pessego", "pêssego"),
+                       (r"tutti ?frutti", "tutti-frutti"), (r"melancia", "melancia"), (r"\bcoco\b", "coco"), (r"menta", "menta"), obrigatoria=True),
+                   dim((r"zero|diet|sem acucar|light", "zero açúcar"))]),
+    declarar("salsicha", "Salsicha", casa=_comeca(r"^salsicha"), exclui=_CARNES_A_EXCLUIR + r"|conserva|\blata\b|\bviena\b.*\bsache\b", multipacote=False,
+             dims=[dim((r"hot[ -]?dog", "hot dog"), (r"viena", "viena"), (r"frango", "de frango"), (r"\bperu\b", "de peru"), (r"defumad", "defumada"), (r"\blight\b", "light"), varios=True)]),
+    declarar("linguica", "Linguiça", casa=_comeca(r"^linguica"), exclui=_CARNES_A_EXCLUIR + r"|salsicha|churrasqueira|espeto", multipacote=False,
+             dims=[dim((r"toscana", "toscana"), (r"calabresa", "calabresa"), (r"mista", "mista"), (r"frango", "de frango"), (r"pernil", "de pernil"), (r"lombo", "de lombo"),
+                       (r"costela", "de costela"), (r"churrasco", "de churrasco"), (r"cuiabana", "cuiabana"), (r"blumenau", "blumenau"), (r"\bpato\b", "de pato"),
+                       (r"mignon", "de filé mignon"), (r"coalho", "de queijo coalho"), (r"\bpaio\b", "paio"), (r"portuguesa", "portuguesa"), (r"mineira", "mineira"),
+                       (r"suina|carne suina|\bporco\b", "suína"), obrigatoria=True),
+                   dim((r"^(?!.*calabresa).*defumad", "defumada"), (r"cozida", "cozida")),
+                   dim((r"\bfina\b|fininha", "fina")),
+                   dim((r"bacon", "bacon"), (r"pimenta|apimentad|picante", "apimentada"), (r"\balho\b|alho poro", "alho"), (r"queijo", "queijo"), (r"ervas", "ervas"), (r"fatiada", "fatiada"), (r"angus", "angus"), varios=True)]),
+    declarar("hamburguer", "Hambúrguer", casa=_comeca(r"^hamburguer"), exclui=_CARNES_A_EXCLUIR, multipacote=False,
+             dims=[dim((r"misto|mista|aves? e bovin|frango e bovin|bovin\w* e (frango|aves?)", "misto"), (r"frango|aves", "de frango"), (r"suin", "suíno"),
+                       (r"bovin|angus|picanha|maminha|fraldinha|costela|brisket|churrasco|carne", "bovino"), obrigatoria=True),
+                   dim((r"angus", "angus"), (r"picanha", "picanha"), (r"costela", "costela"), (r"fraldinha", "fraldinha"), (r"brisket", "brisket"), (r"maminha", "maminha"),
+                       (r"bacon", "bacon"), (r"queijo|cheddar", "queijo"), (r"\bfit\b", "fit"), (r"churrasco", "de churrasco"), (r"defumad", "defumado"), varios=True)]),
+    Familia("cha", "chá", _comeca(r"^cha "), _cha),
+    Familia("papel_toalha", "papel toalha", _comeca(r"^(papel toalha|toalha de papel)"), _papel_toalha),
+    Familia("fralda", "fralda", _comeca(r"^fralda"), _fralda),
+    Familia("absorvente", "absorvente", _comeca(r"^absorvente"), _absorvente),
 ]
 
 
