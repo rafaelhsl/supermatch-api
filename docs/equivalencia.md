@@ -71,6 +71,14 @@ As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.8
 | Fermento em pó | químico em pó (biológico, fresco e instantâneo ficam de fora) |
 | Água sanitária | só o volume |
 | Água mineral | sem gás ou com gás (obrigatório); alcalina |
+| Gelatina | sabor (obrigatório; "sem sabor" e incolor contam como um sabor) e zero açúcar. Fora: gelatina pronta e as balas Fini |
+| Chá | **sachê ou folhas**: todas as ervas do nome ("camomila e maracujá") e o peso; **bebida pronta**: sabor, versão (natural, original), zero açúcar e volume. Fora: misturas ("misto"), solúvel, cápsula |
+| Salsicha | hot dog, viena, de frango, de peru, defumada, light; peso. Fora: em conserva |
+| Linguiça | tipo (toscana, calabresa, mista, de frango, de pernil, costela, paio, portuguesa…, obrigatório), defumada ou cozida, fina, e sabores (bacon, apimentada, alho, queijo); peso |
+| Hambúrguer | bovino, de frango, suíno ou misto (obrigatório), e angus, picanha, costela, bacon, queijo, fit, defumado; peso. Fora: vegetal |
+| Papel toalha | rolo ou interfolhas, folha simples ou dupla, rolos e folhas (ver "Limites") |
+| Fralda | tamanho (RN a XXXG), calça ou comum, linha premium e quantidade de fraldas. Fora: geriátrica, de pano e sem tamanho ou quantidade no nome |
+| Absorvente | externo, interno ou protetor diário; com ou sem abas; suave, seca ou em gel; noturno ou dia e noite; tamanho; plus, ultrafino, longo, premium; quantidade. Fora: pacote com "grátis N" |
 
 ## Como acrescentar uma família
 
@@ -89,11 +97,11 @@ As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.8
 
 No catálogo de 05 a 09/11/2026 (7.836 produtos, 4 mercados):
 
-| | Só as 11 famílias do site | Com as 39 famílias |
-|---|---|---|
-| Produtos com chave | 981 (12,5%) | 2.606 (33,3%) |
-| Grupos | — | 800 |
-| Grupos comparáveis (2 mercados ou mais) | 114 | 396 |
+| | 11 famílias (as do site) | 39 famílias | 47 famílias |
+|---|---|---|---|
+| Produtos com chave | 981 (12,5%) | 2.606 (33,3%) | 3.161 (40,3%) |
+| Grupos | — | 800 | 1.115 |
+| Grupos comparáveis (2 mercados ou mais) | 114 | 396 | 521 |
 
 Iogurte fragmenta de propósito (cada combinação de sabores é um grupo), por isso a cobertura dele é alta e a comparação, menor.
 
@@ -101,4 +109,6 @@ Iogurte fragmenta de propósito (cada combinação de sabores é um grupo), por 
 
 - A equivalência é por **regras sobre o nome**. Se o mercado omite no nome algo que muda o produto, o motor não tem como saber.
 - Produto sem tamanho no nome (ou com medida em unidade não reconhecida) não tem chave.
-- Fora das famílias declaradas nada é equivalente. Ficam para depois: gelatina, chá, salsicha, linguiça, hambúrguer, papel toalha, fralda, absorvente e outros.
+- **Quantidade de unidades.** Fralda, absorvente e papel toalha pesam em unidades, não em gramas. "Leve 28 Pague 26" vale 28 (o que vem no pacote); "Leve 3 Pague 2" (poucas unidades) são vários pacotes e o produto fica de fora. Nome com "grátis N" também fica de fora, porque não diz quanto vem. No papel toalha, "2 rolos de 120 folhas" e "2 unidades com 60 folhas cada" são folhas por rolo; "2 rolos com 100 folhas" pode ser o total ou por rolo, então só junta com quem escreve do mesmo jeito.
+- **Marca e linha.** Em fralda, a linha premium (Premium Care, Supreme Care, Premium Protection) não junta com a comum, mas Pampers, Huggies e Personal da mesma linha juntam. Quem não quer trocar de marca usa o modo exato.
+- Fora das famílias declaradas nada é equivalente. Os maiores buracos que sobram são higiene pessoal (shampoo, sabonete, desodorante, condicionador, creme dental) e bebidas (vinho, cerveja, suco, refrigerante, energético), com centenas de produtos cada. São casos em que "qualquer marca" é discutível (cheiro, sabor e marca pesam na escolha), então cada um pede uma decisão antes. Outros candidatos mais simples: macarrão instantâneo, achocolatado, geleia, pipoca e caldo.
