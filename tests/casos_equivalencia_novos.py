@@ -210,5 +210,16 @@ CASOS = {
         "Absorvente com Abas Seca Always Noturno G Pacote 16 Unidades Grátis 2 Absorventes",
         "Absorvente Sym noturno Suave com Abas",
         "Absorvente Geriátrico Dry Economics com 20 Unidades",
+        # ---- decisão do usuário (10/11/2026): higiene pessoal e bebidas ficam SEM equivalência (produtos diversos demais; cheiro, sabor e marca pesam)
+        "Shampoo Proteína de Trigo com Kera Ceramide Serum Palmolive Naturals Lisos Radiantes Frasco 350ml",
+        "Condicionador com Pantenol, Óleo de Jojoba e Arroz Preto Seda Liso Extremo Frasco 325ml",
+        "Sabonete Líquido Nivea Óleo de Banho 200ml",
+        "Desodorante Aerossol Monange Extrato de Oliva 150ml",
+        "Creme Dental Menta Original Colgate Tripla Ação Caixa 180g",
+        "Vinho Salton Lunae Frisante Branco 750ml",
+        "Cerveja Backer Trigo Garrafa 600 ml",
+        "Suco de Uva Sem Adição de Açúcar Del Valle Caixa 1l",
+        "Refrigerante Sem Açúcar Coca-cola Lata 350ml",
+        "Energético Monster Zero Açúcar 473ml",
     ],
 }
