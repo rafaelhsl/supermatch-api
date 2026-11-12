@@ -265,6 +265,8 @@ tempo de espera da primeira busca do dia, a menos que alguém o mantenha acordad
 
 ### Manter o servidor acordado
 
+(Como o serviço está configurado no Render, com o comando de build, a versão do Python e o health check, está em [`render.md`](render.md).)
+
 A forma que não precisa de código é um **monitor externo gratuito** que chama
 `https://supermatch-api.onrender.com/saude` a cada 5 minutos: o Render só dorme quem fica 15 minutos sem receber nada.
 Serve o UptimeRobot (monitor "HTTP(s)", intervalo de 5 minutos) ou o cron-job.org (tarefa a cada 5 minutos, método GET).

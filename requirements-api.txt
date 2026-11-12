@@ -1,0 +1,7 @@
+# Só o que a API (api_supabase.py) importa, direta ou indiretamente. É o que o Render instala:
+# build command `pip install -r requirements-api.txt`. Os robôs e a carga do GitHub usam o requirements.txt.
+# tests/test_requirements.py confere que este arquivo cobre os imports da API e não traz o Playwright.
+fastapi
+uvicorn
+supabase
+thefuzz
