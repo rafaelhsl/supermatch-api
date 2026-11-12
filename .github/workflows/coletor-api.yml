@@ -11,19 +11,16 @@ on:
         required: false
         default: ''
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   coletar:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
     - name: Puxando o código do projeto
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Configurando o Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.11'
 
@@ -39,7 +36,7 @@ jobs:
 
     - name: Guardando o resultado
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: coleta-por-api
         path: |
