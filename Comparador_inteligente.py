@@ -1,4 +1,5 @@
 import re
+from collections import Counter
 from thefuzz import fuzz
 
 # --- 1. BLINDAGEM DE PESOS E MEDIDAS ---
@@ -184,6 +185,12 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
                 "opcoes_dict": { produto['supermercado']: produto }
             })
 
+    # Identificador estável do grupo para o site. O nome do grupo é o do primeiro produto que entrou nele, e a ordem dos produtos
+    # muda a cada carga (os ids do banco são recriados), então o nome varia de um dia para o outro. O código de barras (sem zeros à
+    # esquerda) não varia. Quando dois grupos dividem o mesmo código (cadastro repetido por engano, com tamanhos diferentes), o
+    # tamanho desempata. Grupo sem código de barras não tem id: o site usa o nome.
+    grupos_por_ean = Counter(_chave_do_ean(g['ean']) for g in grupos_de_produtos if g.get('ean'))
+
     resultados_finais = []
     for grupo in grupos_de_produtos:
         opcoes = list(grupo['opcoes_dict'].values())
@@ -202,6 +209,8 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
         }
         if grupo.get('ean'):
             resultado["ean"] = grupo['ean']
+            chave = _chave_do_ean(grupo['ean'])
+            resultado["id_do_grupo"] = chave if grupos_por_ean[chave] == 1 else f"{chave}|{grupo['medida'] or ''}"
         resultados_finais.append(resultado)
 
     return resultados_finais

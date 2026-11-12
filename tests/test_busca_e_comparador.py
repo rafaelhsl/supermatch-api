@@ -220,6 +220,37 @@ def teste_sem_nenhum_ean_continua_como_antes():
     assert comp.cruzar_multiplos_produtos([[]]) == [] and comp.cruzar_multiplos_produtos([]) == []
 
 
+def teste_grupo_com_ean_tem_id_estavel_igual_ao_codigo_sem_zeros():
+    ordem_1 = [
+        produto("Café em Pó Coffee++ Caparao 250g", mercado="Apoio Entrega", ean="0630941446201"),
+        produto("CAFE CAPARAO COFFEE++ 250G", mercado="Supernosso", ean="630941446201"),
+    ]
+    g1 = comp.cruzar_multiplos_produtos([ordem_1])[0]
+    g2 = comp.cruzar_multiplos_produtos([list(reversed(ordem_1))])[0]
+    assert g1["id_do_grupo"] == g2["id_do_grupo"] == "630941446201"
+    assert g1["produto_base"] != g2["produto_base"]                  # o nome do grupo depende da ordem; o id não
+
+
+def teste_grupos_que_dividem_o_ean_ganham_o_tamanho_no_id():
+    produtos = [
+        produto("Refrigerante Mate Couro 200ml", mercado="Apoio Entrega", ean="7896478801361"),
+        produto("Refrigerante Mate Couro 1L", mercado="Atacadao", ean="7896478801361"),          # EAN repetido por engano no cadastro
+        produto("Arroz Camil 5kg", mercado="Apoio Entrega", ean="7896006711155"),
+    ]
+    grupos = comp.cruzar_multiplos_produtos([produtos])
+    ids = {g["produto_base"]: g["id_do_grupo"] for g in grupos}
+    assert ids["Refrigerante Mate Couro 200ml"] == "7896478801361|200.0ml" and ids["Refrigerante Mate Couro 1L"] == "7896478801361|1000.0ml"
+    assert ids["Arroz Camil 5kg"] == "7896006711155"                                              # EAN único: só o código
+    assert len({g["id_do_grupo"] for g in grupos}) == 3
+    inverso = {g["produto_base"]: g["id_do_grupo"] for g in comp.cruzar_multiplos_produtos([list(reversed(produtos))])}
+    assert inverso == ids                                                                         # a ordem dos produtos não muda os ids
+
+
+def teste_grupo_sem_ean_nao_tem_id_do_grupo():
+    grupos = comp.cruzar_multiplos_produtos([[produto("Arroz Camil Tipo 1 5kg", mercado="Super ABC"), produto("Feijão Preto Camil 1kg", mercado="Super ABC")]])
+    assert len(grupos) == 2 and all("id_do_grupo" not in g and "ean" not in g for g in grupos)
+
+
 if __name__ == "__main__":
     testes = [v for k, v in sorted(globals().items()) if k.startswith("teste_") and callable(v)]
     for t in testes:
