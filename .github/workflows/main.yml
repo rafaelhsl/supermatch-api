@@ -31,11 +31,6 @@ on:
           - robos
         default: api
 
-# --- A CORREÇÃO PARA O AVISO DO NODE.JS 24 ---
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-# ---------------------------------------------
-
 jobs:
   atualizar_banco_de_dados:
     runs-on: ubuntu-latest # O GitHub liga um Linux para nós
@@ -43,10 +38,10 @@ jobs:
 
     steps:
     - name: Puxando o código do projeto
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Configurando o Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.11'
 
