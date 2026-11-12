@@ -57,8 +57,14 @@ def obter_uf_pelo_cep(cep: str):
 #   plano (só a primeira busca depois de o servidor acordar, sem catálogo nenhum, precisa esperar);
 # - só uma atualização por UF acontece por vez, mesmo com várias buscas chegando juntas;
 # - se a atualização falhar, o catálogo anterior continua valendo;
-# - o servidor carrega o catálogo ao iniciar e quando o site chama /saude, então a primeira busca já o encontra pronto.
-CATALOGO_VALIDADE_SEGUNDOS = 600
+# - o servidor carrega o catálogo ao iniciar e, se ainda não tiver nenhum, quando alguém chama /saude; assim a primeira
+#   busca já o encontra pronto. /saude NUNCA recarrega um catálogo que já existe (ver o próximo parágrafo).
+#
+# Os preços só mudam na carga diária, então 1 hora é folga de sobra. Cada recarga baixa cerca de 3,5 MB do Supabase; recarregando
+# a cada 10 minutos isso dá uns 15 GB por mês, mais que a cota de saída de dados do plano gratuito. Com 1 hora, no pior caso
+# (busca o dia todo) são uns 2,5 GB. Um monitor externo chamando /saude a cada 5 minutos para manter o Render acordado (ver
+# docs/banco_de_dados.md) não pode, portanto, disparar recargas: por isso /saude só carrega o que falta.
+CATALOGO_VALIDADE_SEGUNDOS = 3600
 TAMANHO_PAGINA = 1000  # limite de linhas por consulta do Supabase
 UF_DA_REGIAO = "MG"    # Belo Horizonte e região metropolitana
 # Só as colunas que a API devolve ou usa na busca e no agrupamento (fica de fora `texto_original`, o texto bruto do robô).
@@ -133,19 +139,22 @@ def carregar_catalogo(uf: str):
     return guardado[1]
 
 
-def aquecer_catalogo(uf: str):
-    """Deixa o catálogo carregando em segundo plano, se ainda não existe ou já venceu."""
+def aquecer_catalogo(uf: str, tambem_se_vencido: bool = True):
+    """Deixa o catálogo carregando em segundo plano, se ainda não existe (ou, com `tambem_se_vencido`, se já venceu)."""
     guardado = _catalogos.get(uf)
-    if guardado is None or _vencido(guardado):
+    if guardado is None or (tambem_se_vencido and _vencido(guardado)):
         atualizar_em_segundo_plano(uf)
 
 
-@app.get("/saude")
+@app.api_route("/saude", methods=["GET", "HEAD"])
 def saude():
     # Resposta leve, sem esperar o banco. Serve para acordar o servidor: o plano gratuito do Render "dorme" após
-    # 15 minutos sem uso e a primeira chamada depois disso leva cerca de 1 minuto. Aproveita para já deixar o catálogo
-    # carregando, assim a primeira busca depois de abrir o site não paga o download.
-    aquecer_catalogo(UF_DA_REGIAO)
+    # 15 minutos sem uso e a primeira chamada depois disso leva cerca de 1 minuto. Se o servidor acabou de acordar e
+    # não tem catálogo, já o deixa carregando, assim a primeira busca depois de abrir o site não paga o download.
+    # Catálogo vencido NÃO é recarregado aqui: um monitor chamando /saude de 5 em 5 minutos (para o servidor não dormir)
+    # baixaria o catálogo do Supabase sem ninguém buscar nada. Quem recarrega o vencido é a próxima busca de verdade.
+    # Aceita HEAD porque é o que vários monitores gratuitos enviam.
+    aquecer_catalogo(UF_DA_REGIAO, tambem_se_vencido=False)
     return {"status": "ok"}
 
 @app.get("/comparar")

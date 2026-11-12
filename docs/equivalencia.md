@@ -14,7 +14,7 @@ O motor é [`equivalencia.py`](../equivalencia.py). A API ([`api_supabase.py`](.
 
 Produto que não cabe em nenhuma família **não leva** os dois primeiros campos. O site só agrupa o que tem chave; esses produtos aparecem no modo exato.
 
-Nada disso mexe no banco: a chave é calculada na API, a cada recarga do catálogo (a cada 10 minutos, em segundo plano). Uma regra nova vale assim que a API é publicada, sem recarregar os dados.
+Nada disso mexe no banco: a chave é calculada na API, a cada recarga do catálogo (a cada hora, em segundo plano). Uma regra nova vale assim que a API é publicada, sem recarregar os dados.
 
 Se o site abrir com uma API antiga (sem `equivalencia_familias`), ele usa um motor reserva próprio, com só as 11 primeiras famílias (bloco `@equivalencia-inicio` de `site/index.html`). Esse bloco fica congelado e pode ser apagado quando não houver mais API antiga em uso.
 

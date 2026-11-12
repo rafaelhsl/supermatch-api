@@ -173,13 +173,14 @@ Endpoint `GET /comparar?cep=...&item=...` em [`api_supabase.py`](../api_supabase
 2. Pega o **catálogo** da UF, ou seja, todos os produtos com `uf_cobertura` igual à UF do CEP ou
    a `BR`, **em memória** (os preços só mudam na carga diária). Baixá-lo do banco leva uns 6 s com 8 mil
    produtos, por isso:
-   - Passados 10 minutos, a busca **responde na hora com o catálogo que tem** e a atualização roda em
+   - Passada 1 hora, a busca **responde na hora com o catálogo que tem** e a atualização roda em
      segundo plano; a busca seguinte já vê o novo. Só a primeira busca depois de o servidor acordar, sem
      catálogo nenhum, espera o download.
    - Só uma atualização por UF acontece por vez, mesmo com várias buscas chegando juntas.
    - Se a atualização falhar (banco fora do ar), a API segue com o catálogo anterior e avisa no log.
-   - O servidor começa a carregar o catálogo ao ligar e quando o site chama `/saude`, então a primeira
-     busca depois de abrir o site já o encontra pronto.
+   - O servidor começa a carregar o catálogo ao ligar e, se ainda não tiver nenhum, quando alguém chama
+     `/saude`, então a primeira busca depois de abrir o site já o encontra pronto. `/saude` nunca recarrega
+     um catálogo que já existe (veja "Manter o servidor acordado").
 
    A consulta ao banco é paginada de 1000 em 1000 linhas, o limite do Supabase por requisição, e pede só
    as colunas que a API devolve ou usa (fica de fora `texto_original`, o texto bruto do robô):
@@ -245,10 +246,30 @@ no banco. Veja [`equivalencia.md`](equivalencia.md).
 O parâmetro opcional `todos=1` (`/comparar?cep=...&item=...&todos=1`) devolve também os que só citam a palavra. Cada opção
 desses vem marcada com `"so_cita": true`. É o que o botão "Mostrar também" do site pede.
 
-O endpoint `GET /saude` responde `{"status": "ok"}` sem esperar o banco (só dispara o carregamento do catálogo
-em segundo plano, se preciso). O site o chama ao abrir a página para acordar o servidor, que no plano gratuito do
-Render dorme após 15 minutos sem uso; o acordar do servidor (cerca de 30 a 60 s) continua sendo o maior tempo de
-espera da primeira busca do dia.
+O endpoint `/saude` (GET ou HEAD) responde `{"status": "ok"}` sem esperar o banco (só dispara o carregamento do
+catálogo em segundo plano quando o servidor não tem nenhum). O site o chama ao abrir a página para acordar o servidor,
+que no plano gratuito do Render dorme após 15 minutos sem uso; o acordar do servidor (cerca de 30 a 60 s) é o maior
+tempo de espera da primeira busca do dia, a menos que alguém o mantenha acordado (próxima seção).
+
+### Manter o servidor acordado
+
+A forma que não precisa de código é um **monitor externo gratuito** que chama
+`https://supermatch-api.onrender.com/saude` a cada 5 minutos: o Render só dorme quem fica 15 minutos sem receber nada.
+Serve o UptimeRobot (monitor "HTTP(s)", intervalo de 5 minutos) ou o cron-job.org (tarefa a cada 5 minutos, método GET).
+Não use o agendador do GitHub Actions para isso: ele atrasa por horas (a carga de 05/11 marcada para 08:17 rodou às 15:42)
+e gasta minutos do repositório.
+
+Dois cuidados, ambos já tratados no código:
+
+- **Catálogo.** Cada recarga baixa cerca de 3,5 MB do Supabase. Se `/saude` recarregasse o catálogo vencido, o monitor
+  causaria uma recarga a cada vencimento (uns 15 GB por mês com validade de 10 minutos), mais que a cota de saída de dados do
+  plano gratuito. Por isso `/saude` só carrega o catálogo quando ele não existe, e a validade é de 1 hora (no pior caso,
+  buscas o dia todo, uns 2,5 GB por mês). `tests/test_api_catalogo.py` garante as duas coisas.
+- **Horas do Render.** O plano gratuito dá cerca de 750 horas de instância por mês por conta (confira no painel). Um serviço
+  ligado o mês inteiro usa cerca de 744, então cabe, mas um segundo serviço na mesma conta passaria do limite.
+
+Para conferir que funcionou: sem nenhuma outra chamada por mais de 20 minutos, `/saude` e a primeira busca respondem em
+1 ou 2 segundos, e o log do Render não mostra o servidor reiniciando ("Deploy live" ou "Starting service").
 
 ## Diagnóstico rápido (reexecutável)
 

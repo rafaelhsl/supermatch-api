@@ -52,10 +52,13 @@ class BancoFalso:
         return ConsultaFalsa(self.linhas, self.chamadas)
 
 
+VALIDADE_PADRAO = api.CATALOGO_VALIDADE_SEGUNDOS
+
+
 def limpar():
     api._catalogos.clear()
     api._travas.clear()
-    api.CATALOGO_VALIDADE_SEGUNDOS = 600
+    api.CATALOGO_VALIDADE_SEGUNDOS = VALIDADE_PADRAO
 
 
 class Contador:
@@ -154,7 +157,7 @@ def teste_catalogo_vencido_responde_na_hora_e_atualiza_em_segundo_plano():
         assert api.carregar_catalogo("MG") == "versão 1"                                               # ...e ainda não terminou
         solta.set()
         assert esperar(lambda: api._catalogos["MG"][1] == "versão 2")                                  # terminou: a próxima busca já vê o novo
-        api.CATALOGO_VALIDADE_SEGUNDOS = 600
+        api.CATALOGO_VALIDADE_SEGUNDOS = VALIDADE_PADRAO
         assert api.carregar_catalogo("MG") == "versão 2" and contador.chamadas == 2
     finally:
         solta.set()
@@ -292,6 +295,31 @@ def teste_aquecer_catalogo_carrega_por_tras_e_so_quando_precisa():
         assert contador.chamadas == 1
     finally:
         limpar()
+
+
+def teste_saude_de_5_em_5_minutos_nao_recarrega_o_catalogo():
+    """Um monitor externo chama /saude para o Render não dormir. Isso não pode baixar o catálogo do Supabase a cada vencimento."""
+    contador = Contador()
+    api.baixar_catalogo = contador
+    try:
+        limpar()
+        api.CATALOGO_VALIDADE_SEGUNDOS = 0.05
+        assert api.carregar_catalogo("MG") == "versão 1"
+        time.sleep(0.1)                                                                                # o catálogo venceu
+        for _ in range(20):
+            assert api.saude() == {"status": "ok"}
+        time.sleep(0.2)
+        assert contador.chamadas == 1                                                                  # 20 chamadas de /saude, nenhum download
+        api.carregar_catalogo("MG")                                                                    # uma busca de verdade é quem recarrega o vencido
+        assert esperar(lambda: contador.chamadas == 2)
+    finally:
+        limpar()
+
+
+def teste_saude_aceita_get_e_head_e_o_catalogo_vale_pelo_menos_1_hora():
+    rota = next(r for r in api.app.routes if getattr(r, "path", None) == "/saude")
+    assert {"GET", "HEAD"} <= set(rota.methods)                                                        # monitores gratuitos costumam mandar HEAD
+    assert VALIDADE_PADRAO >= 3600                                                                     # 3,5 MB por recarga: a cota do Supabase não aguenta menos
 
 
 def teste_saude_sem_catalogo_acorda_o_carregamento_sem_esperar():
