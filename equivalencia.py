@@ -8,7 +8,7 @@ Na dúvida, não junta: o produto que não cabe em nenhuma regra fica sem chave 
 de menos é seguro; juntar o que não é equivalente engana a pessoa.
 
 As 11 primeiras famílias (arroz a papel higiênico) são a tradução fiel das que viviam em site/index.html; o teste
-tests/test_equivalencia.py as confere com os mesmos casos do teste em JavaScript. As demais são declaradas pela função
+tests/test_equivalencia.py as confere com os casos do teste em JavaScript da época (tests/casos_equivalencia_legado.json); o motor do site foi removido. As demais são declaradas pela função
 `declarar`, com as dimensões que diferenciam o produto. Veja docs/equivalencia.md.
 """
 import re

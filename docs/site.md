@@ -43,10 +43,10 @@ No site:
 
 - **Sem chave, sem equivalente.** O produto que a API não marcou só aparece no modo exato. Juntar de menos é seguro; juntar o que não é equivalente engana a pessoa.
 - **A mensagem "Nenhum produto equivalente para …"** lista as famílias que a API mandou em `equivalencia_familias`.
-- **API antiga.** Se a resposta não traz `equivalencia_familias`, o site usa o motor reserva que ainda tem (bloco `@equivalencia-inicio` / `@equivalencia-fim`, só com arroz, feijão, óleo, café, manteiga, açúcar, macarrão, detergente, sabão, amaciante e papel higiênico) e a mensagem volta a citar essas 11. A chave dos dois motores é a mesma nessas 11, então a lista guardada no navegador vale nos dois casos.
+- **O site não adivinha pelo nome.** Se a API não manda as chaves (resposta sem `equivalencia_familias`), o modo equivalente não junta nada e a mensagem diz que a comparação por equivalência não está disponível agora; o modo exato segue normal. A chave das 11 primeiras famílias é a mesma que o site calculava antes de a regra ir para a API, então as listas guardadas no navegador continuam valendo.
 - **Preço muito abaixo do normal sai do grupo.** Em grupos com 5 produtos ou mais, um preço abaixo de 45% da mediana é tratado como erro de coleta (já apareceu feijão de 1 kg a R$ 0,78). O modo equivalente escolhe o mais barato de cada mercado, então um erro desses falsearia a comparação inteira. No modo exato o preço continua aparecendo.
 
-Para conferir: `python tests/test_equivalencia.py` (regras, precisa de Python) e `node tests/test_equivalencia.js` (agrupamento no site, precisa do Node). Os casos vêm de nomes reais dos mercados.
+Para conferir: `python tests/test_equivalencia.py` (as regras, precisa de Python) e `node tests/test_agrupamento.js` (o agrupamento por chave no site, precisa do Node). Os casos vêm de nomes dos mercados.
 
 ## Resultados que só citam a palavra
 

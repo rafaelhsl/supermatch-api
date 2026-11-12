@@ -12,7 +12,7 @@ const bloco = (ini, fim) => {
   return html.slice(a, b);
 };
 const semAcento = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-// o bloco da lista usa agruparEquivalentes (motor de equivalência), então os dois blocos andam juntos
+// o bloco da lista usa agruparEquivalentes, então os dois blocos andam juntos
 const { itemDesatualizado, termoDoItem, grupoDeHoje, VALIDADE_DOS_PRECOS_DA_LISTA_MS } = new Function("semAcento",
   bloco("/* @equivalencia-inicio */", "/* @equivalencia-fim */") + bloco("/* @lista-inicio */", "/* @lista-fim */")
   + "; return { itemDesatualizado, termoDoItem, grupoDeHoje, VALIDADE_DOS_PRECOS_DA_LISTA_MS };")(semAcento);
@@ -67,10 +67,12 @@ novo = grupoDeHoje(itemSal, respSal);
 igual(novo && novo.opcoes_de_compra.map((o) => o.preco_varejo).sort(), [2.4, 3.1], "equivalente: junta pela chave da API e traz os preços de hoje (o sal grosso não entra)");
 confere(grupoDeHoje({ ...itemSal, chave: "sal|marinho|1000g" }, respSal) === null, "equivalente: chave que não existe mais dá null");
 
-// API antiga (sem equivalencia_familias): o site usa o motor próprio, e a chave guardada é a mesma nas 11 famílias antigas
+// API sem chaves de equivalência: o site não adivinha pelo nome, então o item equivalente não é achado e fica com o último preço
 const itemArroz = { produto_base: "Arroz branco tipo 1, 5 kg", equivalente: true, chave: "arroz|branco|tipo 1|5000g", opcoes_de_compra: [op(1, "Atacadao", "Arroz Branco Camil Tipo 1 5kg", 25)] };
-novo = grupoDeHoje(itemArroz, hoje(grupoApi("Arroz Branco Camil Tipo 1 5kg", "1", op(31, "Atacadao", "Arroz Branco Camil Tipo 1 5kg", 23.5), op(32, "Supernosso", "Arroz Branco Tio João Tipo 1 5kg", 24))));
-igual(novo && novo.opcoes_de_compra.map((o) => o.preco_varejo).sort(), [23.5, 24], "equivalente com API antiga: o motor do site acha a mesma chave");
+confere(grupoDeHoje(itemArroz, hoje(grupoApi("Arroz Branco Camil Tipo 1 5kg", "1", op(31, "Atacadao", "Arroz Branco Camil Tipo 1 5kg", 23.5)))) === null, "equivalente com API sem chaves: não é achado (null)");
+// a chave guardada de uma lista antiga (11 famílias do site) é a mesma que a API manda hoje: o arroz continua achado
+novo = grupoDeHoje(itemArroz, hoje(grupoApi("Arroz Branco Camil Tipo 1 5kg", "1", op(31, "Atacadao", "Arroz Branco Camil Tipo 1 5kg", 23.5, { chave_equivalencia: "arroz|branco|tipo 1|5000g", rotulo_equivalencia: "Arroz branco tipo 1, 5 kg" }), op(32, "Supernosso", "Arroz Branco Tio João Tipo 1 5kg", 24, { chave_equivalencia: "arroz|branco|tipo 1|5000g", rotulo_equivalencia: "Arroz branco tipo 1, 5 kg" }))));
+igual(novo && novo.opcoes_de_compra.map((o) => o.preco_varejo).sort(), [23.5, 24], "equivalente guardado numa lista antiga: a chave do arroz é a mesma de hoje e o item é achado");
 
 if (erros.length) { console.error(`${erros.length} falha(s):\n  - ` + erros.join("\n  - ")); process.exit(1); }
 console.log(`${ok} verificações passaram, 0 falharam`);
