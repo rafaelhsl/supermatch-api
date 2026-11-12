@@ -1,5 +1,3 @@
-fastapi
-uvicorn
-supabase
-thefuzz
+# Tudo o que o projeto usa: a API (requirements-api.txt) e o Playwright, dos robôs.
+-r requirements-api.txt
 playwright
