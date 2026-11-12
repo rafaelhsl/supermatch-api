@@ -236,7 +236,7 @@ FAMILIAS = [
     Familia("cafe", "café", _comeca(r"^cafe "), _cafe),
     Familia("manteiga", "manteiga", _comeca(r"^manteiga "), _manteiga),
     Familia("acucar", "açúcar", _comeca(r"^acucar "), _acucar),
-    Familia("macarrao", "macarrão", _comeca(r"^macarrao "), _macarrao),
+    Familia("macarrao", "macarrão", _comeca(r"^macarrao (?!inst)"), _macarrao),
     Familia("detergente", "detergente", _comeca(r"\bdetergente\b"), _detergente),
     Familia("sabao", "sabão", _comeca(r"\bsabao\b"), _sabao),
     Familia("amaciante", "amaciante", _comeca(r"\bamaciante\b"), _amaciante),
@@ -589,6 +589,56 @@ FAMILIAS += [
     Familia("papel_toalha", "papel toalha", _comeca(r"^(papel toalha|toalha de papel)"), _papel_toalha),
     Familia("fralda", "fralda", _comeca(r"^fralda"), _fralda),
     Familia("absorvente", "absorvente", _comeca(r"^absorvente"), _absorvente),
+]
+
+
+# ============================== quarta leva: macarrão instantâneo, achocolatado, geleia, pipoca e caldo ==============================
+
+def _pipoca(t):
+    """Pipoca: de micro-ondas, pronta ou milho para pipoca (o grão), com o sabor (manteiga de cinema, natural...) e o peso."""
+    if re.search(_NAO_E_PRODUTO_UNICO + r"|\bsaco\b|festas|romana|decor|pipoqueira|maquina|panela|tempero|chocolate|bombom|\boleo\b", t):
+        return None
+    m = medida(t, "massa", varrer=True)
+    if not m:
+        return None
+    micro = re.search(r"micro ?ondas|microondas", t) is not None
+    grao = not micro and re.search(r"^milho (de |para )?pipoca|^milho pipoca", t) is not None
+    tipo = "para micro-ondas" if micro else "milho para pipoca" if grao else "pronta"
+    if grao:
+        qualidade = escolher(t, [(r"premium|gourmet", "premium")], "")
+        return _Analise([tipo, qualidade], m, f"Milho para pipoca{' ' + qualidade if qualidade else ''}")
+    sabor = escolher(t, [(r"manteiga light", "manteiga light"), (r"cinema", "manteiga de cinema"), (r"manteiga", "manteiga"), (r"bacon", "bacon"),
+                         (r"cheddar", "cheddar"), (r"queijo", "queijo"), (r"doce|caramelo", "doce"), (r"natural", "natural"), (r"temperada", "temperada")], None)
+    if not sabor:      # sem o sabor no nome não dá para saber se é a mesma pipoca
+        return None
+    return _Analise([tipo, sabor], m, f"Pipoca {tipo} {sabor}")
+
+
+FAMILIAS += [
+    declarar("macarrao_instantaneo", "Macarrão instantâneo", casa=_comeca(r"^(macarrao|mac) inst"), exclui=r"panela|caseiro",
+             dims=[dim((r"cup noodles|\bcopo\b|\bcup\b", "em copo"), (r"yakissoba|\bu\.?f\.?o\b", "yakissoba"), (r"talharim", "talharim"), (r"espaguete", "espaguete"), padrao="lámen"),
+                   dim((r"frango assado", "frango assado"), (r"galinha caipira", "galinha caipira"), (r"galinha|frango", "galinha"), (r"carne defumada", "carne defumada"), (r"carne", "carne"), (r"bacon", "bacon"),
+                       (r"calabresa", "calabresa"), (r"picanha", "picanha"), (r"costela", "costela"), (r"legumes", "legumes"), (r"queijo", "queijo"),
+                       (r"camarao", "camarão"), (r"parmegiana", "parmegiana"), (r"bolonhesa", "bolonhesa"), (r"caldinho de feijao", "caldinho de feijão"),
+                       (r"tomate", "tomate"), (r"cheddar", "cheddar"), (r"nacho", "nacho"),
+                       (r"\btradicional\b|yakissoba", "tradicional"), obrigatoria=True),
+                   dim((r"picante", "picante"), (r"suave|turma da monica", "suave"), varios=True)]),
+    declarar("achocolatado", "Achocolatado", casa=_comeca(r"^achocolatado"), exclui=r"capsula|dolce gusto|nescafe|kopenhagen|cobertura|barra|sorvete",
+             dims=[dim((r"flocos|crocante", "flocos crocantes"), (r"granulado", "granulado"), padrao="em pó"),
+                   dim((r"light|diet|zero|sem acucar", "light"), (r"menos acucar", "menos açúcar"), (r"\b60\b", "60% cacau"), (r"protein|proteina", "proteína"), (r"ovomaltine|malte", "com malte"),
+                       (r"alpino", "alpino"), (r"sem lactose|zero lactose", "sem lactose"), (r"vegan|vegetal", "vegano"), varios=True)]),
+    declarar("geleia", "Geleia", casa=_comeca(r"^geleia"), exclui=r"mocoto|\bmel\b|\breal\b",
+             dims=[dim((r"frutas vermelhas|frutas silvestres", "frutas vermelhas"), (r"morango", "morango"), (r"amora", "amora"), (r"damasco", "damasco"), (r"goiaba", "goiaba"),
+                       (r"\buva\b", "uva"), (r"mirtilo", "mirtilo"), (r"framboesa", "framboesa"), (r"figo", "figo"), (r"jabuticaba", "jabuticaba"), (r"laranja", "laranja"),
+                       (r"abacaxi", "abacaxi"), (r"\bmaca\b", "maçã"), (r"maracuja", "maracujá"), (r"pessego", "pêssego"), (r"cereja", "cereja"), (r"pimenta", "pimenta"),
+                       (r"cranberry", "cranberry"), (r"limao", "limão"), (r"\bmanga\b", "manga"), (r"banana", "banana"), (r"cupuacu", "cupuaçu"), obrigatoria=True),
+                   dim((r"diet|zero|sem (adicao de )?acucar|light", "zero açúcar")),
+                   dim((r"gourmet", "gourmet"), (r"polonesa", "polonesa"), (r"agridoce", "agridoce"), (r"jalapeno", "jalapeño"), varios=True)]),
+    Familia("pipoca", "pipoca", _comeca(r"^(pipoca|milho (de |para )?pipoca)"), _pipoca),
+    declarar("caldo", "Caldo", casa=_comeca(r"^caldo "), exclui=r"sazon|liquido|pronto|osso|receita|molho|" + _NAO_E_PRODUTO_UNICO, multipacote=False,
+             dims=[dim((r"galinha caipira", "de galinha caipira"), (r"galinha|frango", "de galinha"), (r"carne", "de carne"), (r"legumes?", "de legumes"), (r"costela", "de costela"),
+                       (r"camarao", "de camarão"), (r"peixe", "de peixe"), (r"bacon", "de bacon"), obrigatoria=True),
+                   dim((r"menos sodio|reduzido|light|sem sal|menos sal", "menos sal"))]),
 ]
 
 
