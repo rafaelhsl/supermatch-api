@@ -79,7 +79,7 @@ A lista fica salva no navegador, e os preços mudam todo dia (os robôs atualiza
 
 - **Identidade do item.** Cada produto exato é identificado pelo `id_do_grupo` que a API manda (o código de barras; com o tamanho quando dois grupos dividem o código). O nome do grupo é o do primeiro produto que entrou nele e muda de um dia para o outro, então por nome o mesmo produto podia aparecer fora da lista ("Adicionar" de novo) e entrar duas vezes. Sem código de barras (cerca de 11% dos grupos, os do Super ABC), o id continua sendo o nome. Um item guardado antes recebe o id na primeira atualização; se isso fizer dois itens virarem o mesmo produto, o site os junta somando as quantidades.
 
-O código fica nos blocos `@lista-inicio` / `@lista-fim` (decisões puras: o id do grupo, quais itens estão velhos, qual termo consultar, qual grupo da resposta é o mesmo item, juntar repetidos) e em `atualizarPrecosDaLista`. `node tests/test_lista.js` confere as decisões.
+O código fica nos blocos `@lista-inicio` / `@lista-fim` (decisões puras: o id do grupo, quais itens estão velhos, qual termo consultar, qual grupo da resposta é o mesmo item, juntar repetidos) e em `atualizarPrecosDaLista`. `node tests/test_lista.js` confere a atualização dos preços e `node tests/test_id_do_grupo.js` confere o identificador e a junção de repetidos.
 
 ## Regras da comparação
 
