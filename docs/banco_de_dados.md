@@ -178,6 +178,12 @@ Endpoint `GET /comparar?cep=...&item=...` em [`api_supabase.py`](../api_supabase
      catálogo nenhum, espera o download.
    - Só uma atualização por UF acontece por vez, mesmo com várias buscas chegando juntas.
    - Se a atualização falhar (banco fora do ar), a API segue com o catálogo anterior e avisa no log.
+   - **Cada carga vai para o log** com a duração e o motivo, por exemplo:
+     `📦 Catálogo de MG+BR carregado do banco em 6.4 s: 8244 produtos (busca com catálogo vencido; o catálogo anterior tinha 61 min)`.
+     Os motivos possíveis são `servidor iniciando`, `chamada a /saude` (só quando não há catálogo), `primeira busca` e
+     `busca com catálogo vencido`; todos dizem se havia catálogo na memória e, se havia, a idade dele. Uma falha aparece como
+     `⚠️ Catálogo de MG+BR: a carga falhou após X s (motivo): erro`. No Render, filtre o log por `Catálogo`: as linhas de pedido
+     (`API Recebeu pedido…`) trazem o CEP de quem buscou, e o filtro evita mostrá-las ao colar o log numa conversa.
    - O servidor começa a carregar o catálogo ao ligar e, se ainda não tiver nenhum, quando alguém chama
      `/saude`, então a primeira busca depois de abrir o site já o encontra pronto. `/saude` nunca recarrega
      um catálogo que já existe (veja "Manter o servidor acordado").
