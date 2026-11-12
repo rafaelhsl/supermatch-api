@@ -24,7 +24,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @asynccontextmanager
 async def ciclo_de_vida(_app):
-    aquecer_catalogo(UF_DA_REGIAO)           # o servidor acabou de acordar: já começa a carregar o catálogo
+    aquecer_catalogo(UF_DA_REGIAO, contexto="servidor iniciando")     # o servidor acabou de acordar: já começa a carregar o catálogo
     yield
 
 
@@ -100,32 +100,46 @@ def baixar_catalogo(uf: str):
         inicio += TAMANHO_PAGINA
     # A chave de equivalência ("mesmo tipo e tamanho, qualquer marca") sai pronta daqui, junto com o produto: o site só agrupa
     # pelas chaves (ver equivalencia.py). Calcular o catálogo todo leva menos de 1 s.
-    produtos = com_equivalencia(produtos)
-    print(f"📦 Catálogo de {uf}+BR carregado do banco: {len(produtos)} produtos "
-          f"({sum(1 for p in produtos if 'chave_equivalencia' in p)} com equivalência)")
-    return indexar(produtos)
+    return indexar(com_equivalencia(produtos))
 
 
-def atualizar_catalogo(uf: str):
-    """Baixa e guarda o catálogo. Quem chega durante uma atualização espera por ela e usa o resultado, em vez de baixar de novo."""
+def _motivo_da_carga(contexto: str, guardado) -> str:
+    """Para o log: quem pediu a carga e a idade do catálogo que ela substitui."""
+    if guardado is None:
+        return f"{contexto}, sem catálogo na memória"
+    return f"{contexto}; o catálogo anterior tinha {(time.monotonic() - guardado[0]) / 60:.0f} min"
+
+
+def atualizar_catalogo(uf: str, contexto: str = "atualização"):
+    """Baixa e guarda o catálogo. Quem chega durante uma atualização espera por ela e usa o resultado, em vez de baixar de novo.
+
+    `contexto` diz quem pediu ("primeira busca", "servidor iniciando"...). Cada carga vai para o log com o motivo e a duração,
+    para entender no log do Render por que o catálogo foi baixado naquela hora e quanto o banco demorou."""
     with _trava_da_uf(uf):
         guardado = _catalogos.get(uf)
         if guardado and not _vencido(guardado):
             return guardado[1]
-        catalogo = baixar_catalogo(uf)
+        motivo = _motivo_da_carga(contexto, guardado)
+        inicio = time.monotonic()
+        try:
+            catalogo = baixar_catalogo(uf)
+        except Exception as erro:
+            print(f"⚠️ Catálogo de {uf}+BR: a carga falhou após {time.monotonic() - inicio:.1f} s ({motivo}): {erro!r}")
+            raise
+        print(f"📦 Catálogo de {uf}+BR carregado do banco em {time.monotonic() - inicio:.1f} s: {len(catalogo)} produtos ({motivo})")
         _catalogos[uf] = (time.monotonic(), catalogo)
         return catalogo
 
 
-def atualizar_em_segundo_plano(uf: str):
+def atualizar_em_segundo_plano(uf: str, contexto: str = "segundo plano"):
     if _trava_da_uf(uf).locked():     # já há uma atualização em andamento
         return
 
     def trabalho():
         try:
-            atualizar_catalogo(uf)
-        except Exception as erro:
-            print(f"⚠️ Não consegui atualizar o catálogo de {uf}: {erro!r}. Sigo com o catálogo anterior.")
+            atualizar_catalogo(uf, contexto)
+        except Exception:
+            print(f"⚠️ Sigo com o catálogo anterior de {uf}.")      # o motivo da falha já foi para o log
 
     threading.Thread(target=trabalho, daemon=True).start()
 
@@ -133,17 +147,17 @@ def atualizar_em_segundo_plano(uf: str):
 def carregar_catalogo(uf: str):
     guardado = _catalogos.get(uf)
     if guardado is None:
-        return atualizar_catalogo(uf)         # primeira vez: não há o que mostrar, então espera
+        return atualizar_catalogo(uf, "primeira busca")         # primeira vez: não há o que mostrar, então espera
     if _vencido(guardado):
-        atualizar_em_segundo_plano(uf)        # responde já com o catálogo que tem
+        atualizar_em_segundo_plano(uf, "busca com catálogo vencido")        # responde já com o catálogo que tem
     return guardado[1]
 
 
-def aquecer_catalogo(uf: str, tambem_se_vencido: bool = True):
+def aquecer_catalogo(uf: str, tambem_se_vencido: bool = True, contexto: str = "aquecimento"):
     """Deixa o catálogo carregando em segundo plano, se ainda não existe (ou, com `tambem_se_vencido`, se já venceu)."""
     guardado = _catalogos.get(uf)
     if guardado is None or (tambem_se_vencido and _vencido(guardado)):
-        atualizar_em_segundo_plano(uf)
+        atualizar_em_segundo_plano(uf, contexto)
 
 
 @app.api_route("/saude", methods=["GET", "HEAD"])
@@ -154,7 +168,7 @@ def saude():
     # Catálogo vencido NÃO é recarregado aqui: um monitor chamando /saude de 5 em 5 minutos (para o servidor não dormir)
     # baixaria o catálogo do Supabase sem ninguém buscar nada. Quem recarrega o vencido é a próxima busca de verdade.
     # Aceita HEAD porque é o que vários monitores gratuitos enviam.
-    aquecer_catalogo(UF_DA_REGIAO, tambem_se_vencido=False)
+    aquecer_catalogo(UF_DA_REGIAO, tambem_se_vencido=False, contexto="chamada a /saude")
     return {"status": "ok"}
 
 @app.get("/comparar")

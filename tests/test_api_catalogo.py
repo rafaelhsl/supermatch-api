@@ -2,7 +2,10 @@
 
 Rodar com:  python tests/test_api_catalogo.py   (precisa de fastapi, uvicorn, supabase e thefuzz, do requirements.txt)
 """
+import contextlib
+import io
 import os
+import re
 import sys
 import threading
 import time
@@ -104,6 +107,56 @@ def teste_baixar_catalogo_pagina_e_pede_so_as_colunas_usadas():
     for coluna in ("id", "supermercado", "nome", "preco_varejo", "preco_atacado", "quantidade_atacado", "atualizado_em", "ean", "termo"):
         assert coluna in api.COLUNAS_DO_CATALOGO.split(","), coluna                                    # o site e a busca precisam delas
     assert ("in", "uf_cobertura", ("MG", "BR")) in chamadas
+
+
+def capturar(funcao):
+    """O que `funcao` imprime no log (inclusive de threads em segundo plano que terminarem antes de ela devolver)."""
+    saida = io.StringIO()
+    with contextlib.redirect_stdout(saida):
+        funcao()
+    return saida.getvalue()
+
+
+def teste_log_diz_o_motivo_e_a_duracao_de_cada_carga():
+    def devagar(uf):
+        time.sleep(0.4)
+        return "x" * 8244
+    api.baixar_catalogo = devagar
+    try:
+        limpar()
+        log = capturar(lambda: api.carregar_catalogo("MG"))
+        assert re.search(r"Catálogo de MG\+BR carregado do banco em 0\.[4-5] s: 8244 produtos", log), log                  # mede o download
+        assert "primeira busca, sem catálogo na memória" in log, log
+
+        api.CATALOGO_VALIDADE_SEGUNDOS = 0.05
+        time.sleep(0.1)
+        log = capturar(lambda: (api.carregar_catalogo("MG"), time.sleep(0.7)))                                           # vencido: a carga roda por trás
+        assert "busca com catálogo vencido; o catálogo anterior tinha 0 min" in log, log                                  # diz de quem e a idade do anterior
+        assert re.search(r"carregado do banco em 0\.[4-5] s", log), log
+    finally:
+        limpar()
+
+
+def teste_log_diz_quem_acordou_o_catalogo_e_se_a_carga_falhou():
+    contador = Contador()
+    api.baixar_catalogo = contador
+    try:
+        limpar()
+        log = capturar(lambda: (api.saude(), esperar(lambda: "MG" in api._catalogos)))
+        assert "chamada a /saude, sem catálogo na memória" in log, log
+
+        limpar()
+        log = capturar(lambda: (api.aquecer_catalogo("MG", contexto="servidor iniciando"), esperar(lambda: "MG" in api._catalogos)))
+        assert "servidor iniciando, sem catálogo na memória" in log, log
+
+        limpar()
+        api.baixar_catalogo = Contador(falha_a_partir=1)
+        log = capturar(lambda: (api.aquecer_catalogo("MG"), time.sleep(0.3)))
+        assert "a carga falhou após" in log and "banco fora do ar" in log and "aquecimento, sem catálogo na memória" in log, log     # a causa e o motivo no log
+        assert "Sigo com o catálogo anterior de MG" in log, log
+        assert not api._trava_da_uf("MG").locked() and "MG" not in api._catalogos
+    finally:
+        limpar()
 
 
 def teste_baixar_catalogo_calcula_a_chave_de_equivalencia_de_cada_produto():
