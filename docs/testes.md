@@ -30,7 +30,7 @@ Cada arquivo termina com `ok: N …` ou `N verificações passaram` quando tudo 
 O workflow [`testes.yml`](../.github/workflows/testes.yml) roda a suíte inteira **em cada PR e a cada merge na `main`**, e aparece no PR como "Testes". São três rodadas em paralelo:
 
 - **Python 3.11**, a versão da carga diária (`main.yml`);
-- **Python do Render**, que vem do arquivo `.python-version` (hoje 3.14.3), então o teste acompanha a versão de produção quando ela muda;
+- **Python do Render**: lê a série do arquivo `.python-version` (hoje 3.14.3, então a série 3.14) e roda na correção mais nova que o GitHub oferece (hoje a 3.14.10, porque ele não tem mais a 3.14.3). Assim o teste acompanha a série de produção quando ela muda, e só difere na correção, não na versão;
 - **Node 24**, para os testes do site.
 
 Uma rodada vermelha mostra, na aba do PR, qual arquivo falhou (o log de cada um fica numa seção que se abre). Cada uma é independente: se a 3.11 falhar, a do Render continua e mostra se também falha nela. Um commit novo no mesmo PR cancela a rodada anterior.
