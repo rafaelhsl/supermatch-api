@@ -551,8 +551,6 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     }
     return melhor;
   };
-  // Identifica o grupo na lista. Um grupo exato e um equivalente nunca se confundem.
-  const idDoGrupo = (g) => (g.equivalente ? "eq:" + g.chave : "ex:" + g.produto_base);
   // O grupo equivalente já tem um nome pronto ("Arroz branco tipo 1, 5 kg"); o exato vem do mercado e precisa de capitalização.
   const nomeDoGrupo = (g) => (g.equivalente ? g.produto_base : nomeBonito(g.produto_base));
   const cidadeAtendida = (cidade) => {
@@ -836,6 +834,10 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   /* @equivalencia-fim */
 
   /* @lista-inicio */
+  // Identifica o grupo na lista. Um grupo exato e um equivalente nunca se confundem. O exato usa o `id_do_grupo` que a API calcula
+  // (o código de barras; com o tamanho quando dois grupos dividem o código). Sem ele (produto sem código de barras, ou item guardado
+  // antes de a API mandar o id), usa o nome do grupo, que pode mudar de um dia para o outro.
+  const idDoGrupo = (g) => (g.equivalente ? "eq:" + g.chave : g.id_do_grupo ? "ex:" + g.id_do_grupo : "ex:" + g.produto_base);
   /* ---------- preços da lista ----------
      A lista fica salva no navegador com os preços de quando cada item entrou, e os preços mudam todo dia. Ao abrir a
      página (e ao voltar a ela), os itens consultados há mais de 3 horas são consultados de novo na API. O item continua o
@@ -851,16 +853,32 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   }
   const semZerosAEsquerda = (ean) => String(ean || "").replace(/^0+/, "");
   // O grupo de hoje que corresponde ao item da lista, ou null se ele não aparece mais nesta resposta da API.
-  // Exato: pelo código de barras (o nome do grupo pode mudar de um dia para o outro) e, sem ele, pelo nome.
-  // Equivalente: pela chave, com o mesmo agrupamento da busca.
+  // Exato: pelo `id_do_grupo` da API; num item guardado antes dele, pelo código de barras (se há mais de um grupo com o mesmo código
+  // e nenhum com o mesmo nome, não escolhe no chute: devolve null) e, sem código, pelo nome. Equivalente: pela chave, com o mesmo
+  // agrupamento da busca.
   function grupoDeHoje(grupo, dados) {
     const brutos = Array.isArray(dados && dados.carrinho_comparativo) ? dados.carrinho_comparativo : [];
     if (grupo.equivalente) {
       return agruparEquivalentes(brutos, Array.isArray(dados.equivalencia_familias)).find((g) => g.chave === grupo.chave) || null;
     }
     const ean = semZerosAEsquerda(grupo.ean);
-    const novo = (ean && brutos.find((g) => semZerosAEsquerda(g.ean) === ean)) || brutos.find((g) => g.produto_base === grupo.produto_base);
+    let novo = grupo.id_do_grupo ? brutos.find((g) => g.id_do_grupo === grupo.id_do_grupo) : null;
+    if (!novo && ean) {
+      const mesmoCodigo = brutos.filter((g) => semZerosAEsquerda(g.ean) === ean);
+      novo = mesmoCodigo.length === 1 ? mesmoCodigo[0] : mesmoCodigo.find((g) => g.produto_base === grupo.produto_base);
+    }
+    if (!novo && !ean) novo = brutos.find((g) => g.produto_base === grupo.produto_base);
     return novo && novo.opcoes_de_compra.length ? novo : null;
+  }
+  // Itens da lista que passaram a ser o mesmo grupo (o esquema antigo, por nome, podia guardar o mesmo produto duas vezes com
+  // nomes diferentes) viram um só, somando as quantidades. Devolve a lista nova; não mexe na recebida.
+  function juntarRepetidos(lista) {
+    const vistos = new Map(), saida = [];
+    for (const item of lista) {
+      const id = idDoGrupo(item.grupo), antes = vistos.get(id);
+      if (antes) antes.qtd += item.qtd; else { const copia = { ...item }; vistos.set(id, copia); saida.push(copia); }
+    }
+    return saida;
   }
   /* @lista-fim */
 
@@ -918,6 +936,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
             if (novo) {
               item.grupo = { ...item.grupo, opcoes_de_compra: novo.opcoes_de_compra };
               if (!item.grupo.ean && novo.ean) item.grupo.ean = novo.ean;
+              if (novo.id_do_grupo) item.grupo.id_do_grupo = novo.id_do_grupo;       // o item passa a ser identificado pelo código de barras
               item.em = Date.now();
             } else semPreco++;
           }
@@ -925,6 +944,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       };
       await Promise.all([trabalhar(), trabalhar(), trabalhar()]);
       estado.listaStatus = { atualizando: false, semPreco, falhou: falharam > 0 && falharam === termos.length };
+      estado.lista = juntarRepetidos(estado.lista);
       salvarLista();
       emitir();
     })().finally(() => { atualizandoLista = null; });

@@ -13,9 +13,9 @@ const bloco = (ini, fim) => {
 };
 const semAcento = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 // o bloco da lista usa agruparEquivalentes (motor de equivalência), então os dois blocos andam juntos
-const { itemDesatualizado, termoDoItem, grupoDeHoje, VALIDADE_DOS_PRECOS_DA_LISTA_MS } = new Function("semAcento",
+const { itemDesatualizado, termoDoItem, grupoDeHoje, idDoGrupo, juntarRepetidos, VALIDADE_DOS_PRECOS_DA_LISTA_MS } = new Function("semAcento",
   bloco("/* @equivalencia-inicio */", "/* @equivalencia-fim */") + bloco("/* @lista-inicio */", "/* @lista-fim */")
-  + "; return { itemDesatualizado, termoDoItem, grupoDeHoje, VALIDADE_DOS_PRECOS_DA_LISTA_MS };")(semAcento);
+  + "; return { itemDesatualizado, termoDoItem, grupoDeHoje, idDoGrupo, juntarRepetidos, VALIDADE_DOS_PRECOS_DA_LISTA_MS };")(semAcento);
 
 let ok = 0; const erros = [];
 const confere = (cond, texto) => { if (cond) ok++; else erros.push(texto); };
@@ -71,6 +71,38 @@ confere(grupoDeHoje({ ...itemSal, chave: "sal|marinho|1000g" }, respSal) === nul
 const itemArroz = { produto_base: "Arroz branco tipo 1, 5 kg", equivalente: true, chave: "arroz|branco|tipo 1|5000g", opcoes_de_compra: [op(1, "Atacadao", "Arroz Branco Camil Tipo 1 5kg", 25)] };
 novo = grupoDeHoje(itemArroz, hoje(grupoApi("Arroz Branco Camil Tipo 1 5kg", "1", op(31, "Atacadao", "Arroz Branco Camil Tipo 1 5kg", 23.5), op(32, "Supernosso", "Arroz Branco Tio João Tipo 1 5kg", 24))));
 igual(novo && novo.opcoes_de_compra.map((o) => o.preco_varejo).sort(), [23.5, 24], "equivalente com API antiga: o motor do site acha a mesma chave");
+
+// ---- identificador do grupo na lista ----
+igual(idDoGrupo({ produto_base: "Arroz Camil 5kg", id_do_grupo: "7896006711155" }), "ex:7896006711155", "exato com id da API: usa o id");
+igual(idDoGrupo({ produto_base: "Arroz Camil 5kg" }), "ex:Arroz Camil 5kg", "exato sem id (sem código de barras ou guardado antes): usa o nome");
+igual(idDoGrupo({ produto_base: "Arroz branco tipo 1, 5 kg", equivalente: true, chave: "arroz|branco|tipo 1|5000g", id_do_grupo: "x" }), "eq:arroz|branco|tipo 1|5000g", "equivalente: sempre pela chave");
+confere(idDoGrupo({ produto_base: "Arroz Camil 5kg", id_do_grupo: "1" }) !== idDoGrupo({ produto_base: "Arroz Camil 5kg" }), "o mesmo nome com e sem id são ids diferentes (até o item guardado ser atualizado)");
+igual(idDoGrupo({ produto_base: "A", id_do_grupo: "789|200.0ml" }) === idDoGrupo({ produto_base: "B", id_do_grupo: "789|1000.0ml" }), false, "dois grupos que dividem o código têm ids diferentes pelo tamanho");
+
+// ---- achar o item pelo id da API, mesmo com o nome do grupo mudado ----
+{
+  const guardado = { produto_base: "Arroz Tio João Tipo 1 5kg", ean: "7893500000001", id_do_grupo: "7893500000001", opcoes_de_compra: [op(1, "Atacadao", "Arroz Tio João 5kg", 20)] };
+  novo = grupoDeHoje(guardado, hoje({ ...grupoApi("Arroz Branco Tio João 5 kg", "7893500000001", op(11, "Atacadao", "x", 18.5)), id_do_grupo: "7893500000001" }));
+  confere(novo && novo.opcoes_de_compra[0].preco_varejo === 18.5, "acha pelo id_do_grupo mesmo com o nome do grupo mudado");
+  const dividido = (nome, id, preco) => ({ ...grupoApi(nome, "7896478801361", op(preco, "Atacadao", nome, preco)), id_do_grupo: id });
+  const resp = hoje(dividido("Refrigerante Mate Couro 200ml", "7896478801361|200.0ml", 3), dividido("Refrigerante Mate Couro 1L", "7896478801361|1000.0ml", 8));
+  novo = grupoDeHoje({ produto_base: "Refrigerante Mate Couro 1L", ean: "7896478801361", id_do_grupo: "7896478801361|1000.0ml", opcoes_de_compra: [op(1, "Atacadao", "x", 7)] }, resp);
+  confere(novo && novo.opcoes_de_compra[0].preco_varejo === 8, "dois grupos com o mesmo código: o id (com o tamanho) escolhe o certo");
+  novo = grupoDeHoje({ produto_base: "Refrigerante Mate Couro 1L", ean: "7896478801361", opcoes_de_compra: [op(1, "Atacadao", "x", 7)] }, resp);
+  confere(novo && novo.opcoes_de_compra[0].preco_varejo === 8, "item antigo, sem id, com 2 grupos de mesmo código: o nome desempata");
+  confere(grupoDeHoje({ produto_base: "Refrigerante Mate Couro (nome antigo)", ean: "7896478801361", opcoes_de_compra: [op(1, "Atacadao", "x", 7)] }, resp) === null, "item antigo, sem id, com 2 grupos de mesmo código e nenhum com o mesmo nome: não escolhe no chute (null)");
+  confere(grupoDeHoje({ produto_base: "Café Pilão 500g", ean: "7891", opcoes_de_compra: [op(1, "Atacadao", "x", 7)] }, hoje(grupoApi("Café Pilão 500g", "7891", op(5, "Atacadao", "x", 6)))).opcoes_de_compra[0].preco_varejo === 6, "item antigo com um só grupo de mesmo código: acha");
+}
+
+// ---- juntar o que o esquema antigo duplicou ----
+{
+  const item = (nome, id, qtd) => ({ grupo: { produto_base: nome, ...(id ? { id_do_grupo: id } : {}), opcoes_de_compra: [] }, qtd, em: 1 });
+  const lista = [item("Arroz Camil 5kg", "789", 2), item("Feijão 1kg", "111", 1), item("Arroz Camil Tipo 1 5 kg", "789", 3), item("Sabão A", null, 1), item("Sabão B", null, 1)];
+  const nova = juntarRepetidos(lista);
+  igual(nova.map((i) => [i.grupo.produto_base, i.qtd]), [["Arroz Camil 5kg", 5], ["Feijão 1kg", 1], ["Sabão A", 1], ["Sabão B", 1]], "mesmo id vira um item só, somando as quantidades; por nome (sem id) nada se junta");
+  confere(lista[0].qtd === 2 && lista.length === 5, "não mexe na lista recebida");
+  igual(juntarRepetidos([]), [], "lista vazia");
+}
 
 if (erros.length) { console.error(`${erros.length} falha(s):\n  - ` + erros.join("\n  - ")); process.exit(1); }
 console.log(`${ok} verificações passaram, 0 falharam`);
