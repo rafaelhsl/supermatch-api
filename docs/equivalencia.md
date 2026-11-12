@@ -16,7 +16,7 @@ Produto que não cabe em nenhuma família **não leva** os dois primeiros campos
 
 Nada disso mexe no banco: a chave é calculada na API, a cada recarga do catálogo (a cada hora, em segundo plano). Uma regra nova vale assim que a API é publicada, sem recarregar os dados.
 
-Se o site abrir com uma API antiga (sem `equivalencia_familias`), ele usa um motor reserva próprio, com só as 11 primeiras famílias (bloco `@equivalencia-inicio` de `site/index.html`). Esse bloco fica congelado e pode ser apagado quando não houver mais API antiga em uso.
+O site **não tem regra própria**: só junta os produtos que chegam com a mesma chave (bloco `@equivalencia-inicio` de `site/index.html`). Sem as chaves, o modo equivalente avisa que não está disponível. Até o PR #32 o site tinha um motor próprio, com as 11 primeiras famílias; foi removido depois que a API passou a decidir.
 
 ## Como decide
 
@@ -29,7 +29,7 @@ Cada família diz o que **diferencia** um produto do outro (leite desnatado não
 
 ## Famílias
 
-As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.836 produtos do catálogo de 09/11/2026, o motor em JavaScript e o de Python dão a **mesma chave e o mesmo rótulo** em todos os 981 que o JavaScript cobria. Por isso as listas de compras já guardadas no navegador continuam valendo.
+As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.836 produtos do catálogo de 09/11/2026, o motor em JavaScript (hoje removido do site) e o de Python deram a **mesma chave e o mesmo rótulo** em todos os 981 que o JavaScript cobria. Por isso as listas de compras já guardadas no navegador continuam valendo.
 
 | Família | O que diferencia |
 |---|---|
@@ -96,7 +96,7 @@ As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.8
 
 - `python tests/test_equivalencia.py`: confere os mesmos casos do teste em JavaScript contra as 11 primeiras famílias (paridade), os casos novos, a lista de famílias e `com_equivalencia`.
 - `python tests/test_api_catalogo.py`: a API calcula as chaves ao carregar o catálogo e as devolve na resposta.
-- `node tests/test_equivalencia.js`: o motor reserva do site e o agrupamento a partir das chaves da API.
+- `node tests/test_agrupamento.js`: o agrupamento no site a partir das chaves da API (produto repetido, preço de erro de coleta, ordem).
 
 ## Cobertura
 

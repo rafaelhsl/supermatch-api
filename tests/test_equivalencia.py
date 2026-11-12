@@ -4,7 +4,7 @@ Rodar com:  python tests/test_equivalencia.py
 
 Duas partes:
 1. PARIDADE: as 11 famílias que viviam em site/index.html foram traduzidas para Python. Os casos do teste em JavaScript
-   (tests/test_equivalencia.js) foram extraídos para tests/casos_equivalencia_legado.json e rodam aqui contra as 11 famílias
+   (o antigo tests/test_equivalencia.js, já removido) foram extraídos para tests/casos_equivalencia_legado.json e rodam aqui contra as 11 famílias
    originais. Se um caso falhar, a tradução mudou o comportamento.
 2. FAMÍLIAS NOVAS: casos de nomes reais dos mercados. "juntam" garante que marcas diferentes caem no mesmo grupo; "separam",
    que o que não é equivalente nunca é juntado; "fora", que o que não dá para garantir fica sem chave.

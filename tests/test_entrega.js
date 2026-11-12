@@ -51,6 +51,16 @@ const parciais = (cidade) => mercadosDaCidade(cidade).filter((m) => m.parcial).m
 confere(parciais("Santa Luzia/MG") === "Atacadão", `parcial em Santa Luzia: ${parciais("Santa Luzia/MG")}`);
 confere(parciais("Betim/MG") === "", "nada parcial em Betim");
 
+// ---- cidades atendidas ----
+const cidadeAtendida = (cidade) => {
+  const [nome, uf] = String(cidade || "").split("/");
+  return uf === "MG" && CIDADES.some((c) => semAcento(c) === semAcento(nome));
+};
+["Belo Horizonte/MG", "BELO HORIZONTE/MG", "Betim/MG", "Brumadinho/MG", "Contagem/MG", "Esmeraldas/MG", "Ibirité/MG", "Ibirite/MG", "Igarapé/MG", "Nova Lima/MG",
+ "Ribeirão das Neves/MG", "Ribeirao das Neves/MG", "Sabará/MG", "Santa Luzia/MG", "São Joaquim de Bicas/MG", "Sarzedo/MG", "Vespasiano/MG"].forEach((c) => confere(cidadeAtendida(c), `deveria atender: ${c}`));
+["Uberlândia/MG", "Juiz de Fora/MG", "Juatuba/MG", "Mateus Leme/MG", "Santa Luzia/BA", "Betim/SP", "São Paulo/SP", "Rio de Janeiro/RJ", "", "Betim"].forEach((c) => confere(!cidadeAtendida(c), `NÃO deveria atender: ${c}`));
+confere(CIDADES.length === 14, `são 14 cidades, há ${CIDADES.length}`);
+
 console.log(`${ok} verificações passaram, ${erros.length} falharam`);
 erros.forEach((e) => console.log("  FALHA:", e));
 process.exit(erros.length ? 1 : 0);

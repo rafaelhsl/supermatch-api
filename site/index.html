@@ -649,7 +649,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       b.ocultosSoCitam = +dados.ocultos_so_citam || 0;
       b.soCitamPorMercado = dados.so_citam_por_mercado && typeof dados.so_citam_por_mercado === "object" ? dados.so_citam_por_mercado : {};
       b.ocultosPeloLimite = +dados.ocultos_pelo_limite || 0;
-      // a API nova manda a chave de equivalência de cada produto e a lista de famílias; uma API antiga, não (e o site usa o motor próprio)
+      // a API manda a chave de equivalência de cada produto e a lista das famílias que conhece
       b.familiasEquivalentes = Array.isArray(dados.equivalencia_familias) ? dados.equivalencia_familias.filter((f) => typeof f === "string") : null;
       // a data mais antiga entre os preços exibidos: é a que vale para a tela toda
       const datas = grupos.flatMap((g) => g.opcoes_de_compra.map((o) => o.atualizado_em)).filter(Boolean).sort();
@@ -669,7 +669,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     const visiveis = b.brutos
       .map((g) => ({ ...g, opcoes_de_compra: g.opcoes_de_compra.filter((o) => ativos.has(o.supermercado)) }))
       .filter((g) => g.opcoes_de_compra.length);
-    b.grupos = estado.modo === "equivalente" ? agruparEquivalentes(visiveis, b.familiasEquivalentes !== null) : visiveis.sort((x, y) => y.opcoes_de_compra.length - x.opcoes_de_compra.length);
+    b.grupos = estado.modo === "equivalente" ? agruparEquivalentes(visiveis) : visiveis.sort((x, y) => y.opcoes_de_compra.length - x.opcoes_de_compra.length);
     b.semEquivalentes = visiveis.length > 0 && b.grupos.length === 0;   // há produtos, mas nenhum se encaixa nas regras de equivalência
     b.status = b.grupos.length ? "ok" : "vazio";
   }
@@ -682,144 +682,22 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 
   /* @equivalencia-inicio */
   /* ---------- produto equivalente ----------
-     "Equivalente" é o mesmo tipo de produto no mesmo tamanho, de qualquer marca. Cada família abaixo diz o que
-     diferencia um produto do outro (arroz parboilizado não é arroz branco; café solúvel não é café em pó) e o que
-     não importa (marca, embalagem, perfume). Na dúvida, não junta: o produto que não cabe em nenhuma regra só
-     aparece no modo "exato". Errar por juntar de menos é seguro; juntar o que não é equivalente engana a pessoa. */
-  const escolher = (t, regras, padrao) => { for (const [re, valor] of regras) if (re.test(t)) return valor; return padrao; };
+     "Equivalente" é o mesmo tipo de produto no mesmo tamanho, de qualquer marca. Quem decide o que é equivalente é a API
+     (equivalencia.py): cada produto chega com `chave_equivalencia` e `rotulo_equivalencia`, e o site só junta os que têm
+     a mesma chave. Produto sem chave não tem equivalente e só aparece no modo "exato". Veja docs/equivalencia.md. */
 
-  // Primeira medida do nome, em gramas ou mililitros. tipo: "massa", "volume" ou "qualquer".
-  function medida(t, tipo) {
-    const m = t.match(/(\d+(?:[.,]\d+)?)\s*(kg|gr|g|ml|lt|litros?|l)\b/);
-    if (!m) return null;
-    const massa = m[2] === "kg" || m[2] === "g" || m[2] === "gr";
-    if ((tipo === "massa" && !massa) || (tipo === "volume" && massa)) return null;
-    let v = parseFloat(m[1].replace(",", "."));
-    if (m[2] === "kg" || !massa && m[2] !== "ml") v *= 1000;
-    return { massa, valor: Math.round(v) };
-  }
-  const textoMedida = ({ massa, valor }) => {
-    if (valor < 1000) return valor + (massa ? " g" : " ml");
-    return String(valor / 1000).replace(".", ",") + (massa ? " kg" : " L");
-  };
-
-  const FAMILIAS = [
-    { id: "arroz", comeca: /^arroz /, analisar: (t) => {
-      if (/carreteiro|galinhada|\bmix\b/.test(t)) return null;
-      const m = medida(t, "massa"); if (!m) return null;
-      const variedade = escolher(t, [[/parboiliz/, "parboilizado"], [/integral/, "integral"], [/arbor/, "arbório"], [/japon/, "japonês"], [/risot|carnaroli|italian/, "para risoto"], [/quebrado/, "quebrado"]], "branco");
-      const tipo = escolher(t, [[/fora de tipo/, "fora de tipo"], [/tipo 2|\bt2\b/, "tipo 2"]], "tipo 1");
-      return { partes: [variedade, tipo], m, rotulo: `Arroz ${variedade} ${tipo}` };
-    } },
-    { id: "feijao", comeca: /^feijao /, analisar: (t) => {
-      if (/pronto|tempero|caldinho/.test(t)) return null;
-      const m = medida(t, "massa"); if (!m) return null;
-      const variedade = escolher(t, [[/carioca/, "carioca"], [/\bpreto\b|\bpto\b/, "preto"], [/\bbranco\b|\bbco\b/, "branco"], [/fradinho/, "fradinho"], [/jalo/, "jalo"], [/vermelho/, "vermelho"], [/roxo/, "roxo"], [/rajado/, "rajado"], [/de corda/, "de corda"]], null);
-      if (!variedade) return null;
-      const tipo = escolher(t, [[/tipo 2/, "tipo 2"]], "tipo 1");
-      return { partes: [variedade, tipo], m, rotulo: `Feijão ${variedade} ${tipo}` };
-    } },
-    { id: "oleo", comeca: /^oleo /, analisar: (t) => {
-      if (/capilar|cabelo|corporal|bebe|bronz|sunless|babosa|amendoa|\bcoco\b|\buva\b|ricino|mosqueta|peroba|moveis|lubrificante|serum|finalizador|argan|queratina|tratamento|gergelim|eucalipto|avante|farmax|almotolia|oregano|cebola|alho/.test(t)) return null;
-      const m = medida(t, "qualquer"); if (!m) return null;
-      if (/bagaco/.test(t)) return null;   // "composto de bagaço de oliva" é outro produto
-      const tipo = escolher(t, [[/composto|misto|soja e oliva/, "composto"], [/soja/, "soja"], [/girassol/, "girassol"], [/milho/, "milho"], [/canola/, "canola"], [/algodao/, "algodão"]], null);
-      if (!tipo) return null;
-      return { partes: [tipo], m, rotulo: tipo === "composto" ? "Óleo composto de soja e oliva" : `Óleo de ${tipo}` };
-    } },
-    { id: "cafe", comeca: /^cafe /, analisar: (t) => {
-      if (/capsula|dolce gusto|nespresso/.test(t)) return null;
-      const m = medida(t, "massa"); if (!m) return null;
-      const forma = escolher(t, [[/com leite/, "com leite"], [/soluvel|liofilizado|granulado|instantaneo/, "solúvel"], [/em graos/, "em grãos"]], "em pó");
-      const forca = escolher(t, [[/descafeinado/, "descafeinado"], [/extra ?forte|\+ ?forte/, "extraforte"], [/liofilizado/, "liofilizado"], [/gourmet|premium|especial|superior|organico|prima qualit|estrada real/, "gourmet"], [/tradicional|tradicao/, "tradicional"]], "");
-      return { partes: [forma, forca], m, rotulo: `Café ${forma}${forca ? " " + forca : ""}` };
-    } },
-    { id: "manteiga", comeca: /^manteiga /, analisar: (t) => {
-      if (/karite|castanha|margarina|amanteigado|pipoca|biscoito|papel|tempero|coloracao/.test(t)) return null;
-      const m = medida(t, "massa"); if (!m) return null;
-      const sal = escolher(t, [[/sem sal/, "sem sal"], [/com sal|\bc sal\b|cristais de sal/, "com sal"]], null);
-      if (!sal) return null;
-      const tipo = escolher(t, [[/bufala/, "de búfala"], [/zero lactose|sem lactose/, "sem lactose"], [/\bextra\b|gastronomique/, "extra"]], "");
-      return { partes: [tipo, sal], m, rotulo: `Manteiga ${tipo ? tipo + " " : ""}${sal}` };
-    } },
-    { id: "acucar", comeca: /^acucar /, analisar: (t) => {
-      if (/sach|zero|sem acucar/.test(t)) return null;
-      const m = medida(t, "massa"); if (!m) return null;
-      const tipo = escolher(t, [[/confeiteiro|glace|glacucar|\bconf\b/, "de confeiteiro"], [/demerad|demerar|dourado/, "demerara"], [/mascavo/, "mascavo"], [/refinado/, "refinado"], [/cristal|cristaal/, "cristal"]], null);
-      if (!tipo) return null;
-      const extra = escolher(t, [[/organic/, "orgânico"], [/light|magro|\bfit\b|diet|lowcucar/, "light"]], "");
-      return { partes: [tipo, extra], m, rotulo: `Açúcar ${tipo}${extra ? " " + extra : ""}` };
-    } },
-    { id: "macarrao", comeca: /^macarrao /, analisar: (t) => {
-      if (/instant|miojo|lamen|noodles|yakisoba|yakissoba/.test(t)) return null;
-      const m = medida(t, "massa"); if (!m) return null;
-      const formato = escolher(t, [[/espaguetinho|spaghettini/, "espaguetinho"], [/espaguete|spaghetti/, "espaguete"], [/parafuso|fusilli/, "parafuso"], [/penne|\bpena\b/, "penne"], [/linguine/, "linguine"], [/fettuccine|fetuccine|fettucine/, "fettuccine"], [/talharim|tagliarinni|tagliatelle|ninho/, "talharim"], [/caracol/, "caracol"], [/alfabeto/, "alfabeto"], [/fidelinho/, "fidelinho"]], null);
-      if (!formato) return null;
-      const massa = escolher(t, [[/ovos/, "com ovos"], [/semola|semolao|grano duro|durum/, "de sêmola"]], "");
-      return { partes: [formato, massa], m, rotulo: `Macarrão ${formato}${massa ? " " + massa : ""}` };
-    } },
-    { id: "detergente", contem: /\bdetergente\b/, analisar: (t) => {
-      if (/sanitario|multiuso|uso geral|desengordurante|pastilha|bloco|limpador|cremoso/.test(t)) return null;
-      const m = medida(t, "qualquer"); if (!m) return null;
-      const forma = escolher(t, [[/\bgel\b/, "gel"], [/\bpo\b/, /louca|maquina/.test(t) ? "em pó para lava-louças" : "em pó"]], "líquido");
-      return { partes: [forma], m, rotulo: `Detergente ${forma}` };
-    } },
-    { id: "sabao", contem: /\bsabao\b/, analisar: (t) => {
-      if (/sabonete|shampoo|condicionador/.test(t)) return null;
-      if (/\d+ ?(barras?|unidades?|und)\b/.test(t) && /cada|barras? de/.test(t)) return null;   // pacote de barras: o tamanho é ambíguo
-      const m = medida(t, "qualquer"); if (!m) return null;
-      const forma = escolher(t, [[/liquido/, "líquido"], [/em po|\bpo\b/, "em pó"], [/barra|pedaco/, "em barra"], [/pasta/, "em pasta"]], null);
-      if (!forma) return null;
-      const roupa = escolher(t, [[/finas|delicad/, "para roupas delicadas"]], "");
-      return { partes: [forma, roupa], m, rotulo: `Sabão ${forma}${roupa ? " " + roupa : ""}` };
-    } },
-    { id: "amaciante", contem: /\bamaciante\b/, analisar: (t) => {
-      if (/carne|tempero|maggi|qualimax/.test(t)) return null;
-      const m = medida(t, "volume"); if (!m) return null;
-      const tipo = escolher(t, [[/concentrad/, "concentrado"]], "");
-      return { partes: [tipo], m, rotulo: `Amaciante${tipo ? " " + tipo : ""}` };
-    } },
-    { id: "papel", comeca: /^papel higienico /, analisar: (t) => {
-      const metros = t.match(/(\d+(?:[.,]\d+)?) ?(?:m|metros?)\b/);
-      const rolos = t.match(/leve ?(\d+)/) || t.match(/\bl(\d+)p\d+/) || t.match(/(\d+) ?rolos?/) || t.match(/\b(\d+) ?r\b/) || t.match(/\bcom ?(\d+)\b/) || t.match(/(\d+) ?(?:unidades?|und)\b/);
-      if (!metros || !rolos) return null;
-      const folha = escolher(t, [[/folha dupla|\bfd\b|\bf d\b/, "folha dupla"], [/folha tripla/, "folha tripla"], [/folha simples|\bfs\b|\bf s\b/, "folha simples"]], "");
-      const m = metros[1].replace(",", "."), n = rolos[1];
-      return { partes: [folha, m, n], rotulo: `Papel higiênico${folha ? " " + folha : ""}, ${n} ${+n === 1 ? "rolo" : "rolos"} de ${m.replace(".", ",")} m` };
-    } },
-  ];
-
-  // { chave, rotulo } do produto, ou null se ele não se encaixa em nenhuma regra.
-  function equivalencia(nome) {
-    const t = semAcento(String(nome)).replace(/[^a-z0-9+,. ]/g, " ").replace(/\s+/g, " ").trim();
-    if (/\b\d+ ?x ?\d+/.test(t)) return null;   // caixas e multipacotes ("24x40g")
-    for (const f of FAMILIAS) {
-      if (!(f.comeca ? f.comeca.test(t) : f.contem.test(t))) continue;
-      const r = f.analisar(t);
-      if (!r) return null;
-      return {
-        chave: [f.id, ...r.partes, r.m ? (r.m.massa ? r.m.valor + "g" : r.m.valor + "ml") : ""].join("|"),
-        rotulo: r.rotulo + (r.m ? ", " + textoMedida(r.m) : ""),
-      };
-    }
-    return null;
-  }
-
-  // Junta, entre os produtos devolvidos pela busca, os que são equivalentes. Cada grupo guarda todos os produtos
+  // Junta, entre os produtos devolvidos pela busca, os que têm a mesma chave. Cada grupo guarda todos os produtos
   // candidatos; a comparação escolhe, em cada mercado, o que sai mais barato.
-  // `doServidor`: a API (equivalencia.py) já mandou `chave_equivalencia` e `rotulo_equivalencia` em cada produto; sem chave, o
-  // produto não tem equivalente. Sem isso (API antiga), as chaves saem do motor `equivalencia` acima, só com as 11 famílias.
-  function agruparEquivalentes(brutos, doServidor = false) {
+  function agruparEquivalentes(brutos) {
     const vistos = new Set(), mapa = new Map();
     for (const g of brutos) {
       for (const o of g.opcoes_de_compra) {
         const id = o.id || o.supermercado + "|" + o.nome;
         if (vistos.has(id)) continue;
         vistos.add(id);
-        const e = doServidor ? (o.chave_equivalencia ? { chave: o.chave_equivalencia, rotulo: o.rotulo_equivalencia || o.chave_equivalencia } : null) : equivalencia(o.nome);
-        if (!e) continue;
-        if (!mapa.has(e.chave)) mapa.set(e.chave, { produto_base: e.rotulo, equivalente: true, chave: e.chave, opcoes_de_compra: [] });
-        mapa.get(e.chave).opcoes_de_compra.push(o);
+        if (!o.chave_equivalencia) continue;
+        if (!mapa.has(o.chave_equivalencia)) mapa.set(o.chave_equivalencia, { produto_base: o.rotulo_equivalencia || o.chave_equivalencia, equivalente: true, chave: o.chave_equivalencia, opcoes_de_compra: [] });
+        mapa.get(o.chave_equivalencia).opcoes_de_compra.push(o);
       }
     }
     // Preço muito abaixo do normal do grupo é quase sempre erro de coleta (já vimos feijão de 1 kg a R$ 0,78). No modo
@@ -856,7 +734,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   function grupoDeHoje(grupo, dados) {
     const brutos = Array.isArray(dados && dados.carrinho_comparativo) ? dados.carrinho_comparativo : [];
     if (grupo.equivalente) {
-      return agruparEquivalentes(brutos, Array.isArray(dados.equivalencia_familias)).find((g) => g.chave === grupo.chave) || null;
+      return agruparEquivalentes(brutos).find((g) => g.chave === grupo.chave) || null;
     }
     const ean = semZerosAEsquerda(grupo.ean);
     const novo = (ean && brutos.find((g) => semZerosAEsquerda(g.ean) === ean)) || brutos.find((g) => g.produto_base === grupo.produto_base);
@@ -997,8 +875,6 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 <script>
 (function () {
   const S = Supermatch, U = S.util;
-  // as famílias do motor reserva do site (a API nova manda a lista completa, ver equivalencia_familias)
-  const FAMILIAS_DO_MOTOR_DO_SITE = ["arroz", "feijão", "óleo", "café", "manteiga", "açúcar", "macarrão", "detergente", "sabão", "amaciante", "papel higiênico"];
   const $ = (id) => document.getElementById(id);
   const SOL = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.4" fill="#182848"/><g stroke="#182848" stroke-width="1.6" stroke-linecap="round"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13"/></g></svg>';
   const SETA = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1072,9 +948,10 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       el.innerHTML = `<div class="estado"><strong>Não deu para consultar agora</strong>${U.esc(b.aviso)}<br><br><button class="botao vazado" type="button" id="tentar">Buscar de novo</button></div>`;
     } else if (b.status === "vazio" && b.semEquivalentes) {
       // há produtos, mas nenhum se encaixa nas regras de equivalência
-      const familias = b.familiasEquivalentes && b.familiasEquivalentes.length ? b.familiasEquivalentes : FAMILIAS_DO_MOTOR_DO_SITE;
+      const familias = b.familiasEquivalentes || [];     // a API manda as famílias que conhece; sem a lista, ela não tem equivalência
       const lista = familias.length > 1 ? familias.slice(0, -1).join(", ") + " e " + familias[familias.length - 1] : familias.join("");
-      el.innerHTML = `<div class="estado"><strong>Nenhum produto equivalente para “${U.esc(b.termo)}”</strong>A comparação por equivalência vale para ${U.esc(lista)}. Para outros itens, ou para uma marca específica, use Produto exato.<br><br><button class="botao vazado" type="button" data-modo="exato">Ver como produto exato</button></div>`;
+      const vale = familias.length ? `A comparação por equivalência vale para ${lista}.` : "A comparação por equivalência não está disponível agora.";
+      el.innerHTML = `<div class="estado"><strong>Nenhum produto equivalente para “${U.esc(b.termo)}”</strong>${U.esc(vale)} Para outros itens, ou para uma marca específica, use Produto exato.<br><br><button class="botao vazado" type="button" data-modo="exato">Ver como produto exato</button></div>`;
     } else if (b.status === "vazio") {
       el.innerHTML = `<div class="estado"><strong>Nada encontrado para “${U.esc(b.termo)}”</strong>Tente uma palavra mais curta ou confira a escrita.</div>`;
     } else {
