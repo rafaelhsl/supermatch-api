@@ -1,0 +1,98 @@
+name: Testes
+
+# Roda a suíte inteira do repositório (tests/test_*.py e tests/test_*.js) em cada PR e a cada merge na main.
+# Não usa segredo, não toca no banco, não abre navegador e não faz chamadas de rede de verdade: os testes são locais,
+# com bancos e APIs de mentira. Veja docs/testes.md.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# um commit novo no mesmo PR cancela a rodada anterior
+concurrency:
+  group: testes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python (${{ matrix.rotulo }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false       # se uma versão falhar, a outra termina e mostra o que também falha nela
+      matrix:
+        include:
+          # a versão da carga diária (.github/workflows/main.yml)
+          - rotulo: '3.11, a da carga diária'
+            python-version: '3.11'
+          # a versão que o Render usa, lida do arquivo .python-version: muda junto com ele
+          - rotulo: 'a do Render, lida do .python-version'
+            python-version: render
+    steps:
+    - name: Puxando o código do projeto
+      uses: actions/checkout@v7
+
+    - name: Descobrindo a versão do Python
+      id: versao
+      env:
+        ALVO: ${{ matrix.python-version }}
+      run: |
+        if [ "$ALVO" = "render" ]; then
+          # O Render usa a versão exata do arquivo (hoje 3.14.3). O GitHub só oferece as correções mais novas da mesma série
+          # (hoje 3.14.10), então testamos a série: o "3.14" do arquivo, na correção mais nova que o GitHub tem.
+          versao="$(cut -d. -f1,2 .python-version)"
+        else
+          versao="$ALVO"
+        fi
+        echo "Python pedido: $versao"
+        echo "python=$versao" >> "$GITHUB_OUTPUT"
+
+    - name: Configurando o Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ steps.versao.outputs.python }}
+        cache: pip
+        cache-dependency-path: requirements*.txt
+
+    - name: Instalando as bibliotecas (requirements.txt, sem os navegadores do Playwright)
+      run: |
+        python --version
+        pip install -r requirements.txt
+
+    - name: Rodando os testes em Python
+      run: |
+        falhou=0
+        for teste in tests/test_*.py; do
+          echo "::group::$teste"
+          python "$teste" || { echo "::error file=$teste::falhou"; falhou=1; }
+          echo "::endgroup::"
+        done
+        exit $falhou
+
+  node:
+    name: Node (24)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: Puxando o código do projeto
+      uses: actions/checkout@v7
+
+    - name: Configurando o Node
+      uses: actions/setup-node@v7
+      with:
+        node-version: '24'
+
+    - name: Rodando os testes em Node (os do site/index.html)
+      run: |
+        node --version
+        falhou=0
+        for teste in tests/test_*.js; do
+          echo "::group::$teste"
+          node "$teste" || { echo "::error file=$teste::falhou"; falhou=1; }
+          echo "::endgroup::"
+        done
+        exit $falhou
