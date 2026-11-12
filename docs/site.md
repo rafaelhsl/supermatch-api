@@ -67,6 +67,18 @@ conta isso numa nota tracejada logo abaixo do título dos resultados:
 O texto e as contas ficam em `notasDaBusca` (bloco `@ocultos-inicio` / `@ocultos-fim` de `site/index.html`), testado por
 `node tests/test_ocultos.js`.
 
+## Preços da lista
+
+A lista fica salva no navegador, e os preços mudam todo dia (os robôs atualizam o banco uma vez por dia). Por isso o site **busca os preços de hoje** dos itens da lista:
+
+- **Quando:** ao abrir a página e ao voltar a ela (a aba que estava em segundo plano), para os itens cuja consulta tem mais de 3 horas. Itens salvos antes dessa versão não têm a hora `em` e são atualizados na primeira abertura. O item que acabou de ser adicionado já tem preço de agora e não é consultado.
+- **Como:** uma consulta à API por termo (o campo `termo` que cada produto traz; num item antigo, a primeira palavra do nome), no máximo 3 ao mesmo tempo. Itens do mesmo termo dividem a consulta.
+- **O que muda:** só as opções de compra, com os preços. O nome, a quantidade e a escolha exato/equivalente do item não mudam, então a lista não "troca" o produto por outro nem duplica itens. O item exato é achado pelo código de barras (o nome do grupo pode mudar de um dia para o outro) e, sem ele, pelo nome; o equivalente é achado pela chave de equivalência.
+- **Quando não dá:** se o produto não aparece mais, ou a API não responde, o item mantém o último preço. O cupom diz "Atualizando os preços…" enquanto consulta, e depois "N itens sem preço novo: ficou o último que a lista tinha" ou "Não deu para atualizar os preços agora".
+- Dá para mexer na lista (mudar quantidades, remover) enquanto a atualização acontece.
+
+O código fica nos blocos `@lista-inicio` / `@lista-fim` (decisões puras: quais itens estão velhos, qual termo consultar, qual grupo da resposta é o mesmo item) e em `atualizarPrecosDaLista`. `node tests/test_lista.js` confere as decisões.
+
 ## Regras da comparação
 
 - Um mercado que não vende algum item da lista fica **incompleto**: seu total é parcial, aparece como "falta N itens" e ele nunca é apontado como o mais barato.
@@ -82,11 +94,11 @@ O texto e as contas ficam em `notasDaBusca` (bloco `@ocultos-inicio` / `@ocultos
 
 ## O que fica no navegador
 
-`localStorage`: `sm_cep`, `sm_cidade`, `sm_modo` (exato ou equivalente) e `sm_lista` (a lista com os preços do momento em que cada item foi adicionado). Na primeira visita, o site também lê `user_cep` e `user_cidade`, que eram da versão anterior; sem a cidade guardada, o CEP é pedido de novo.
+`localStorage`: `sm_cep`, `sm_cidade`, `sm_modo` (exato ou equivalente) e `sm_lista` (a lista: cada item guarda o grupo com os preços da última vez que foi consultado, a quantidade e a hora `em` dessa consulta). Na primeira visita, o site também lê `user_cep` e `user_cidade`, que eram da versão anterior; sem a cidade guardada, o CEP é pedido de novo.
 
 ## Limitações conhecidas
 
-- **Preços da lista envelhecem.** Ficam salvos como estavam quando o item entrou na lista, e os robôs atualizam o banco uma vez por dia. O cupom informa a data do preço mais antigo dele, mas ainda não busca preços novos ao reabrir a página.
+- **Preços da lista são atualizados ao abrir a página.** Veja "Preços da lista" abaixo. Quando a API está fora do ar, ou o produto saiu do catálogo, o item fica com o último preço que a lista tinha e o cupom avisa; a data dele, "Preços de …", é a do preço mais antigo.
 - **A entrega é decidida por cidade, mas o Atacadão (e talvez os outros) decide por bairro.** Onde o levantamento deu resultados diferentes dentro da cidade, o site só avisa ("Só em parte da cidade"). Uma amostra mais densa de CEPs (um por faixa de CEP) diria o bairro exato. A amostra atual tem de 2 a 9 CEPs por cidade.
 - **O Super ABC aparece só em BH e Betim**, porque só tem unidade lá; uma unidade vizinha pode entregar em outras cidades, mas o site dele não deixa conferir.
 - **O Apoio muda de catálogo conforme a região** (canal de vendas); a carga diária usa o canal de Betim.
