@@ -44,7 +44,7 @@ Em **Cronjobs → Create cronjob**:
 | Execution schedule | todos os dias, **07:30**, fuso **America/Sao_Paulo** (confira o fuso: sem isso o horário vira o do servidor) |
 | Aba **Advanced** → Request method | **POST** |
 | Request body | veja o passo 3 |
-| Headers | `Authorization` = `Bearer ` e o token (a palavra Bearer, um espaço, e o token); `Accept` = `application/vnd.github+json`; `X-GitHub-Api-Version` = `2022-11-28`; `Content-Type` = `application/json` |
+| Headers (aba Advanced; **uma linha para cada um**, botão **+ ADD**: nunca junte vários no valor do `Authorization`, o GitHub leria tudo como se fosse o token e responderia 401) | `Authorization` = `Bearer ` e o token (a palavra Bearer, um espaço, e o token); `Accept` = `application/vnd.github+json`; `X-GitHub-Api-Version` = `2022-11-28`; `Content-Type` = `application/json` |
 | Notifications | avise quando a tarefa **falhar** |
 
 O GitHub responde `204 No Content` quando aceita o disparo, e o cron-job.org conta qualquer resposta 2xx como sucesso.
@@ -90,7 +90,7 @@ gh api -X POST repos/rafaelhsl/supermatch-api/actions/workflows/main.yml/dispatc
 
 ## Renovar o token
 
-Um token do GitHub vence. O GitHub costuma avisar por e-mail poucos dias antes, mas não conte só com isso: anote a data. Para renovar: Developer settings → Fine-grained tokens → abra o token → **Regenerate token** (mesmas permissões) → copie o valor novo → no cron-job.org, edite a tarefa e troque o valor do header `Authorization`. Enquanto o token estiver vencido a reserva do GitHub continua carregando, só que no fim do dia.
+Um token do GitHub vence. O token criado em 13/11/2026 vale até **13/11/2027** (a data também aparece no cabeçalho `github-authentication-token-expiration` da resposta do teste). O GitHub costuma avisar por e-mail poucos dias antes, mas não conte só com isso: anote a data numa agenda. Na renovação, aproveite para trocar também o valor do cabeçalho `X-GitHub-Api-Version` por uma versão mais nova: o GitHub avisa (cabeçalho `Sunset` da resposta) que a `2022-11-28` deixa de funcionar em **10/03/2028**. Para renovar: Developer settings → Fine-grained tokens → abra o token → **Regenerate token** (mesmas permissões) → copie o valor novo → no cron-job.org, edite a tarefa e troque o valor do header `Authorization`. Enquanto o token estiver vencido a reserva do GitHub continua carregando, só que no fim do dia.
 
 ## Mudar o horário
 
