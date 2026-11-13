@@ -1,15 +1,20 @@
-name: Robô da Madrugada (Scraper)
+name: Carga diária de preços
+
+# Duas formas de disparar a carga, uma não repete o trabalho da outra (veja docs/carga_diaria.md):
+#  1. PRINCIPAL: um serviço externo (cron-job.org) chama a API do GitHub às 07:30 de Brasília e a carga começa na hora.
+#     O agendador do GitHub, abaixo, atrasa umas 7 horas por dia (a carga chegava às ~16h), então o site mostrava de manhã os preços de ontem.
+#  2. RESERVA: o agendador do GitHub (schedule). Se o serviço externo falhou, ele garante que o dia não fica sem carga. Se a carga de
+#     hoje já foi feita, o job `decidir` faz o job de carga pular (veja guarda_da_carga.py).
+# O título de cada execução (run-name) traz gravar= e mercados=: é por ele que a guarda reconhece a carga completa de hoje.
+run-name: Carga (${{ github.event_name == 'schedule' && 'agendada do GitHub' || 'disparada' }}) | gravar=${{ inputs.gravar || 'sim' }} | mercados=${{ inputs.mercados || 'todos' }} | coleta=${{ inputs.coleta || 'api' }}
 
 on:
-  # O Despertador: roda todo dia às 11:17 UTC (08:17 da manhã no Brasil).
-  # Não pode ser de madrugada: o Apoio Entrega mostra todos os produtos como "Item indisponível" (sem preço)
-  # antes das ~7h, e a carga ficaria sem os dados dele. O GitHub nunca roda antes do horário do cron
-  # (só atrasa), então este horário garante que a carga começa depois das 8h. Evitamos o minuto 00 porque
-  # é quando o GitHub mais atrasa as execuções agendadas.
+  # A reserva: roda todo dia às 11:17 UTC (08:17 em Brasília) quando o GitHub não atrasa. Evitamos o minuto 00 porque é
+  # quando o GitHub mais atrasa as execuções agendadas.
   schedule:
     - cron: '17 11 * * *'
-  # Isso permite que você clique num botão para rodar na hora que quiser testar!
-  # Dispare depois das 8h da manhã (Brasília), pelo mesmo motivo acima.
+  # Dispara na hora: pelo botão "Run workflow" do GitHub ou pela API (é o que o serviço externo faz; sem `inputs`, valem os
+  # padrões abaixo: todos os mercados, gravando, por API).
   workflow_dispatch:
     inputs:
       mercados:
@@ -31,8 +36,39 @@ on:
           - robos
         default: api
 
+# Uma carga por vez: dois disparos ao mesmo tempo (o externo e a reserva, ou um clique duplo) esperam na fila em vez de se atropelar.
+concurrency:
+  group: carga-diaria
+  cancel-in-progress: false
+
 jobs:
+  decidir:
+    name: Já houve carga hoje?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      pular: ${{ steps.guarda.outputs.pular }}
+    steps:
+    - name: Puxando o código do projeto
+      uses: actions/checkout@v7
+
+    - name: Conferindo as cargas de hoje
+      id: guarda
+      # Se esta etapa falhar, não sai `pular` e o job de carga roda: na dúvida, carrega.
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+        EVENTO: ${{ github.event_name }}
+      run: |
+        gh run list --workflow main.yml --status success --limit 30 --json createdAt,displayTitle,conclusion | python3 guarda_da_carga.py >> "$GITHUB_OUTPUT"
+
   atualizar_banco_de_dados:
+    needs: decidir
+    # `!cancelled()` e não só `needs`: se o job `decidir` quebrar por qualquer motivo, a carga roda mesmo assim.
+    if: ${{ !cancelled() && needs.decidir.outputs.pular != 'sim' }}
     runs-on: ubuntu-latest # O GitHub liga um Linux para nós
     timeout-minutes: 150   # a carga com os 100 produtos leva 15 a 45 minutos (o Super ABC é o mais lento)
 
@@ -55,9 +91,9 @@ jobs:
       env:
         # Injeta a chave secreta que salvamos no cofre do GitHub
         SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        # Só têm valor quando a execução é disparada à mão; na agendada ficam vazios (todos os mercados, gravando)
+        # Só têm valor quando a execução é disparada (à mão ou pela API) com esses campos; na agendada ficam vazios (todos os mercados, gravando)
         SO_MERCADOS: ${{ github.event.inputs.mercados }}
         SEM_GRAVAR: ${{ github.event.inputs.gravar == 'nao' && '1' || '' }}
-        # Na agendada o campo "coleta" é vazio: vale a coleta por API. "robos" volta ao modo antigo (COLETA_POR_API=0).
+        # Quando o campo "coleta" é vazio: vale a coleta por API. "robos" volta ao modo antigo (COLETA_POR_API=0).
         COLETA_POR_API: ${{ github.event.inputs.coleta == 'robos' && '0' || '1' }}
       run: python alimentar_banco.py
