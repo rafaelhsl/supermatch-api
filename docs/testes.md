@@ -1,11 +1,12 @@
 # Testes
 
-Os testes ficam em [`tests/`](../tests). Todos são locais: usam bancos e APIs de mentira, não precisam de segredo, de rede nem de navegador.
+Os testes ficam em [`tests/`](../tests). Todos são locais: usam bancos e APIs de mentira e não precisam de segredo nem de rede. Só os de `tests/navegador/` abrem um navegador de verdade (também com respostas de mentira).
 
 | Arquivos | O que conferem | Precisa de |
 |---|---|---|
 | `tests/test_*.py` | a API, a busca, o agrupamento, a equivalência (`equivalencia.py`), a carga, o histórico, o coletor, o Super ABC, a entrega por cidade e os arquivos de bibliotecas | Python e as bibliotecas do `requirements.txt` |
 | `tests/test_*.js` | trechos de `site/index.html`: agrupamento por equivalência, lista de compras, identificador dos itens, aviso dos ocultados e entrega por cidade | Node |
+| `tests/navegador/test_site_*.py` | o site inteiro numa tela de verdade (celular e computador): entrega por cidade, equivalência, identificador dos itens, lista com preços do dia e aviso dos ocultados | Python, Playwright e o Chromium (veja abaixo) |
 
 ## Rodar na sua máquina
 
@@ -25,13 +26,34 @@ Get-ChildItem tests/test_*.js | ForEach-Object { node $_.FullName }
 
 Cada arquivo termina com `ok: N …` ou `N verificações passaram` quando tudo passa; se algo falha, mostra onde e sai com erro.
 
+### Testes de navegador
+
+Eles abrem o `site/index.html` direto do disco num Chromium sem janela, simulam o que a pessoa faz (digitar o CEP, buscar, adicionar à lista, abrir o cupom) no celular e no computador, e conferem o que aparece. A API do Supermatch e a de CEP são de mentira: o próprio teste responde no lugar delas, então nada sai para a rede e o resultado é sempre o mesmo.
+
+Na primeira vez, instale o Chromium do Playwright (o `pip install -r requirements.txt` já traz o Playwright):
+
+```
+python -m playwright install chromium
+```
+
+e rode um arquivo (cada um leva de 30 segundos a 2 minutos):
+
+```
+python tests/navegador/test_site_lista.py
+```
+
+Todos de uma vez, no PowerShell: `Get-ChildItem tests/navegador/test_*.py | ForEach-Object { python $_.FullName }`.
+
+Cada verificação aparece como `OK` ou `FALHA`, e o final traz `RESUMO: N ok, M falhas` (sai com erro se houver alguma falha). As fotos da tela tiradas pelos testes vão para `tests/navegador/capturas/` (fora do Git), para você olhar o que o navegador viu; a variável `SM_CAPTURAS` troca a pasta.
+
 ## Rodar no GitHub
 
-O workflow [`testes.yml`](../.github/workflows/testes.yml) roda a suíte inteira **em cada PR e a cada merge na `main`**, e aparece no PR como "Testes". São três rodadas em paralelo:
+O workflow [`testes.yml`](../.github/workflows/testes.yml) roda a suíte inteira **em cada PR e a cada merge na `main`**, e aparece no PR como "Testes". São quatro rodadas em paralelo:
 
 - **Python 3.11**, a versão da carga diária (`main.yml`);
 - **Python do Render**: lê a série do arquivo `.python-version` (hoje 3.14.3, então a série 3.14) e roda na correção mais nova que o GitHub oferece (hoje a 3.14.10, porque ele não tem mais a 3.14.3). Assim o teste acompanha a série de produção quando ela muda, e só difere na correção, não na versão;
-- **Node 24**, para os testes do site.
+- **Node 24**, para os testes do site;
+- **Navegador (Chromium)**, para os testes de `tests/navegador/`: instala o Playwright e o Chromium (uns 2 minutos) e roda cada arquivo. Se algo falha, as fotos da tela ficam guardadas por 7 dias na execução (seção "Artifacts", com o nome `capturas-de-tela`).
 
 Uma rodada vermelha mostra, na aba do PR, qual arquivo falhou (o log de cada um fica numa seção que se abre). Cada uma é independente: se a 3.11 falhar, a do Render continua e mostra se também falha nela. Um commit novo no mesmo PR cancela a rodada anterior.
 
@@ -51,7 +73,7 @@ Duas consequências práticas:
 
 ## O que os testes não cobrem
 
-- **O site no navegador.** A tela (clicar, buscar, adicionar à lista, o cupom) é conferida à mão e por scripts de navegador que ainda não estão no repositório. Os testes em Node só cobrem as decisões de `site/index.html` que não dependem da tela.
+- **O site com a API de verdade.** Os testes de navegador cobrem a tela (digitar o CEP, buscar, adicionar à lista, o cupom, celular e computador), mas com respostas de mentira, então não pegam um problema que só existe com os dados reais do dia. Isso, e o visual (cores, espaçamento, se algo "ficou feio"), continuam sendo conferidos à mão: as fotos da tela dos testes ajudam, mas não são comparadas automaticamente.
 - **As APIs e o banco de verdade.** Tudo é simulado. Quem prova que a carga funciona é a própria carga diária (e o modo de teste do `main.yml`, que não grava: `gravar=nao`).
 - **Os robôs de navegador** (`Scraper_*.py`).
 

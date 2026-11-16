@@ -18,6 +18,7 @@ env/
 debug_*.png
 test-results/
 playwright-report/
+tests/navegador/capturas/
 
 # --- Logs ---
 *.log
