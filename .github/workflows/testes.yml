@@ -1,8 +1,9 @@
 name: Testes
 
-# Roda a suíte inteira do repositório (tests/test_*.py e tests/test_*.js) em cada PR e a cada merge na main.
-# Não usa segredo, não toca no banco, não abre navegador e não faz chamadas de rede de verdade: os testes são locais,
-# com bancos e APIs de mentira. Veja docs/testes.md.
+# Roda a suíte inteira do repositório em cada PR e a cada merge na main: tests/test_*.py, tests/test_*.js e, num job à parte,
+# os testes de navegador (tests/navegador/test_*.py, que abrem o site de verdade num Chromium).
+# Não usa segredo, não toca no banco e não faz chamadas de rede de verdade: os testes são locais, com bancos e APIs de
+# mentira (o navegador também só fala com respostas de mentira). Veja docs/testes.md.
 on:
   pull_request:
   push:
@@ -96,3 +97,43 @@ jobs:
           echo "::endgroup::"
         done
         exit $falhou
+
+  navegador:
+    name: Navegador (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - name: Puxando o código do projeto
+      uses: actions/checkout@v7
+
+    - name: Configurando o Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.11'     # a mesma da carga diária, que também usa o Playwright
+        cache: pip
+        cache-dependency-path: requirements*.txt
+
+    - name: Instalando as bibliotecas e o Chromium (Playwright)
+      run: |
+        pip install -r requirements.txt
+        python -m playwright install --with-deps chromium
+
+    - name: Rodando os testes de navegador (abrem o site/index.html com a API de mentira)
+      run: |
+        falhou=0
+        for teste in tests/navegador/test_*.py; do
+          echo "::group::$teste"
+          python "$teste" || { echo "::error file=$teste::falhou"; falhou=1; }
+          echo "::endgroup::"
+        done
+        exit $falhou
+
+    # Se algo falhou, as fotos da tela no momento do teste ajudam a ver o que o navegador viu (aba "Summary" da execução).
+    - name: Guardando as capturas de tela
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: capturas-de-tela
+        path: tests/navegador/capturas
+        if-no-files-found: ignore
+        retention-days: 7
