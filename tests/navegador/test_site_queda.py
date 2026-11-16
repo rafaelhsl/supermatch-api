@@ -98,6 +98,18 @@ async def clicar(alvo):
     await alvo.evaluate("(e) => e.click()")
 
 
+async def foto_da_pagina_inteira(pg, caminho):
+    """Foto da página inteira. Ela junta a página toda numa imagem só, e a barra "Sua lista / Ver cupom", que no celular fica FIXA
+    colada na base da janela (e acompanha a rolagem), sairia desenhada no meio da imagem, parecendo fora do lugar. Por isso a barra
+    some da foto. (A posição dela na janela é conferida pela foto só da janela; no site ela está certa.)"""
+    await pg.add_style_tag(content="#barraMovel { display: none !important; }")
+    imagem = await pg.screenshot(full_page=True)
+    try:
+        caminho.write_bytes(imagem)
+    except OSError as erro:                  # a foto é só para a pessoa olhar: no Windows a gravação às vezes falha, e isso não é defeito do site
+        print(f"AVISO: não consegui gravar a foto {caminho.name}: {erro}", flush=True)
+
+
 def limpo(texto):
     return " ".join(texto.replace("\xa0", " ").split())
 
@@ -155,7 +167,7 @@ async def rodar():
             # (não confere a página inteira: a 320 px o botão do CEP do cabeçalho já passa da borda, com ou sem selo; aqui importa o que o selo mexe)
             fora = await pg.evaluate("() => [...document.querySelectorAll('.produtos *, #cupom *')].filter((e) => e.getBoundingClientRect().right > document.documentElement.clientWidth + 1).length")
             confere(fora == 0, f"nada dos resultados nem do cupom passa da borda da tela ({fora} elementos)")
-            await pg.screenshot(path=str(SAIDA / f"queda-{rotulo}-1-resultados.png"), full_page=True)
+            await foto_da_pagina_inteira(pg, SAIDA / f"queda-{rotulo}-1-resultados.png")
 
             # --- 3. cupom: a linha do item que caiu leva o selo; escolher o mercado que não caiu tira o selo
             await clicar(pg.locator("article.produto").nth(0).locator("[data-add]"))
@@ -164,7 +176,7 @@ async def rodar():
             await pg.wait_for_timeout(300)
             linha = pg.locator("#cupom .linha").first
             confere(limpo(await linha.locator(".queda-linha").inner_text()) == "↓ Caiu 47% em 7 dias (era R$ 14,99)", f"cupom do Supernosso: «{limpo(await linha.locator('.queda-linha').inner_text())}»")
-            await pg.screenshot(path=str(SAIDA / f"queda-{rotulo}-2-cupom.png"), full_page=True)
+            await foto_da_pagina_inteira(pg, SAIDA / f"queda-{rotulo}-2-cupom.png")
             await clicar(pg.locator("[data-mercado='Atacadao']"))
             await pg.wait_for_timeout(300)
             confere(await pg.locator("#cupom .queda-linha").count() == 0, "cupom do Atacadão (que não caiu): sem selo")
@@ -191,7 +203,7 @@ async def rodar():
             confere(await quadro_f("Supernosso").locator(".queda").count() == 0, "equivalente, Supernosso: o mais barato é a Delícia (sem marca); o selo do Becel (47%) não vale aqui")
             confere(limpo(await quadro_f("Atacadão").locator(".queda").inner_text()) == "↓ Caiu 17% em 7 dias", "equivalente, Atacadão: o mais barato é a Delícia, e o selo dela aparece")
             confere(await quadro_f("Apoio").locator(".queda").count() == 0, "equivalente, Apoio: o mais barato é a Qualy (sem marca); o selo do Becel (15%) não vale aqui")
-            await pg.screenshot(path=str(SAIDA / f"queda-{rotulo}-3-equivalente.png"), full_page=True)
+            await foto_da_pagina_inteira(pg, SAIDA / f"queda-{rotulo}-3-equivalente.png")
             await ctx.close()
 
             # --- 6. API sem a marca (antiga, ou histórico fora do ar): nada de selo e nenhum erro
