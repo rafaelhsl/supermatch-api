@@ -81,6 +81,17 @@ A lista fica salva no navegador, e os preços mudam todo dia (os robôs atualiza
 
 O código fica nos blocos `@lista-inicio` / `@lista-fim` (decisões puras: o id do grupo, quais itens estão velhos, qual termo consultar, qual grupo da resposta é o mesmo item, juntar repetidos) e em `atualizarPrecosDaLista`. `node tests/test_lista.js` confere a atualização dos preços e `node tests/test_id_do_grupo.js` confere o identificador e a junção de repetidos.
 
+## Selo "caiu X% em 7 dias"
+
+Quando a API marca uma opção de compra com `queda_preco` (o preço do varejo caiu 5% ou mais em relação ao de 7 dias antes; veja [`historico_de_precos.md`](historico_de_precos.md#o-selo-caiu-x-em-7-dias)), o site mostra:
+
+- **no quadro do mercado** (a "pílula" de cada cartão de produto), um selo verde "↓ Caiu 47% em 7 dias" e, embaixo, "Era R$ 14,99". Aparece em qualquer mercado que tenha caído, não só no mais barato. O quadro amarelo do mais barato continua amarelo;
+- **na linha do cupom**, "↓ Caiu 47% em 7 dias (era R$ 14,99)" embaixo do nome. Quando o cupom cobra o **preço de atacado** (a quantidade alcançou o mínimo), o selo não aparece, porque a queda era do preço do varejo.
+
+O site **não confia cegamente na marca**: `quedaDaOpcao` (bloco `@queda-inicio` / `@queda-fim`) refaz o percentual com o preço de antes e o preço que ele mesmo mostra, e some com o selo se o preço mostrado não for mais menor que o de antes (um item velho da lista guardada no navegador, por exemplo). Resposta de uma API sem o campo não gera selo. O verde (`--queda`) tem contraste de 5,8:1 a 6,1:1 sobre o fundo do selo, e a seta é só enfeite (`aria-hidden`): o leitor de tela ouve "Caiu 47% em 7 dias" e "Era R$ 14,99". Em tela estreita (320 px) o selo quebra em duas linhas, "Caiu 47%" e "em 7 dias".
+
+`node tests/test_queda.js` confere a regra do site e `python tests/navegador/test_site_queda.py` confere a tela (celular, celular estreito e computador).
+
 ## Regras da comparação
 
 - Um mercado que não vende algum item da lista fica **incompleto**: seu total é parcial, aparece como "falta N itens" e ele nunca é apontado como o mais barato.

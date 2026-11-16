@@ -13,6 +13,7 @@ from supabase import create_client, Client
 from busca import buscar_detalhado, indexar, sem_acento
 from Comparador_inteligente import cruzar_multiplos_produtos
 from equivalencia import com_equivalencia, familias_equivalentes
+from quedas import QuedasDoHistorico
 
 # --- 1. CONFIGURAÇÃO SEGURA DO BANCO ---
 SUPABASE_URL = "https://gtdvgdfalpsrnefzyfgu.supabase.co"
@@ -64,6 +65,9 @@ def obter_uf_pelo_cep(cep: str):
 # a cada 10 minutos isso dá uns 15 GB por mês, mais que a cota de saída de dados do plano gratuito. Com 1 hora, no pior caso
 # (busca o dia todo) são uns 2,5 GB. Um monitor externo chamando /saude a cada 5 minutos para manter o Render acordado (ver
 # docs/banco_de_dados.md) não pode, portanto, disparar recargas: por isso /saude só carrega o que falta.
+#
+# O selo "caiu X% em 7 dias" também lê o banco (o histórico de preços, em quedas.py), mas só uma vez por dia de carga e
+# só os produtos que mudaram de preço (uns 600 KB): recarregar o catálogo no mesmo dia reaproveita o que já foi lido.
 CATALOGO_VALIDADE_SEGUNDOS = 3600
 TAMANHO_PAGINA = 1000  # limite de linhas por consulta do Supabase
 UF_DA_REGIAO = "MG"    # Belo Horizonte e região metropolitana
@@ -71,6 +75,7 @@ UF_DA_REGIAO = "MG"    # Belo Horizonte e região metropolitana
 COLUNAS_DO_CATALOGO = ("id,supermercado,nome,marca,ean,categoria,id_origem,termo,"
                        "preco_varejo,preco_atacado,quantidade_atacado,uf_cobertura,atualizado_em")
 _catalogos = {}   # uf -> (momento em que foi carregado, catálogo indexado)
+_quedas = QuedasDoHistorico()   # preços de 7 dias antes, para o selo de queda
 _travas = {}      # uf -> trava: uma atualização por vez
 _travas_das_travas = threading.Lock()
 
@@ -98,6 +103,9 @@ def baixar_catalogo(uf: str):
         if len(pagina) < TAMANHO_PAGINA:
             break
         inicio += TAMANHO_PAGINA
+    # Selo "caiu X% em 7 dias": marca os produtos cujo preço caiu em relação ao de 7 dias antes (quedas.py). Se o histórico
+    # falhar, o catálogo segue sem selos.
+    _quedas.anotar(supabase, produtos)
     # A chave de equivalência ("mesmo tipo e tamanho, qualquer marca") sai pronta daqui, junto com o produto: o site só agrupa
     # pelas chaves (ver equivalencia.py). Calcular o catálogo todo leva menos de 1 s.
     return indexar(com_equivalencia(produtos))
