@@ -28,11 +28,16 @@ def confere(cond, texto):
     print(("OK    " if cond else "FALHA ") + texto, flush=True)
 
 
-def opcao(mercado, nome, varejo, ean, queda=None, atacado=None, qtd_atacado=1):
+CHAVE, ROTULO = "margarina|500g", "Margarina, 500 g"          # a família dos três produtos de 500 g
+
+
+def opcao(mercado, nome, varejo, ean, queda=None, atacado=None, qtd_atacado=1, familia=False):
     o = {"supermercado": mercado, "nome": nome, "preco_varejo": varejo, "preco_atacado": atacado if atacado is not None else varejo, "quantidade_atacado": qtd_atacado,
          "atualizado_em": HOJE, "id": f"{mercado}-{ean}", "termo": "margarina", "ean": ean}
     if queda:
         o["queda_preco"] = {"preco_antes": queda[0], "percentual": queda[1], "dias": 7}
+    if familia:
+        o["chave_equivalencia"], o["rotulo_equivalencia"] = CHAVE, ROTULO
     return o
 
 
@@ -45,23 +50,24 @@ def resposta(com_selo=True):
     grupos = [
         # 1. o mais barato (Supernosso) é o que caiu: 14,99 -> 7,99; o Apoio caiu menos
         grupo("Margarina Becel 500g", "7891000000001",
-              opcao("Supernosso", "Margarina Becel 500g", 7.99, "7891000000001", s((14.99, 47))),
-              opcao("Apoio Entrega", "Margarina Becel 500g", 8.5, "7891000000001", s((10.0, 15))),
-              opcao("Atacadao", "Margarina Becel 500g", 9.49, "7891000000001")),
+              opcao("Supernosso", "Margarina Becel 500g", 7.99, "7891000000001", s((14.99, 47)), familia=True),
+              opcao("Apoio Entrega", "Margarina Becel 500g", 8.5, "7891000000001", s((10.0, 15)), familia=True),
+              opcao("Atacadao", "Margarina Becel 500g", 9.49, "7891000000001", familia=True)),
         # 2. quem caiu NÃO é o mais barato; e o Supernosso tem preço de atacado a partir de 6 unidades
         grupo("Margarina Qualy 500g", "7891000000002",
-              opcao("Atacadao", "Margarina Qualy 500g", 5.0, "7891000000002"),
-              opcao("Supernosso", "Margarina Qualy 500g", 6.0, "7891000000002", s((8.0, 25)), atacado=5.5, qtd_atacado=6),
-              opcao("Apoio Entrega", "Margarina Qualy 500g", 6.4, "7891000000002")),
-        # 3. nenhum mercado com queda
+              opcao("Atacadao", "Margarina Qualy 500g", 5.0, "7891000000002", familia=True),
+              opcao("Supernosso", "Margarina Qualy 500g", 6.0, "7891000000002", s((8.0, 25)), atacado=5.5, qtd_atacado=6, familia=True),
+              opcao("Apoio Entrega", "Margarina Qualy 500g", 6.4, "7891000000002", familia=True)),
+        # 3. a marca da API não bate com o preço da tela: dizia 99%, mas 6,00 -> 4,99 é 17%; o site refaz a conta
         grupo("Margarina Delícia 500g", "7891000000003",
-              opcao("Atacadao", "Margarina Delícia 500g", 4.99, "7891000000003"),
-              opcao("Supernosso", "Margarina Delícia 500g", 5.29, "7891000000003")),
+              opcao("Atacadao", "Margarina Delícia 500g", 4.99, "7891000000003", s((6.0, 99)), familia=True),
+              opcao("Supernosso", "Margarina Delícia 500g", 5.29, "7891000000003", familia=True)),
+        # 4. marca velha: o preço de hoje (3,50) é MAIOR que o de antes (3,20), então o selo não pode aparecer
         grupo("Margarina Primor 250g", "7891000000004",
-              opcao("Apoio Entrega", "Margarina Primor 250g", 3.5, "7891000000004"),
+              opcao("Apoio Entrega", "Margarina Primor 250g", 3.5, "7891000000004", s((3.2, 9))),
               opcao("Atacadao", "Margarina Primor 250g", 3.39, "7891000000004")),
     ]
-    return {"status": "sucesso", "cep": "x", "uf": "MG", "item": "margarina", "mercados_consultados": MERCADOS, "equivalencia_familias": [], "carrinho_comparativo": grupos}
+    return {"status": "sucesso", "cep": "x", "uf": "MG", "item": "margarina", "mercados_consultados": MERCADOS, "equivalencia_familias": ["margarina"], "carrinho_comparativo": grupos}
 
 
 async def abrir(nav, vp, mobile, com_selo=True):
@@ -131,9 +137,11 @@ async def rodar():
             confere(await quadro(pg, 0, "Atacadão").locator(".queda").count() == 0, "Becel: o Atacadão não caiu e não leva selo")
             confere(await quadro(pg, 1, "Supernosso").locator(".queda").count() == 1 and "menor" not in await quadro(pg, 1, "Supernosso").get_attribute("class"),
                     "Qualy: o selo aparece mesmo quando quem caiu não é o mais barato")
-            confere(await pg.locator("article.produto").nth(2).locator(".queda").count() == 0, "produto sem nenhuma queda: nenhum selo")
-            confere(await pg.locator(".queda").count() == 3, f"na tela inteira há exatamente 3 selos: {await pg.locator('.queda').count()}")
-            confere(await pg.locator(".queda span[aria-hidden='true']").count() == 3, "a seta é enfeite: some para o leitor de tela, que ouve só o texto")
+            confere(limpo(await quadro(pg, 2, "Atacadão").locator(".queda").inner_text()) == "↓ Caiu 17% em 7 dias", "Delícia: a API dizia 99%; o site refaz a conta com os preços da tela e mostra 17%")
+            confere(await quadro(pg, 2, "Supernosso").locator(".queda").count() == 0, "Delícia: o Supernosso não tem marca, não tem selo")
+            confere(await pg.locator("article.produto").nth(3).locator(".queda").count() == 0, "Primor: marca velha (o preço de hoje é maior que o de antes) não gera selo")
+            confere(await pg.locator(".queda").count() == 4, f"na tela inteira há exatamente 4 selos: {await pg.locator('.queda').count()}")
+            confere(await pg.locator(".queda span[aria-hidden='true']").count() == 4, "a seta é enfeite: some para o leitor de tela, que ouve só o texto")
 
             # --- 2. legível e sem estourar o quadro
             for alvo, nome in ((quadro(pg, 0, "Supernosso").locator(".queda"), "no quadro amarelo (o mais barato)"), (quadro(pg, 0, "Apoio").locator(".queda"), "no quadro branco")):
@@ -173,7 +181,20 @@ async def rodar():
             confere(await pg.locator("#cupom .queda-linha").count() == 1, "linha cobrada no atacado: sem selo (a queda era do varejo); a do Becel continua")
             await ctx.close()
 
-            # --- 5. API sem a marca (antiga, ou histórico fora do ar): nada de selo e nenhum erro
+            # --- 5. modo equivalente: o quadro mostra o mais barato da família em cada mercado, e o selo é DESSE produto
+            ctx, pg = await abrir(nav, vp, mobile)
+            await clicar(pg.locator('.modo button[data-modo="equivalente"]'))
+            await pg.wait_for_timeout(500)
+            familia = pg.locator("article.produto", has=pg.locator("h3", has_text=ROTULO))
+            confere(await familia.count() == 1, f"modo equivalente: um cartão «{ROTULO}»: {await familia.count()}")
+            quadro_f = lambda mercado: familia.locator("li.pilula", has_text=mercado)
+            confere(await quadro_f("Supernosso").locator(".queda").count() == 0, "equivalente, Supernosso: o mais barato é a Delícia (sem marca); o selo do Becel (47%) não vale aqui")
+            confere(limpo(await quadro_f("Atacadão").locator(".queda").inner_text()) == "↓ Caiu 17% em 7 dias", "equivalente, Atacadão: o mais barato é a Delícia, e o selo dela aparece")
+            confere(await quadro_f("Apoio").locator(".queda").count() == 0, "equivalente, Apoio: o mais barato é a Qualy (sem marca); o selo do Becel (15%) não vale aqui")
+            await pg.screenshot(path=str(SAIDA / f"queda-{rotulo}-3-equivalente.png"), full_page=True)
+            await ctx.close()
+
+            # --- 6. API sem a marca (antiga, ou histórico fora do ar): nada de selo e nenhum erro
             ctx, pg = await abrir(nav, vp, mobile, com_selo=False)
             confere(await pg.locator(".queda").count() == 0 and await pg.locator(".era").count() == 0, "sem a marca da API: nenhum selo na tela")
             await clicar(pg.locator("article.produto").nth(0).locator("[data-add]"))

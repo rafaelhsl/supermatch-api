@@ -7,7 +7,7 @@ import io
 import os
 import re
 import sys
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 os.environ.setdefault("SUPABASE_KEY", "chave-falsa-so-para-importar")      # a API cria o cliente ao importar
@@ -19,6 +19,10 @@ import quedas  # noqa: E402
 from historico import chave_origem  # noqa: E402
 
 CARGA_DE_HOJE = "2026-11-16T10:44:50.134498+00:00"          # 07:44 de 16/11 em Brasília
+MOMENTO_DA_CARGA = datetime(2026, 11, 16, 10, 44, 50, 134498, tzinfo=timezone.utc)
+# O relógio do selo é fixo: por padrão, 2 horas depois da carga, quando a leitura do histórico já é definitiva.
+RELOGIO = {"agora": MOMENTO_DA_CARGA + timedelta(hours=2)}
+quedas._agora = lambda: RELOGIO["agora"]
 DIA_DE_ANTES = date(2026, 11, 9)                             # 7 dias antes de 16/11
 
 
@@ -60,6 +64,7 @@ class ConsultaFalsa:
 
     def order(self, coluna):
         self.ordem.append(coluna)
+        self.banco.chamadas.append(("order", self.tabela, coluna))
         return self
 
     def range(self, inicio, fim):
@@ -223,6 +228,7 @@ def teste_ler_precos_de_antes_le_todas_as_paginas():
     antes = quedas.ler_precos_de_antes(banco, DIA_DE_ANTES)
     assert len(antes) == 2300
     assert [c[2:] for c in banco.chamadas if c[0] == "range"] == [(0, 999), (1000, 1999), (2000, 2999)]
+    assert ("order", "precos", "catalogo_id") in banco.chamadas, "sem ORDER BY a paginação do banco repete e perde linhas"
 
 
 def teste_historico_estranho_nao_derruba_a_leitura():
@@ -259,11 +265,11 @@ def teste_catalogo_leva_o_selo_nos_produtos_que_cairam():
     assert p[8]["queda_preco"]["percentual"] == 5
     for id_ in (2, 4, 5, 6, 7, 9):
         assert "queda_preco" not in p[id_], id_                  # parado, queda pequena, subida, voltou ao mesmo preço, produto novo, abaixo do limite
-    assert "3 de 9 produtos com queda de 5% ou mais em 7 dias" in log, log
+    assert "3 de 9 produtos com queda de 5% a 70% em 7 dias" in log, log
     assert "7 produtos com preço diferente do de 09/11 (dados de 16/11)" in log, log
 
 
-def teste_o_historico_so_e_lido_uma_vez_por_dia_de_carga():
+def teste_o_historico_so_e_lido_uma_vez_por_carga():
     com_catalogo_novo()
     banco = banco_do_cenario()
     com_banco(banco, lambda: capturar(lambda: api.baixar_catalogo("MG")))
@@ -273,12 +279,14 @@ def teste_o_historico_so_e_lido_uma_vez_por_dia_de_carga():
         catalogo, _log = capturar(lambda: com_banco(banco, lambda: api.baixar_catalogo("MG")))
         assert "queda_preco" in por_id(catalogo)[1]              # e continua com os selos
     assert len(banco.consultas_ao_historico()) == leituras, "recarregar o catálogo no mesmo dia não pode reler o histórico"
-    # dia novo de dados: lê de novo, agora para o dia 10/11
+    # carga nova (outro dia de dados): lê de novo, agora para o dia 10/11
+    RELOGIO["agora"] = datetime(2026, 11, 17, 13, 0, tzinfo=timezone.utc)
     for linha in banco.tabelas["produtos"]:
         linha["atualizado_em"] = "2026-11-17T10:44:50+00:00"
     com_banco(banco, lambda: capturar(lambda: api.baixar_catalogo("MG")))
     assert len(banco.consultas_ao_historico()) == leituras + 1
     assert ("lte", "precos", "desde", "2026-11-10") in banco.chamadas
+    RELOGIO["agora"] = MOMENTO_DA_CARGA + timedelta(hours=2)
 
 
 def teste_historico_fora_do_ar_nao_derruba_o_catalogo_e_a_proxima_carga_tenta_de_novo():
@@ -291,6 +299,63 @@ def teste_historico_fora_do_ar_nao_derruba_o_catalogo_e_a_proxima_carga_tenta_de
     catalogo, _log = capturar(lambda: com_banco(banco, lambda: api.baixar_catalogo("MG")))
     assert por_id(catalogo)[1]["queda_preco"]["percentual"] == 47          # voltou: não ficou "preso" na falha
     assert len(banco.consultas_ao_historico()) == 2
+
+
+def teste_marcar_quedas_so_conta_a_linha_gravada_no_dia_dos_dados():
+    antes = {("Atacadão", "v:1:1"): 10.0, ("Apoio Entrega", "v:2:2"): 10.0}
+    nova = {"supermercado": "Atacadão", "nome": "A", "preco_varejo": 8.0, "id_origem": "1:1", "atualizado_em": CARGA_DE_HOJE}
+    velha = {"supermercado": "Apoio Entrega", "nome": "B", "preco_varejo": 8.0, "id_origem": "2:2", "atualizado_em": "2026-11-15T10:44:50+00:00"}   # sobrou de ontem
+    sem_data = {"supermercado": "Apoio Entrega", "nome": "B", "preco_varejo": 8.0, "id_origem": "2:2"}
+    assert quedas.marcar_quedas([nova, velha, sem_data], antes, dia=date(2026, 11, 16)) == 1
+    assert "queda_preco" in nova and "queda_preco" not in velha and "queda_preco" not in sem_data
+    assert quedas.marcar_quedas([dict(velha)], antes) == 1                       # sem `dia` a data da linha não é conferida
+
+
+def teste_queda_grande_demais_e_tratada_como_erro_de_coleta():
+    antes = {("Apoio Entrega", "v:1:1"): 7.0}
+    feijao = lambda preco: {"supermercado": "Apoio Entrega", "nome": "Feijão 1kg", "preco_varejo": preco, "id_origem": "1:1"}
+    erro, no_teto, passou = feijao(0.78), feijao(2.1), feijao(2.0)
+    assert quedas.TETO_QUEDA_PCT == 70.0
+    assert quedas.marcar_quedas([erro], antes) == 0 and "queda_preco" not in erro                    # -89%: provável erro de dado
+    assert quedas.marcar_quedas([no_teto], antes) == 1 and no_teto["queda_preco"]["percentual"] == 70   # exatamente 70%: ainda vale
+    assert quedas.marcar_quedas([passou], antes) == 0                                                # 71,4%: passou do teto
+
+
+def teste_linha_que_sobrou_de_outro_dia_nao_ganha_selo_no_catalogo():
+    com_catalogo_novo()
+    banco = banco_do_cenario()
+    banco.tabelas["produtos"][0]["atualizado_em"] = "2026-11-15T10:44:50+00:00"      # o Becel é de ontem: o termo dele falhou na carga de hoje
+    catalogo, _log = capturar(lambda: com_banco(banco, lambda: api.baixar_catalogo("MG")))
+    p = por_id(catalogo)
+    assert "queda_preco" not in p[1], "preço de ontem não pode levar um selo que afirma o preço de hoje"
+    assert "queda_preco" in p[3] and "queda_preco" in p[8]
+
+
+def teste_leitura_feita_durante_a_carga_e_provisoria_e_se_corrige_na_recarga():
+    """A carga grava os produtos de um mercado e só depois o histórico dele: ler o histórico nesse intervalo não vê as quedas de hoje."""
+    com_catalogo_novo()
+    banco = banco_do_cenario()
+    completo = list(banco.tabelas["precos"])
+    # o histórico ainda não fechou o intervalo do Becel: ele segue aberto, com o preço de ontem
+    banco.tabelas["precos"] = [l for l in completo if not (l["catalogo_id"] == 1 and l["ate"])] + [intervalo(1, "Supernosso", "v:11:1", "2026-11-04", None, 14.99)]
+    ler = lambda: capturar(lambda: com_banco(banco, lambda: api.baixar_catalogo("MG")))
+    try:
+        RELOGIO["agora"] = MOMENTO_DA_CARGA + timedelta(minutes=5)
+        catalogo, log = ler()
+        assert "queda_preco" not in por_id(catalogo)[1] and "queda_preco" in por_id(catalogo)[3]       # quem mudou antes de hoje já está certo
+        assert "leitura provisória" in log, log
+        RELOGIO["agora"] = MOMENTO_DA_CARGA + timedelta(minutes=10)
+        ler()
+        assert len(banco.consultas_ao_historico()) == 2, "ainda provisória: lê de novo na recarga"
+        banco.tabelas["precos"] = completo                                       # o histórico terminou de gravar
+        RELOGIO["agora"] = MOMENTO_DA_CARGA + timedelta(hours=1)
+        catalogo, log = ler()
+        assert por_id(catalogo)[1]["queda_preco"]["percentual"] == 47 and "provisória" not in log, log   # a recarga seguinte corrige
+        assert len(banco.consultas_ao_historico()) == 3
+        ler()
+        assert len(banco.consultas_ao_historico()) == 3, "leitura definitiva: não lê mais até haver carga nova"
+    finally:
+        RELOGIO["agora"] = MOMENTO_DA_CARGA + timedelta(hours=2)
 
 
 def teste_catalogo_sem_data_nao_consulta_o_historico():
