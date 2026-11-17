@@ -255,6 +255,10 @@ A resposta traz ainda `equivalencia_familias`, a lista dos tipos de produto para
 qualquer família vem sem esses dois campos. A chave é calculada pela API ao carregar o catálogo (`equivalencia.py`), não fica
 no banco. Veja [`equivalencia.md`](equivalencia.md).
 
+Cada opção de compra pode trazer também `queda_preco` (`{"preco_antes": 14.99, "percentual": 47, "dias": 7}`) quando o preço do varejo
+caiu entre 5% e 70% em relação ao de 7 dias antes; sem queda, o campo não vem. Vem do histórico de preços, lido uma vez por dia, e não fica em
+`produtos`. Veja [`historico_de_precos.md`](historico_de_precos.md#o-selo-caiu-x-em-7-dias).
+
 O parâmetro opcional `todos=1` (`/comparar?cep=...&item=...&todos=1`) devolve também os que só citam a palavra. Cada opção
 desses vem marcada com `"so_cita": true`. É o que o botão "Mostrar também" do site pede.
 

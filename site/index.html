@@ -29,6 +29,8 @@
   --sol: #ffd23f;           /* a placa de "mais barato" */
   --sol-claro: #fff3c2;
   --alerta: #b3361f;
+  --queda: #0b6b3a;         /* verde escuro do selo "caiu X%" (5,6:1 sobre o fundo claro dele) */
+  --queda-fundo: #e1f5e9;
   --titulo: "Unbounded", "Arial Rounded MT Bold", system-ui, sans-serif;
   --texto: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "Martian Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
@@ -155,6 +157,10 @@ h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02
 .produto .qualquer { margin: -6px 0 0; font-size: 13px; color: var(--tinta-2); }
 .pilula .real { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 3px; font-size: 11.5px; line-height: 1.25; color: var(--tinta-2); }
 .pilula.menor .real { color: #3b3400; }
+.pilula .queda { display: inline-flex; align-items: baseline; gap: 4px; margin-top: 4px; padding: 1px 8px 2px 6px; border-radius: 11px; background: var(--queda-fundo); color: var(--queda); font-size: 11.5px; font-weight: 700; line-height: 1.35; }
+.pilula.menor .queda { background: rgba(255, 255, 255, .78); }
+.pilula .era { display: block; margin-top: 1px; font-size: 11.5px; line-height: 1.25; color: var(--tinta-2); }
+.pilula.menor .era { color: #3b3400; }
 .acao { margin-top: auto; }
 .acao .botao { width: 100%; }
 .passos { display: flex; align-items: center; justify-content: space-between; background: var(--tinta); color: var(--branco); border-radius: 999px; padding: 4px; }
@@ -193,6 +199,7 @@ h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02
 .linha .valor { font: 600 13.5px/1.2 var(--mono); text-align: right; white-space: nowrap; }
 .linha .un { font: 400 11px/1.35 var(--mono); color: var(--tinta-2); text-align: right; }
 .linha .real { display: block; margin-top: 4px; font: 400 11px/1.4 var(--mono); color: var(--tinta-2); }
+.linha .real.queda-linha { color: var(--queda); font-weight: 600; }
 .linha.falta .nome, .linha.falta .valor, .linha.falta .un { color: var(--alerta); }
 .linha.falta .valor { font-weight: 500; font-size: 12.5px; }
 .quant { display: inline-flex; align-items: center; gap: 4px; }
@@ -613,6 +620,22 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   }
   /* @ocultos-fim */
 
+  /* @queda-inicio */
+  /* ---------- selo "caiu X% em 7 dias" ----------
+     A API marca a opção com queda_preco = { preco_antes, percentual, dias } quando o preço do varejo caiu pelo menos 5% em
+     relação ao de 7 dias antes (quedas.py, que usa o histórico de preços). Aqui o selo só aparece se a marca bate com o preço
+     que a tela mostra: o percentual é refeito com os dois preços, e uma opção velha (da lista guardada no navegador, por exemplo)
+     cujo preço não é mais menor que o de antes fica sem selo. Resposta de uma API sem o campo não gera selo nenhum. */
+  function quedaDaOpcao(opcao) {
+    const q = opcao && opcao.queda_preco;
+    if (!q) return null;
+    const antes = Number(q.preco_antes), atual = Number(opcao.preco_varejo), dias = Math.round(Number(q.dias)) || 7;
+    if (!(antes > 0) || !(atual > 0) || !(atual < antes)) return null;
+    const percentual = Math.round(((antes - atual) / antes) * 100);
+    return percentual >= 1 ? { percentual, antes, dias } : null;
+  }
+  /* @queda-fim */
+
   /* ---------- busca ---------- */
   let numeroDaBusca = 0;   // respostas atrasadas de uma busca antiga não podem sobrescrever a atual
   async function buscar(termo, { todos = false } = {}) {
@@ -888,7 +911,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     estado, MERCADOS, mercadosAtivos, situacaoDeEntrega, CIDADES_ATENDIDAS, cidadeAtendida, mercadoPorId, aoMudar: (f) => ouvintes.push(f), iniciar,
     definirCep, definirModo, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo, atualizarPrecosDaLista,
     notasDaBusca: () => notasDaBusca(estado.busca, new Set(mercadosAtivos().map((m) => m.id))),
-    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora },
+    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora, quedaDaOpcao },
   };
 })();
 </script>
@@ -998,7 +1021,9 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
         const e = o.preco_varejo === menor && comparavel;
         const at = o.quantidade_atacado > 1 && o.preco_atacado < o.preco_varejo ? `<span class="atacado">${U.moeda(o.preco_atacado)} a partir de ${o.quantidade_atacado} un.</span>` : "";
         const real = equivalente ? `<span class="real">${U.esc(U.nomeBonito(o.nome))}</span>` : "";
-        return `<li class="pilula${e ? " menor" : ""}"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">${U.moeda(o.preco_varejo)}</span>${at}${real}</li>`;
+        const q = U.quedaDaOpcao(o);
+        const queda = q ? `<span class="queda"><span aria-hidden="true">↓</span> Caiu ${q.percentual}% em&nbsp;${q.dias}&nbsp;dias</span><span class="era">Era ${U.moeda(q.antes)}</span>` : "";
+        return `<li class="pilula${e ? " menor" : ""}"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">${U.moeda(o.preco_varejo)}</span>${queda}${at}${real}</li>`;
       }).join("");
     const acao = qtd
       ? `<div class="passos" role="group" aria-label="Quantidade na lista"><button type="button" data-foco="p-menos-${i}" data-menos="${i}" aria-label="Tirar uma unidade de ${nome}">−</button><span>${qtd} na lista</span><button type="button" data-foco="p-mais-${i}" data-mais="${i}" aria-label="Colocar mais uma unidade de ${nome}">+</button></div>`
@@ -1062,7 +1087,10 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     const un = l.qtd > 1 ? `${l.qtd} × ${U.moeda(l.unitario)}${l.atacado ? ", atacado" : ""}` : l.atacado ? "preço de atacado" : "";
     // item equivalente: o cupom diz qual produto aquele mercado entregaria
     const real = l.grupo.equivalente ? `<span class="real">Qualquer marca. Leva: ${U.esc(U.nomeBonito(l.opcao.nome))}</span>` : "";
-    return `<li class="linha"><span class="nome">${nome}${real}</span><span class="valor">${U.moeda(l.subtotal)}</span>${ctrl}<span class="un">${un}</span></li>`;
+    // o selo é do preço do varejo: se o cupom está cobrando o de atacado, ele não vale
+    const q = l.atacado ? null : U.quedaDaOpcao(l.opcao);
+    const queda = q ? `<span class="real queda-linha"><span aria-hidden="true">↓</span> Caiu ${q.percentual}% em ${q.dias} dias (era ${U.moeda(q.antes)})</span>` : "";
+    return `<li class="linha"><span class="nome">${nome}${real}${queda}</span><span class="valor">${U.moeda(l.subtotal)}</span>${ctrl}<span class="un">${un}</span></li>`;
   }
 
   function desenhar() {
