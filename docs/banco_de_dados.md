@@ -203,7 +203,10 @@ limit 1000 offset <0, 1000, 2000, ...>;
 3. Filtra o catálogo em memória ([`busca.py`](../busca.py)): ignora maiúsculas e acentos e exige que
    o nome contenha **todas** as palavras digitadas, em qualquer ordem. Palavras de ligação (`de`,
    `da`, `do`, `e`, `com`, `para`, `em`) são ignoradas, então `óleo de soja` também acha
-   `Óleo Soja Liza`. Os resultados têm duas faixas:
+   `Óleo Soja Liza`. Uma mesma palavra que os mercados escrevem de dois jeitos vale como uma só (`GRAFIAS_IGUAIS` em
+   [`busca.py`](../busca.py)): hoje, `maizena` e `maisena` (16 nomes diziam "Maizena" e 5 "Maisena" no catálogo de 12/11/2026;
+   sem isso, quem digitava "maisena" via 4 dos 21 biscoitos). A troca vale só dentro da busca: o nome do produto volta como o
+   mercado escreveu, e as chaves do histórico e da equivalência não mudam. Os resultados têm duas faixas:
    - **principais**: o `termo` do produto (coluna `termo`, ex.: `arroz`) tem as palavras digitadas, ou o
      nome **começa** por elas (`Arroz Branco Camil…`). Palavras de até 3 letras valem inteiras (`sal` não
      acha `salsicha`); as de 4 ou mais valem como começo (`arro` acha `arroz`);

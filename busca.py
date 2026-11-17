@@ -20,6 +20,10 @@ PALAVRAS_DE_LIGACAO = {"de", "da", "do", "das", "dos", "e", "com", "para", "em"}
 MINIMO_DE_PRINCIPAIS = 3
 LIMITE_DE_RESULTADOS = 400        # a busca de "a" casava 6,6 mil produtos e o agrupamento levava 24 s
 TAMANHO_MINIMO_PARA_PREFIXO = 4   # "arro" acha "arroz"; "sal" não acha "salsicha"
+# A mesma palavra escrita de dois jeitos nos nomes dos mercados: a busca trata as duas como uma só ("maisena" acha o biscoito
+# "Maizena" e vice-versa; no catálogo de 12/11/2026, 16 nomes diziam "maizena" e 5, "maisena"). Vale SÓ para a busca: `sem_acento` é
+# usada também pelas chaves do histórico de preços e pelas regras de equivalência, e mudá-la mexeria nelas.
+GRAFIAS_IGUAIS = (("maizena", "maisena"),)
 
 Entrada = namedtuple("Entrada", "nome palavras_do_nome palavras_do_termo produto")
 # produtos: o que volta; so_citam_por_mercado: {mercado: quantos} dos que só citam a palavra (escondidos ou não);
@@ -33,8 +37,15 @@ def sem_acento(texto):
     return "".join(c for c in decomposto if unicodedata.category(c) != "Mn")
 
 
+def _grafia_unica(texto):
+    """Troca cada grafia alternativa pela principal (já em minúsculas e sem acento): 'biscoito maizena' vira 'biscoito maisena'."""
+    for alternativa, principal in GRAFIAS_IGUAIS:
+        texto = texto.replace(alternativa, principal)
+    return texto
+
+
 def palavras_da_busca(item):
-    palavras = [p.strip(".,;:!?()-") for p in sem_acento(item).split()]
+    palavras = [p.strip(".,;:!?()-") for p in _grafia_unica(sem_acento(item)).split()]
     palavras = [p for p in palavras if p]
     uteis = [p for p in palavras if p not in PALAVRAS_DE_LIGACAO]
     return uteis or palavras
@@ -42,8 +53,8 @@ def palavras_da_busca(item):
 
 def indexar(produtos):
     """Calcula uma vez o nome e o termo de cada produto, sem acento: [Entrada, ...]."""
-    return [Entrada(nome, re.findall(r"[a-z0-9]+", nome), re.findall(r"[a-z0-9]+", sem_acento(produto.get("termo") or "")), produto)
-            for produto in produtos for nome in [sem_acento(produto["nome"])]]
+    return [Entrada(nome, re.findall(r"[a-z0-9]+", nome), re.findall(r"[a-z0-9]+", _grafia_unica(sem_acento(produto.get("termo") or ""))), produto)
+            for produto in produtos for nome in [_grafia_unica(sem_acento(produto["nome"]))]]
 
 
 def _e_a_palavra(digitada, palavra):
