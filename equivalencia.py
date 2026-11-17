@@ -642,6 +642,76 @@ FAMILIAS += [
 ]
 
 
+# ============================== quinta leva: cereal matinal (flocos de milho), farofa, cream cracker, maisena e ovos ==============================
+
+def _quantidade_de_ovos(t):
+    """Ovos na embalagem: '20 unidades', '20un', '12 Und', '2.5 Dúzias' (= 30), 'meia dúzia' (= 6). None se o nome não diz ou se não faz sentido."""
+    if re.search(r"meia duzia", t):
+        n = 6
+    elif re.search(r"\b(uma|1) duzia\b", t):
+        n = 12
+    else:
+        duzias = re.search(r"(\d+(?:[.,]\d+)?) ?duzias?\b", t)
+        if duzias:
+            n = round(float(duzias.group(1).replace(",", ".")) * 12)
+        else:
+            un = re.search(r"\b(\d+) ?(?:un|und|unid|unidades?|ovos)\b", t) or re.search(r"\bcom (\d+)\b", t)
+            n = int(un.group(1)) if un else None
+    return n if n and 4 <= n <= 60 else None
+
+
+def _ovos(t):
+    """Ovos: de galinha ou de codorna, cor, tipo (caipira, orgânico, cage free), tamanho e quantos vêm na embalagem."""
+    if re.search(_NAO_E_PRODUTO_UNICO + r"|pascoa|chocolate|kinder|surpresa|congelad|cozid|mexid|fatiad|liquid|pasteuriz|\bclara|\bgema|em po\b|tinta|corante|colorid|decorad|bombom|conserva|salmoura|\bleve \d|\bpack\b|\b[2-9] ?bandejas?", t):
+        return None
+    n = _quantidade_de_ovos(t)
+    if not n:                           # sem a quantidade no nome (ou em gramas) não dá para comparar
+        return None
+    especie = "de codorna" if re.search(r"codorna", t) else ""
+    cor = escolher(t, [(r"\bvermelh", "vermelhos"), (r"\bbranc", "brancos")], "")
+    tipo = _todos(t, [(r"cage free", "cage free"), (r"caipira", "caipira"), (r"label rouge", "label rouge"), (r"organic", "orgânicos")])
+    tamanho = escolher(t, [(r"jumbo", "jumbo"), (r"\bextra\b", "extra"), (r"grande", "grandes"), (r"medio", "médios"), (r"pequeno", "pequenos")], "")
+    partes = [especie, cor, tipo, tamanho]
+    rotulo = "Ovos" + "".join(" " + p for p in (especie, cor, tipo) if p) + (f" {tamanho}" if tamanho else "") + f", {n} unidades"
+    return _Analise(partes + [str(n)], None, rotulo)
+
+
+# Sabores de farofa que a regra conhece. Os que ela não quer misturar com a farofa simples (ovos, linguiça, carne seca...) mandam o produto para fora.
+_OUTROS_SABORES_DE_FAROFA = r"\bovos?\b|linguica|carne seca|carne de sol|charque|camarao|legumes|vegetais|abacaxi|castanha|passas|\buva\b|cenoura|couve|torresmo|churrasco|feijao"
+
+
+def _farofa(t):
+    """Farofa pronta: de mandioca ou de milho, temperada, crocante, com pedaços, o sabor (bacon, costela, picanha...) e o peso."""
+    if re.search(_NAO_E_PRODUTO_UNICO + r"|congelad|" + _OUTROS_SABORES_DE_FAROFA, t) or re.search(_MULTIPACOTE, t):
+        return None
+    m = medida(t, "massa", varrer=True)
+    if not m:
+        return None
+    base = "de milho" if re.search(r"milho", t) else "de mandioca"
+    # "tradicional" e a farofa sem nada no nome são a mesma; "temperada", "crocante" e "com pedaços" são produtos diferentes
+    tracos = [nome for padrao, nome in ((r"temperada|tempd", "temperada"), (r"crocante|caseirissima", "crocante"), (r"com pedacos|pedacos de", "com pedaços")) if re.search(padrao, t)]
+    sabor = _todos(t, [(r"costelinha|costela", "costela"), (r"picanha", "picanha"), (r"bacon", "bacon"), (r"cebola", "cebola"), (r"banana", "banana"), (r"frango", "frango"),
+                       (r"calabresa", "calabresa"), (r"picante|pimenta", "picante"), (r"alho", "alho"), (r"limao", "limão")])
+    rotulo = f"Farofa {base}" + "".join(" " + x for x in tracos) + (f" sabor {sabor}" if sabor else "")
+    return _Analise([base, *tracos, sabor], m, rotulo)
+
+
+FAMILIAS += [
+    # Só os flocos de milho: Nescau, Kit Kat, Snow Flakes, Crunch, Negresco etc. são produtos únicos de marca (não há "qualquer marca"): ficam no modo exato.
+    declarar("cereal_matinal", "Cereal matinal de flocos de milho", casa=_tudo(r"^(cereal|sucrilhos|corn flakes)", r"sucrilhos|flocos de milho|corn flakes|corn sugar|milho com acucar"),
+             exclui=r"\+|\bleve\b|\blv\b|\bpague\b|\bpg\b|zero|light|diet|sem acucar|integral|proteina|fibra|granola|aveia|barra|mix",
+             dims=[dim((r"ovomaltine", "com ovomaltine"), (r"chocolate", "com chocolate"))]),
+    Familia("farofa", "farofa", _comeca(r"^farofa"), _farofa),
+    declarar("cream_cracker", "Biscoito cream cracker", casa=_tudo(r"cream ?crackers?"),
+             exclui=r"recheio|recheado|sabor|queijo|cebola|ervas|gergelim|linhaca|chia|aveia|multigrao|gluten|kids|\bmini\b|pizza|chocolate|cobertura",
+             dims=[dim((r"integral", "integral"), (r"light|diet|zero", "light"), (r"manteiga|amanteigado|\bamant\b", "amanteigado"), varios=True)]),
+    declarar("biscoito_maisena", "Biscoito maisena", casa=_tudo(r"\b(biscoito|bisc|bolacha)\b", r"\bmai[sz]ena\b"),
+             exclui=r"chocolate|choco|recheio|recheado|cobertura|sabor|coco|baunilha|morango|leite condensado|doce de leite|goiabada|banana|laranja|limao|cenoura|\bmini\b|amido",
+             dims=[dim((r"sem gluten", "sem glúten"), (r"laminado", "laminado"), (r"manteiga|amanteigado", "amanteigado"), (r"integral", "integral"), (r"light|diet|zero", "light"), varios=True)]),
+    Familia("ovos", "ovos", _comeca(r"^ovos? "), _ovos),
+]
+
+
 # ============================== a interface ==============================
 
 def equivalencia(nome, familias=None) -> Optional[Equivalencia]:

@@ -84,6 +84,11 @@ As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.8
 | Geleia | **sabor** (obrigatório: morango, amora, frutas vermelhas, damasco, goiaba, uva, pimenta…), zero açúcar, gourmet, polonesa, agridoce; peso. Fora: geleia de mocotó e a sem sabor no nome |
 | Pipoca | de micro-ondas, pronta ou **milho para pipoca** (o grão). Micro-ondas e pronta pedem o sabor no nome (manteiga, manteiga de cinema, manteiga light, natural, bacon, cheddar, queijo, doce, temperada); o grão separa o premium; peso. Fora: saco de pipoca de festa, pipoqueira |
 | Caldo | sabor (obrigatório: galinha, galinha caipira, carne, legumes, costela, camarão, peixe, bacon) e menos sal; o peso separa os cubos (57 a 152 g) do pó profissional (1 kg), e "12 cubos" não é multipacote. Fora: Sazón (é tempero) e caldo líquido |
+| Cereal matinal (flocos de milho) | **só os flocos de milho** (Sucrilhos, Corn Flakes, Corn Sugar): original (com açúcar), com chocolate ou com Ovomaltine; peso. Fora: os cereais de marca (Nescau, Kit Kat, Snow Flakes, Crunch, Negresco, Froot Loops, Nesfit…), zero açúcar, integral, proteico, granola e combos ("+", "leve/pague") |
+| Farofa | base (mandioca ou milho), **temperada**, **crocante** (Cantagallo, Yoki Caseiríssima), **com pedaços** e o sabor (costela, picanha, bacon, cebola, banana, frango, calabresa, picante, alho, limão; todos os que aparecem); "tradicional" e sem nada no nome são a mesma farofa; peso. Fora: sabores que a regra não conhece (ovos, linguiça, carne seca, camarão, legumes…), congelada e sem peso no nome |
+| Biscoito cream cracker | integral, light e amanteigado ("manteiga", "amant"); peso. Fora: recheado, com sabor, queijo, cebola, ervas, sementes, sem glúten, mini e chocolate |
+| Biscoito maisena | sem glúten, laminado, amanteigado, integral e light; peso. Exige "biscoito" no nome: o amido de milho Maizena não entra. Fora: com chocolate, recheio, cobertura ou sabor |
+| Ovos | **galinha ou codorna**, cor (brancos, vermelhos), tipo (caipira, orgânicos, cage free, label rouge), tamanho (jumbo, extra, grandes, médios, pequenos) e **quantos ovos vêm** ("20 unidades", "1 dúzia" = 12, "2,5 dúzias" = 30). Fora: sem a quantidade no nome (ou só em gramas), congelados, cozidos, ovo de Páscoa, caixa e "leve N" |
 
 ## Como acrescentar uma família
 
@@ -100,13 +105,13 @@ As 11 primeiras vieram do site e foram traduzidas sem mudar o resultado: nos 7.8
 
 ## Cobertura
 
-No catálogo de 05 a 09/11/2026 (7.836 produtos, 4 mercados):
+No catálogo de 05 a 09/11/2026 (7.836 produtos, 4 mercados; a quinta leva, de 57 famílias, foi medida nele para os números ficarem comparáveis e confirmada no de 12/11: 45,6% e 600 grupos comparáveis):
 
-| | 11 famílias (as do site) | 39 famílias | 47 famílias | 52 famílias |
-|---|---|---|---|---|
-| Produtos com chave | 981 (12,5%) | 2.606 (33,3%) | 3.161 (40,3%) | 3.458 (44,1%) |
-| Grupos | — | 800 | 1.115 | 1.254 |
-| Grupos comparáveis (2 mercados ou mais) | 114 | 396 | 521 | 588 |
+| | 11 famílias (as do site) | 39 famílias | 47 famílias | 52 famílias | 57 famílias |
+|---|---|---|---|---|---|
+| Produtos com chave | 981 (12,5%) | 2.606 (33,3%) | 3.161 (40,3%) | 3.458 (44,1%) | 3.573 (45,6%) |
+| Grupos | — | 800 | 1.115 | 1.254 | 1.328 |
+| Grupos comparáveis (2 mercados ou mais) | 114 | 396 | 521 | 588 | 612 |
 
 Iogurte fragmenta de propósito (cada combinação de sabores é um grupo), por isso a cobertura dele é alta e a comparação, menor.
 
@@ -118,4 +123,6 @@ Iogurte fragmenta de propósito (cada combinação de sabores é um grupo), por 
 - **Marca e linha.** Em fralda, a linha premium (Premium Care, Supreme Care, Premium Protection) não junta com a comum, mas Pampers, Huggies e Personal da mesma linha juntam. Quem não quer trocar de marca usa o modo exato.
 - Fora das famílias declaradas nada é equivalente.
 - **Decidido: higiene pessoal e bebidas ficam sem equivalência**, só no modo exato. Shampoo, condicionador, sabonete, desodorante, creme dental, vinho, cerveja, suco, refrigerante e energético somam mais de 2 mil produtos, mas são diversos demais: cheiro, sabor e marca pesam na escolha, e "qualquer marca" enganaria. `tests/casos_equivalencia_novos.py` guarda a decisão (esses nomes têm de ficar em "fora"), para que uma regra futura mais ampla não os junte sem querer. Se a decisão mudar, comece por uma família estreita (por exemplo, creme dental de uma só variante e peso), não pela categoria inteira.
-- Candidatos que ainda faltam, em ordem do que há no catálogo: cereal matinal, farofa, biscoito cream cracker e de maisena, ovos. Os que vendem a peso variável (queijo, presunto, frango, carne moída) não cabem: o preço por quilo mudaria a regra.
+- **Cereal matinal: só os flocos de milho.** Nescau, Kit Kat, Snow Flakes, Crunch, Negresco e os outros cereais de marca são produtos únicos, sem "qualquer marca": a equivalência só repetiria o que o modo exato já faz com o código de barras. Por isso eles ficam fora (ver os casos "fora" em `tests/casos_equivalencia_novos.py`). Dos 50 produtos do termo "cereal matinal" no catálogo de 12/11, 16 têm chave.
+- **Farofa e ovos usam o nome para decidir a base e o tipo.** Farofa sem "milho" no nome é lida como de mandioca (é o normal no mercado; os nomes de milho dizem "milho"). Ovos sem tamanho no nome não juntam com os que dizem "extra" ou "grandes": na dúvida, separa. Ovo "Happy Eggs", "Queen Eggs" e similares são marcas, e o motor não sabe se são de galinhas criadas soltas; só "caipira", "orgânico", "cage free" e "label rouge" no nome contam.
+- **Ainda sem família:** os que vendem a peso variável (queijo, presunto, frango, carne moída) não cabem, porque o preço por quilo mudaria a regra. Hortifrúti (frutas, verduras, legumes) é uma decisão à parte: cada fruta é um produto, o preço costuma ser por quilo e o nome varia pouco entre mercados.
