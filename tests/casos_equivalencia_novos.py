@@ -1,6 +1,6 @@
 """Casos das famílias novas de equivalencia.py, com nomes dos mercados (catálogo de 05 a 09/11/2026).
 
-Quase todos os nomes existem exatamente assim no catálogo. Uns poucos foram adaptados de um nome real (outro tamanho, sem medida, outro
+Quase todos os nomes existem exatamente assim no catálogo (as 4 primeiras levas, o de 05 a 09/11/2026; a quinta, o de 12/11/2026). Uns poucos foram adaptados de um nome real (outro tamanho, sem medida, outro
 sabor) para exercitar uma regra que o catálogo daquele dia não cobria. Para conferir quais: compare com `GET /comparar?...&todos=1`.
 
 juntam: marcas e embalagens diferentes que são o mesmo produto no mesmo tamanho.
@@ -104,6 +104,27 @@ CASOS = {
         ["Caldo Knorr Galinha 114g", "Caldo Maggi Galinha 114g", "Caldo Arisco Galinha 114 GR"],
         ["Caldo Knorr Galinha 57g 6 cubos", "Caldo Tablete Galinha Maggi Caixa 57g 6 Unidades"],
         ["Caldo Qualimax Galinha 1,010kg", "Caldo Knorr Galinha 1,010kg", "Caldo Kisabor Galinha 1,010kg"],
+        # ---- quinta leva (catálogo de 12/11/2026)
+        ["Cereal Matinal Original Flocos de Milho com Açúcar Kellogg's Sucrilhos Caixa 240g", "Cereal Matinal Original Sucrilhos Kellogg'S 240g Cx"],
+        ["Cereal Matinal Flocos de Milho Chocolate Kellogg's Sucrilhos Caixa 690g", "Cereal Matinal Chocolate Kellogg'S Sucrilhos Caixa 690g"],
+        ["Cereal Matinal Original Flocos de Milho com Açúcar Kellogg's Sucrilhos Pacote 280g", "Cereal Matinal Sucrilhos Kellogg’s 280g"],
+        ["Cereal Matinal Original Sucrilhos Kellogg'S 240g Cx", "Cereal Matinal Corn Flakes Original Neston 240g"],                 # adaptado: o 2º é outra marca de flocos de milho
+        ["Farofa de Mandioca Yoki Bacon 200g", "Farofa de Mandioca Yoki Bacon Pacote com 200g"],
+        ["Farofa de Mandioca Tradicional Yoki Pacote 400g", "Farofa Pinduca Tradicional 400g", "Farofa de Mandioca Ki Flor 400g Pac"],
+        ["Farofa de Mandioca Temperada Tradicional Yoki Pacote 400g", "Farofa Pachá de Mandioca Temperada 400g"],                    # adaptado: o 2º vem em 400 g (o real é de 300 g)
+        ["Farofa com Pedaços de Cebola Yoki 200g", "Farofa de Mandioca com Pedaços de Cebola Yoki 200g"],                          # adaptado: o 2º diz "de mandioca"
+        ["Biscoito Cream Cracker Aymoré Pacote 164g", "Biscoito Aymoré Cream Cracker 164g"],
+        ["Biscoito Rancheiro Cream Cracker 300g", "Cream Cracker Mabel 300g", "Biscoito Marilan Cream Cracker 300g"],
+        ["BISC SALG AMANT VILMA 170G-PC CREAM CRACKER", "Biscoito Cream Cracker Amanteigado Richester Superiore 170g"],
+        ["Biscoito Cream Cracker Manteiga Richester Superiore 350g", "Biscoito Cream Cracker Amanteigado Vilma 350g"],                # adaptado: o 2º é amanteigado em 350 g
+        ["Biscoito Maizena Aymoré Pacote 170g", "Biscoito Maisena Aymoré Pacote 170g", "Biscoito Vilma Maizena 170g", "Biscoito Maizena Bauducco Pacote 170g"],
+        ["Biscoito Piraquê Maizena 175g", "Biscoito Maizena Piraquê 175g"],
+        ["Ovos de Codorna Pente com 30 Unidades", "Ovos de Codorna Asa Bandeja com 30 Unidades"],
+        ["Ovos Branco Mantiqueira Pente com 2.5 Dúzias", "Ovos Brancos 30 Unidades"],                                              # adaptado: o 2º diz 30 unidades
+        ["Ovos Brancos Mantiqueira Galinha Pintadinha com 12 Unidades", "Ovos Brancos 1 Dúzia"],                                   # adaptado: o 2º diz 1 dúzia
+        ["Ovos Brancos Mantiqueira Extra 20un", "Ovos Brancos Extra Aviário 20 Unidades"],                                         # adaptado: o 2º é de outra marca
+        ["Ovos de Galinha Extra Branco Graciana 10 Unidades Categoria A", "Ovos de Galinha Extra Branco Graciana 10 Unidades Categoria A"],
+        ["Ovos Planalto Vermelho Cage Free 20 Unidades", "Ovos Vermelhos Cage Free 20 Unidades"],                                  # adaptado: o 2º é de outra marca
     ],
     "separam": [
         ("Leite UHT Integral Itambé Caixa com Tampa 1l", "Leite UHT Desnatado Itambé Caixa com Tampa 1l"),
@@ -188,6 +209,32 @@ CASOS = {
         ("Milho para Pipoca Tipo 1 Yoki Pacote 400g", "Milho para Pipoca Tipo 1 Yoki Premium Pacote 400g"),
         ("Caldo Knorr Galinha 114g", "Caldo Knorr Galinha 57g"),
         ("Caldo Knorr Galinha 114g", "Caldo Knorr Galinha 152g"),
+        # ---- quinta leva
+        ("Cereal Matinal Original Flocos de Milho com Açúcar Kellogg's Sucrilhos Caixa 240g", "Cereal Matinal Flocos de Milho Chocolate Kellogg's Sucrilhos Caixa 240g"),
+        ("Cereal Matinal Original Sucrilhos Kellogg'S 240g Cx", "Cereal Matinal Sucrilhos Original Kellogg'S 690g Cx"),
+        ("Cereal Matinal Sucrilhos Kellogg's Ovomaltine 200g", "Cereal Matinal Sucrilhos Kellogg's Ovomaltine 90g"),
+        ("Cereal Matinal Sucrilhos Kellogg's Ovomaltine 200g", "Cereal Matinal Sucrilhos Kellogg's 200g"),                          # adaptado: sem o sabor Ovomaltine
+        ("Farofa de Mandioca Yoki Bacon 200g", "Farofa de Mandioca Yoki Banana 200g"),
+        ("Farofa de Mandioca Temperada Tradicional Yoki Pacote 400g", "Farofa de Mandioca Tradicional Yoki Pacote 400g"),
+        ("Farofa de Mandioca Yoki Banana 200g", "Farofa Yoki com Pedaços de Banana Pacote 200g"),
+        ("Farofa Pachá de Milho Temperada Pacote 300g", "Farofa Pacha 300g-pc Mandioca Tempd"),
+        ("Farofa Crocante Tradicional CantaGallo 200g", "Farofa de Mandioca Tradicional Yoki Pacote 200g"),                          # adaptado: o 2º vem em 200 g (o real é de 400 g)
+        ("Farofa Crocante de Picanha com Alho CantaGallo 200g", "Farofa Crocante de Picanha CantaGallo 200g"),                       # adaptado: o 2º é só picanha
+        ("Biscoito Cream Cracker Piraquê 184g", "Biscoito Cream Cracker Light Piraquê Pacote 184g"),
+        ("Biscoito Cream Cracker Integral Vilma 170g", "Biscoito Vilma 170g Cream Cracker"),
+        ("BISC SALG AMANT VILMA 170G-PC CREAM CRACKER", "Biscoito Vilma 170g Cream Cracker"),
+        ("Biscoito Cream Cracker Aymoré Pacote 164g", "Biscoito Cream Cracker Aymoré Pacote 345g"),
+        ("Biscoito Maizena Aymoré Pacote 170g", "Biscoito Maizena Aymoré Pacote 345g"),
+        ("Biscoito Maisena Laminado Mabel 300g", "Biscoito Rancheiro Maizena 300g"),
+        ("BISCOITO DOCE AYMORE MANTEIGA 170G-PC MAISENA", "Biscoito Maisena Aymoré Pacote 170g"),
+        ("Biscoito sem Glúten Kodilar Maizena 140g", "Biscoito Marilan Maizena 140g"),                                              # adaptado: o 1º vem em 140 g (o real é de 112 g)
+        ("Ovos Brancos Mantiqueira Extra 20un", "Ovos Brancos Aviário Diamante 20 Unidades"),
+        ("Ovos Planalto Vermelho Cage Free 20 Unidades", "Ovos Vermelhos Happy Eggs 20 Und"),
+        ("Ovos Caipira Raiar Orgânico Grande com 20 unidades", "Ovos Orgânicos Caipira Mansão Maromba 20 Unidades Categoria A"),
+        ("Ovos de Codorna Pente com 30 Unidades", "Ovos Branco Mantiqueira Pente com 2.5 Dúzias"),
+        ("Ovos Brancos Mantiqueira Jumbo 10 Unid.", "Ovos de Galinha Extra Branco Graciana 10 Unidades Categoria A"),
+        ("Ovos Brancos Aviário Diamante 20 Unidades", "Ovos Vermelhos Happy Eggs 20 Und"),
+        ("Ovos Brancos Mantiqueira Galinha Pintadinha com 12 Unidades", "Ovos caipira Speranza com 12 unidades"),
     ],
     "fora": [
         "Leite Hidratante Monange Frutas Vermelhas 200ml",
@@ -264,5 +311,29 @@ CASOS = {
         "Saco P Pipoca Romana Festas Dec.C 5",
         "Caldo Sazón Galinha 32,5g",
         "Caldo Pó Galinha Sazón Envelope 11g 2 Unidades",
+        # ---- quinta leva
+        "Cereal Matinal Nescau 210g",                                                    # cereal de marca: produto único, não há "qualquer marca"
+        "Cereal Matinal Nestlé Kit Kat 210g",
+        "Cereal Matinal SNOW FLAKES 580g",
+        "Cereal Matinal Kellogg's Froot Loops 230g",
+        "Cereal Matinal Nescau 14x770g",
+        "Cereal Matinal Nescau 270g + Snow Flakes 230g",
+        "Cereal Matinal Nestlé Nescau LV 770g PG 620g",
+        "Cereal Matinal Sucrilhos Zero Açúcar Kellogg's 240g",                           # adaptado: Sucrilhos zero açúcar
+        "Flocos de Milho Yoki 500g",                                                     # adaptado: flocão para cuscuz, não é cereal matinal
+        "Farofa Pronta Pachá Mandioca Com Bacon",                                        # sem peso no nome
+        "Farofa de Ovos Yoki 200g",                                                      # adaptado: sabor que a regra não modela
+        "Farofa de Linguiça Yoki 200g",                                                  # adaptado: idem
+        "Biscoito Cream Cracker Recheado Chocolate Aymoré 130g",                         # adaptado: recheado
+        "Biscoito Cream Cracker Aymoré Pacote",                                          # adaptado: sem peso
+        "Biscoito Maisena Chocolate Ao Leite Garoto Choco Biscuit Pacote 78g",
+        "Amido de Milho Maizena Duryea Tradicional 200g",                                # adaptado: ingrediente, não é biscoito
+        "Creme de Maisena Maizena Duryea Chocolate 200g",                                # adaptado: idem
+        "Ovos Caipira Congelados Speranza 12 Und",
+        "Ovos De Codorna Granja Loureiro 200G",                                          # em gramas, sem a quantidade de ovos
+        "Ovo de Páscoa Lacta Ao Leite 150g",                                             # adaptado: chocolate
+        "Ovos Brancos Bandeja",                                                          # adaptado: sem a quantidade
+        "Ovos Brancos Grandes 20 Unidades Leve 2",                                       # adaptado: promoção "leve 2"
+        "Ovos Cozidos Descascados 6 Unidades",                                           # adaptado: ovo cozido
     ],
 }
