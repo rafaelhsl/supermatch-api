@@ -127,6 +127,41 @@ def teste_o_teto_conta_a_parte():
     assert b.ocultos_so_citam == 0 and b.ocultos_pelo_limite == 7
 
 
+def teste_maizena_e_maisena_sao_a_mesma_palavra_na_busca():
+    """Nos mercados a mesma marca vem escrita dos dois jeitos (16 nomes "Maizena" e 5 "Maisena" no catálogo de 12/11/2026)."""
+    catalogo = busca.indexar([
+        produto("Biscoito Maizena Aymoré Pacote 170g", "biscoito maisena"), produto("Biscoito Maisena Aymoré Pacote 170g", "biscoito maisena", "Super ABC"),
+        produto("Biscoito Marilan Maizena 140g", "biscoito maisena", "Atacadão"), produto("Biscoito Maisena Laminado Mabel 300g", "biscoito maisena", "Atacadão"),
+        produto("Creme de Arroz Maizena Duryea 200g", "creme de arroz"),
+    ])
+    todos = {"Biscoito Maizena Aymoré Pacote 170g", "Biscoito Maisena Aymoré Pacote 170g", "Biscoito Marilan Maizena 140g", "Biscoito Maisena Laminado Mabel 300g"}
+    for digitado in ("biscoito maisena", "biscoito maizena", "BISCOITO MAIZENA", "maisena aymore", "maizena aymore"):
+        achados = busca.buscar_detalhado(catalogo, digitado).produtos
+        assert set(nomes(achados)) >= ({"Biscoito Maizena Aymoré Pacote 170g", "Biscoito Maisena Aymoré Pacote 170g"} if "aymore" in digitado else todos), (digitado, nomes(achados))
+    # as duas grafias dão exatamente o mesmo resultado
+    assert nomes(busca.buscar_detalhado(catalogo, "maisena").produtos) == nomes(busca.buscar_detalhado(catalogo, "maizena").produtos)
+    # o termo da lista também vale nas duas grafias: o produto do termo "biscoito maizena" é principal quando se digita "maisena"
+    com_termo = busca.indexar([produto("Biscoito Maizena Aymoré 170g", "biscoito maizena"), produto("Biscoito Maizena Piraquê 175g", "biscoito maizena"),
+                               produto("Biscoito Maizena Vilma 170g", "biscoito maizena"), produto("Pó Maizena Culinária 200g", "amido")])
+    achados = busca.buscar_detalhado(com_termo, "maisena")
+    assert len(achados.produtos) == 3 and achados.ocultos_so_citam == 1, (nomes(achados.produtos), achados.ocultos_so_citam)
+
+
+def teste_a_grafia_unica_vale_so_na_busca_e_nao_altera_nomes_nem_historico():
+    """`sem_acento` alimenta as chaves do histórico de preços (Super ABC) e as regras de equivalência: não pode trocar "maizena" por "maisena"."""
+    assert busca.sem_acento("Biscoito Maizena Aymoré") == "biscoito maizena aymore"
+    produtos = [produto("Biscoito Maizena Aymoré Pacote 170g", "biscoito maisena")]
+    catalogo = busca.indexar(produtos)
+    achados = busca.buscar_detalhado(catalogo, "maisena").produtos
+    assert achados[0]["nome"] == "Biscoito Maizena Aymoré Pacote 170g"                     # o nome que volta é o do mercado
+    assert produtos[0]["nome"] == "Biscoito Maizena Aymoré Pacote 170g"                    # e o produto original não é tocado
+    import historico
+    assert historico.normalizar_nome("Biscoito Maizena Aymoré") == "biscoito maizena aymore"
+    assert historico.chave_origem("Biscoito Maizena Aymoré") != historico.chave_origem("Biscoito Maisena Aymoré")      # a chave do histórico continua por nome exato
+    import equivalencia
+    assert equivalencia.equivalencia("Biscoito Maizena Aymoré Pacote 170g").chave == equivalencia.equivalencia("Biscoito Maisena Aymoré Pacote 170g").chave
+
+
 def teste_acento_caixa_e_busca_vazia():
     catalogo = busca.indexar([produto(f"FEIJÃO CARIOCA {i}", "feijão") for i in range(3)])
     assert len(busca.buscar(catalogo, "Feijao")[0]) == 3 and len(busca.buscar(catalogo, "FEIJÃO")[0]) == 3
