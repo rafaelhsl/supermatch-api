@@ -1,0 +1,572 @@
+{
+ "versao": 1,
+ "teto_por_termo": 100,
+ "observacao": "LISTA DE RECONHECIMENTO, NÃO É LIDA PELA CARGA DIÁRIA. Hortifrúti vende a peso: em `unidade: kg` o preço é por quilo. Só o coletor de linha de comando a usa (--lista). Veja docs/hortifruti.md.",
+ "termos": [
+  {
+   "termo": "banana",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "banana"
+   ],
+   "nome_inclui": [
+    "^banana\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "maçã",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "maçã"
+   ],
+   "nome_inclui": [
+    "^maca\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "laranja",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "laranja"
+   ],
+   "nome_inclui": [
+    "^laranja\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "limão",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "limão"
+   ],
+   "nome_inclui": [
+    "^limao\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "mamão",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "mamão"
+   ],
+   "nome_inclui": [
+    "^mamao\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "melancia",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "melancia"
+   ],
+   "nome_inclui": [
+    "^melancia\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "abacaxi",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "abacaxi"
+   ],
+   "nome_inclui": [
+    "^abacaxi\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "manga",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "manga"
+   ],
+   "nome_inclui": [
+    "^manga\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "uva",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "uva"
+   ],
+   "nome_inclui": [
+    "^uva\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "morango",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "morango"
+   ],
+   "nome_inclui": [
+    "^morango\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "abacate",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "abacate"
+   ],
+   "nome_inclui": [
+    "^abacate\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "tomate",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "tomate"
+   ],
+   "nome_inclui": [
+    "^tomate\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "batata",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "batata"
+   ],
+   "nome_inclui": [
+    "^batata\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "cebola",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "cebola"
+   ],
+   "nome_inclui": [
+    "^cebola\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "cenoura",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "cenoura"
+   ],
+   "nome_inclui": [
+    "^cenoura\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "alho",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "alho"
+   ],
+   "nome_inclui": [
+    "^alho\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "pepino",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "pepino"
+   ],
+   "nome_inclui": [
+    "^pepino\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "abobrinha",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "abobrinha",
+    "abobora italiana"
+   ],
+   "nome_inclui": [
+    "^(abobrinha|abobora italiana)\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "abóbora",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "abóbora"
+   ],
+   "nome_inclui": [
+    "^abobora(?! italiana)\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "chuchu",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "chuchu"
+   ],
+   "nome_inclui": [
+    "^chuchu\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "mandioca",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "mandioca",
+    "aipim"
+   ],
+   "nome_inclui": [
+    "^(mandioca|aipim|macaxeira)\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "beterraba",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "beterraba"
+   ],
+   "nome_inclui": [
+    "^beterraba\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "pimentão",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "pimentão"
+   ],
+   "nome_inclui": [
+    "^pimentao\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "repolho",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "repolho"
+   ],
+   "nome_inclui": [
+    "^repolho\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "brócolis",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "brócolis"
+   ],
+   "nome_inclui": [
+    "^brocolis\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "alface",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "alface"
+   ],
+   "nome_inclui": [
+    "^alface\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "couve",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "couve"
+   ],
+   "nome_inclui": [
+    "^couve\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda",
+    "couve[ -]?flor"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  },
+  {
+   "termo": "couve-flor",
+   "grupo": "Hortifrúti",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "couve flor"
+   ],
+   "nome_inclui": [
+    "^couve[ -]?flor\\b"
+   ],
+   "nome_exclui": [
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda",
+    "mix|azeitona|speciale|sadia|broc|legumes|cong"
+   ],
+   "categorias": [
+    "^hortifruti(?: > |$)",
+    "^visualizar mais produtos"
+   ],
+   "categorias_proibidas": [
+    "fruta seca|frutas secas|castanha|emporio|congelad"
+   ]
+  }
+ ]
+}
