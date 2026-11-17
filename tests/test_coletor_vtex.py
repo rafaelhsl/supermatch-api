@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import coletor_vtex as c  # noqa: E402
 
 
@@ -342,6 +343,86 @@ def teste_lista_de_produtos_do_repositorio():
                             ("Ração Quatree Gourmet Adulto Gatos", False, True), ("Ração Filhote Sabor Frango", False, False)):
         linha = {"nome": nome, "categoria": "", "peso_variavel": False}
         assert c.passa_no_filtro(linha, racao) is cao and c.passa_no_filtro(linha, gatos) is gato, nome
+
+
+# ============================== hortifrúti (etapa 1: só a coleta, fora da carga diária) ==============================
+
+def teste_peso_variavel_so_entra_no_termo_que_aceita():
+    banana_kg = {"id_origem": "1", "nome": "Banana Prata Quilo", "categoria": "Hortifrúti > Frutas", "peso_variavel": True}
+    normal = {"termo": "banana"}
+    assert not c.passa_no_filtro(banana_kg, normal), "o termo comum continua descartando o produto vendido a peso"
+    assert c.passa_no_filtro(banana_kg, {**normal, "aceita_peso_variavel": True})
+    assert not c.passa_no_filtro(banana_kg, {**normal, "aceita_peso_variavel": False})
+    # e aceitar o peso variável não afrouxa os outros filtros do termo
+    assert not c.passa_no_filtro({**banana_kg, "nome": "Banana Frita Laminada"}, {"termo": "banana", "aceita_peso_variavel": True, "nome_exclui": ["frit"]})
+
+
+def teste_linha_traz_a_unidade_e_o_multiplicador():
+    # Supernosso/Apoio (API de catálogo): "kg" = o preço é por quilo; o multiplicador é de quanto em quanto se compra
+    produto = produto_vtex(1, "Tomate Italiano Supernosso 500g", 18.99, categorias=("/Hortifrúti/Legumes/",), unidade="kg")
+    produto["items"][0]["unitMultiplier"] = 0.5
+    linha = c.baixar_supernosso(HttpFalso(lambda url, corpo: [produto]), "tomate")[0]
+    assert linha["unidade"] == "kg" and linha["multiplicador"] == 0.5 and linha["peso_variavel"] is True and linha["preco_varejo"] == 18.99
+    pacote = produto_vtex(2, "Cebola Orgânico do Chico 400g", 7.99, categorias=("/Hortifrúti/Legumes/",), unidade="un")
+    linha = c.baixar_supernosso(HttpFalso(lambda url, corpo: [pacote]), "cebola")[0]
+    assert linha["unidade"] == "un" and linha["multiplicador"] is None and linha["peso_variavel"] is False       # preço do pacote, não por quilo
+    assert c.linha_do_catalogo("Supernosso", {"productId": "9", "productName": "X"}, {"itemId": "1"}, {"Price": 1}, "x")["unidade"] is None     # sem a informação: vazio
+    # Atacadão (GraphQL): o nó traz o mesmo par
+    no = no_graphql(5, "Banana Prata Quilo", [(1, 3.79)], categorias=("Hortifrúti", "Frutas"), unidade="kg")
+    no["unitMultiplier"] = 0.15
+    linhas = c.baixar_atacadao(HttpFalso(lambda url, corpo: {"data": {"search": {"products": {"edges": [{"node": no}], "pageInfo": {"totalCount": 1}}}}} if "graphql" in url else []), "banana")
+    assert linhas[0]["unidade"] == "kg" and linhas[0]["multiplicador"] == 0.15 and linhas[0]["peso_variavel"] is True
+
+
+def teste_lista_de_hortifruti_do_repositorio():
+    from casos_hortifruti import ADAPTADOS, CASOS
+    teto, termos = c.carregar_lista(c.RAIZ / "dados" / "lista_hortifruti.json")
+    nomes = [t["termo"] for t in termos]
+    assert teto == 100 and len(nomes) == len(set(nomes)) == 28 and set(CASOS) == set(nomes), (len(nomes), set(CASOS) ^ set(nomes))
+    for t in termos:
+        assert t["grupo"] == "Hortifrúti" and t["aceita_peso_variavel"] is True and t["nome_inclui"] and t["consultas"] and t["categorias"], t["termo"]
+        for chave in ("categorias", "categorias_proibidas", "nome_exclui", "nome_inclui"):
+            for padrao in t.get(chave, []):
+                re.compile(padrao)
+    por_termo = {t["termo"]: t for t in termos}
+    for termo, caso in CASOS.items():
+        assert caso["entram"], f"{termo}: precisa de ao menos um caso que entra"
+        for nome, categoria in caso["entram"]:
+            assert c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": True}, por_termo[termo]), f"{termo}: deveria entrar: {nome} [{categoria}]"
+        for nome, categoria in caso["saem"]:
+            assert not c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": True}, por_termo[termo]), f"{termo}: deveria sair: {nome} [{categoria}]"
+    for termo, itens in ADAPTADOS.items():
+        for nome, categoria in itens:
+            assert not c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": True}, por_termo[termo]), f"{termo}: deveria sair: {nome} [{categoria}]"
+
+
+def teste_a_carga_diaria_nao_le_a_lista_de_hortifruti():
+    """Hortifrúti vende a peso (o preço é por quilo) e o site ainda não sabe mostrar isso: gravar esses produtos agora faria o site exibir
+    "Tomate Italiano 500g: R$ 18,99" quando o preço é de 1 kg. Por isso a lista fica à parte e a carga não a lê (docs/hortifruti.md)."""
+    teto, padrao = c.carregar_lista()
+    assert not [t["termo"] for t in padrao if t.get("aceita_peso_variavel") or t.get("grupo") == "Hortifrúti"], "a lista da carga diária não pode ter hortifrúti"
+    assert c.LISTA_PADRAO.name == "lista_de_produtos.json"
+    for arquivo in ("alimentar_banco.py", "api_supabase.py"):
+        assert "lista_hortifruti" not in (c.RAIZ / arquivo).read_text(encoding="utf-8"), f"{arquivo} não pode ler a lista de hortifrúti ainda"
+    # e a lista de hortifrúti não carrega termos do dia a dia (uma carga com ela apagaria os outros produtos do mercado)
+    _, hortifruti = c.carregar_lista(c.RAIZ / "dados" / "lista_hortifruti.json")
+    assert not {t["termo"] for t in hortifruti} & {t["termo"] for t in padrao}
+
+
+def teste_coletar_hortifruti_mantem_o_fresco_e_conta_os_itens_por_quilo():
+    termo = {"termo": "tomate", "aceita_peso_variavel": True, "nome_inclui": ["^tomate\\b"], "nome_exclui": ["seco|pelado"], "categorias": ["^hortifruti"], "categorias_proibidas": []}
+
+    def baixar(http, consulta):
+        def l(i, nome, categoria, unidade, peso):
+            return {"id_origem": str(i), "nome": nome, "categoria": categoria, "unidade": unidade, "multiplicador": 0.5 if unidade == "kg" else None, "peso_variavel": peso,
+                    "ean": None, "quantidade_atacado": 1}
+        return [l(1, "Tomate Italiano Quilo", "Hortifrúti > Legumes", "kg", True), l(2, "Tomate Grape Mini Bandeja 300g", "Hortifrúti > Legumes", "un", False),
+                l(3, "Tomate Seco Speciale 100g", "Hortifrúti > Legumes", "un", False), l(4, "Tomate Pelado Italiano 400g", "Mercearia > Molhos", "un", False)]
+
+    resultado, erros = c.coletar(c.ClienteHttp(), ["Supernosso"], [termo], 100, baixadores={"Supernosso": baixar})
+    linhas = resultado["Supernosso"]["tomate"]
+    assert not erros and [l["nome"] for l in linhas] == ["Tomate Italiano Quilo", "Tomate Grape Mini Bandeja 300g"]
+    assert "1 por kg" in c.resumo_de_termo(linhas) and "por kg" not in c.resumo_de_termo([dict(linhas[1], ean=None, quantidade_atacado=1)])
 
 
 if __name__ == "__main__":

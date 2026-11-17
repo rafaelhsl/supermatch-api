@@ -34,7 +34,7 @@ Regras comuns:
 
 - **EAN** só vale com 8, 12, 13 ou 14 dígitos e sem repetição óbvia. Códigos internos de marca própria (como "8200") viram vazio.
 - **Atacado**: guarda a primeira faixa acima de 1 unidade, se for mais barata que o varejo. Sem faixa, `preco_atacado = preco_varejo` e `quantidade_atacado = 1`, como no banco hoje.
-- **Peso variável** (vendido por kg ou grama: queijo fatiado, carne, hortifruti) é descartado. É a Fase 2.
+- **Peso variável** (vendido por kg ou grama: queijo fatiado, carne, hortifruti) é descartado, a não ser no termo que diz `"aceita_peso_variavel": true`. Só os termos de [`dados/lista_hortifruti.json`](../dados/lista_hortifruti.json) dizem isso, e essa lista **não é lida pela carga diária** (etapa 1 do hortifrúti: veja [`hortifruti.md`](hortifruti.md)). Cada linha traz `unidade` (`kg` quer dizer que o preço é por quilo) e `multiplicador`; a gravação no banco ignora os dois.
 - Falha de rede ou erro 429/5xx: repete até 4 vezes. Erro do GraphQL do Atacadão (já apareceu "Cannot read properties of undefined (reading 'price')" e passou na chamada seguinte): repete até 3 vezes.
 - Um termo que falha em um mercado vira erro daquele par; os outros termos continuam. O programa termina com código 1 se houve erro.
 
@@ -83,7 +83,7 @@ Executada no GitHub em 05/11/2026 ([run 42007495508](https://github.com/rafaelhs
 - **Filtro por nome é conservador.** Produto com a marca antes do tipo ("Camil Arroz…") não passa nos alimentos. Na dúvida, não entra.
 - **Cobertura varia por mercado.** Algumas lojas simplesmente não têm o produto em estoque na região (por exemplo, ovos no Atacadão, papinha no Apoio e no Atacadão, ração no Atacadão). O relatório de cada execução mostra onde.
 - **Termos que se sobrepõem**: o mesmo produto pode aparecer em dois termos (por exemplo, "Leite em Pó Integral" em "leite integral" e "leite em pó", embora o filtro tente separar). Na carga, a linha vale uma vez por mercado.
-- **Fase 2** (hortifruti e peso variável) fica de fora, de propósito.
+- **Fase 2** (hortifruti e peso variável) fica de fora **da carga diária**, de propósito. A coleta de reconhecimento do hortifrúti existe (`--lista dados/lista_hortifruti.json`, só leitura), mas gravar esses produtos exige antes um campo `unidade` no banco e o site mostrar "/kg": veja [`hortifruti.md`](hortifruti.md).
 - O catálogo do Apoio muda de região para região (canal de vendas); o coletor usa o de Betim, como a carga diária.
 
 ## Próximos passos

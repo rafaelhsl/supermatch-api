@@ -180,6 +180,10 @@ def linha_do_catalogo(mercado, produto, item, oferta, termo):
         "uf_cobertura": MERCADOS[mercado]["uf"],
         "termo": termo,
         "peso_variavel": vendido_por_peso(item.get("measurementUnit"), (produto.get("Peso variável") or [""])[0]),
+        # Como o mercado vende: "kg" = o PREÇO É POR QUILO (e o multiplicador é de quanto em quanto se compra: 0.5 = meio quilo);
+        # "un" = por unidade ou por pacote (o peso, se houver, está no nome). Só o hortifrúti usa (docs/hortifruti.md); a gravação ignora.
+        "unidade": str(item.get("measurementUnit") or "").strip().lower() or None,
+        "multiplicador": numero(item.get("unitMultiplier")) or None,
     }
 
 
@@ -325,6 +329,7 @@ def baixar_atacadao(http, consulta):
             "marca": ((no.get("brand") or {}).get("brandName") or "").strip() or None, "ean": None, "categoria": categoria,
             "preco_varejo": varejo, "preco_atacado": atacado, "quantidade_atacado": minimo,
             "uf_cobertura": MERCADOS["Atacadao"]["uf"], "termo": consulta, "peso_variavel": vendido_por_peso(no.get("measurementUnit")),
+            "unidade": str(no.get("measurementUnit") or "").strip().lower() or None, "multiplicador": numero(no.get("unitMultiplier")) or None,
         })
         ids.append(produto_id)
     eans = eans_do_atacadao(http, ids) if ids else {}
@@ -354,8 +359,10 @@ def passa_no_filtro(linha, termo):
     `categorias`: ao menos uma precisa casar com o caminho da categoria do produto, como "mercearia > graos > arroz".
     `categorias_proibidas`: se alguma casar com o caminho, o produto sai (xampu que cita "óleo", gelatina capilar...).
     `nome_inclui`: ao menos uma precisa casar com o nome. `nome_exclui`: se alguma casar com o nome, o produto sai.
+    `aceita_peso_variavel`: o produto vendido a peso (queijo, carne, hortifrúti) só entra no termo que diz aceitá-lo; hoje só os
+    termos de dados/lista_hortifruti.json, que a carga diária não lê.
     """
-    if linha.get("peso_variavel"):
+    if linha.get("peso_variavel") and not termo.get("aceita_peso_variavel"):
         return False
     nome = sem_acento(linha["nome"])
     if _casa(termo.get("nome_exclui"), nome):
@@ -417,7 +424,8 @@ def coletar(http, mercados, termos, teto, ao_terminar_termo=None, baixadores=Non
 def resumo_de_termo(linhas):
     com_atacado = sum(1 for l in linhas if l["quantidade_atacado"] > 1)
     com_ean = sum(1 for l in linhas if l["ean"])
-    return f"{len(linhas):>3} itens, {com_ean:>3} c/EAN, {com_atacado:>3} c/atacado"
+    por_kg = sum(1 for l in linhas if l.get("unidade") == "kg")
+    return f"{len(linhas):>3} itens, {com_ean:>3} c/EAN, {com_atacado:>3} c/atacado" + (f", {por_kg:>3} por kg" if por_kg else "")
 
 
 # ============================== linha de comando ==============================
