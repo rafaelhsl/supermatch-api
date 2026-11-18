@@ -36,7 +36,8 @@ class Familia:
     id: str
     titulo: str                 # como aparece na lista "vale para arroz, feijão, ..."
     casa: Callable[[str], bool]
-    analisar: Callable[[str], Optional[_Analise]]
+    analisar: Callable[..., Optional[_Analise]]
+    usa_unidade: bool = False   # True: `analisar(t, unidade)`; a unidade ("kg" = o preço é por quilo) vem do banco, não do nome
 
 
 def normalizar(nome) -> str:
@@ -712,13 +713,96 @@ FAMILIAS += [
 ]
 
 
+# ============================== sexta leva: hortifrúti (frutas, verduras e legumes) ==============================
+# Uma família só, guiada por uma tabela de produtos. A chave junta produto + variedade + importada + orgânico + "como se compra":
+#  - preço POR QUILO (unidade "kg": o preço é de 1 kg, qualquer que seja o peso do nome) vale "1 kg";
+#  - pacote com o peso no nome vale esse peso, e o pacote de 1 kg é o mesmo que o preço por quilo;
+#  - sem peso nenhum (alface, maço) vale "unidade".
+# Veja docs/hortifruti.md. Só entra o que o mercado põe na categoria Hortifrúti (o filtro da coleta); aqui o nome só descarta o processado.
+
+# (id, rótulo, gênero, começo do nome, variedades). A 1ª variedade que casa vale; sem nenhuma, a variedade fica vazia (o "comum").
+# A ordem importa: "couve-flor" antes de "couve", "alho-poró" antes de "alho", "abobrinha" (que inclui "abóbora italiana") antes de "abóbora".
+_PRODUTOS_HORTIFRUTI = [
+    ("banana", "Banana", "f", r"banana\b", [(r"nanica|caturra", "nanica"), (r"da terra|\bterra\b", "da terra"), (r"\bmaca\b", "maçã"), (r"prata|\bprta\b", "prata")]),
+    ("maca", "Maçã", "f", r"maca\b", [(r"fuji", "fuji"), (r"gala", "gala"), (r"granny", "granny smith"), (r"pink lady", "pink lady"), (r"golden", "golden"), (r"\bred\b|vermelha", "red")]),
+    ("laranja", "Laranja", "f", r"laranja\b", [(r"pera", "pera"), (r"bahia", "bahia"), (r"serra d ?agua", "serra d'água"), (r"lima", "lima"), (r"seleta", "seleta")]),
+    ("limao", "Limão", "m", r"limao\b", [(r"tahiti|taiti", "taiti"), (r"siciliano", "siciliano"), (r"cravo", "cravo")]),
+    ("mamao", "Mamão", "m", r"mamao\b", [(r"formosa", "formosa"), (r"papaya|papaia", "papaia")]),
+    ("melancia", "Melancia", "f", r"melancia\b", [(r"baby", "baby"), (r"amarela", "amarela")]),
+    ("abacaxi", "Abacaxi", "m", r"abacaxi\b", [(r"perola", "pérola"), (r"havai", "havaí")]),
+    ("manga", "Manga", "f", r"manga\b", [(r"palmer", "palmer"), (r"tommy", "tommy"), (r"keyte|keitt|kent", "keitt"), (r"rosa", "rosa"), (r"espada", "espada")]),
+    ("uva", "Uva", "f", r"uva\b", [(r"niagara", "niágara"), (r"thompson", "thompson"), (r"vitoria", "vitória"), (r"red globe", "red globe"), (r"sweet green|verde", "verde sem semente"),
+                                   (r"cherry|cereja", "cherry"), (r"rubi", "rubi"), (r"italia", "itália")]),
+    ("morango", "Morango", "m", r"morango\b", []),
+    ("abacate", "Abacate", "m", r"abacate\b", [(r"avocado|hass", "avocado")]),
+    ("tomate", "Tomate", "m", r"tomate\b", [(r"com rama|\brama\b", "com rama"), (r"italiano", "italiano"), (r"salada|longa vida", "salada"), (r"cereja", "cereja"), (r"uva|grape", "uva"), (r"maca", "maçã")]),
+    ("batata", "Batata", "f", r"batata\b", [(r"doce", "doce"), (r"baroa", "baroa"), (r"bolinha", "bolinha"), (r"asterix|vermelha|rosada", "vermelha"), (r"inglesa|ingelsa|lavada", "inglesa")]),
+    ("cebola", "Cebola", "f", r"cebola\b", [(r"roxa", "roxa"), (r"branca", "branca"), (r"mini|perola", "mini")]),
+    ("cenoura", "Cenoura", "f", r"cenoura\b", [(r"baroa", "baroa")]),
+    ("alho poro", "Alho-poró", "m", r"alho poro\b", []),
+    ("alho", "Alho", "m", r"alho\b", [(r"roxo", "roxo")]),
+    ("pepino", "Pepino", "m", r"pepino\b", [(r"japones|\bjap\b", "japonês"), (r"caipira", "caipira"), (r"baby|snack", "baby")]),
+    ("abobrinha", "Abobrinha", "f", r"(abobrinha|abobora italiana)\b", []),
+    ("abobora", "Abóbora", "f", r"abobora\b", [(r"japonesa|cabotia|kabotia", "japonesa"), (r"moranga", "moranga"), (r"jacare", "jacaré"), (r"menina", "menina"), (r"pump", "pump"), (r"vermelha", "vermelha")]),
+    ("chuchu", "Chuchu", "m", r"chuchu\b", []),
+    ("mandioca", "Mandioca", "f", r"(mandioca|aipim|macaxeira)\b", []),
+    ("beterraba", "Beterraba", "f", r"beterraba\b", []),
+    ("pimentao", "Pimentão", "m", r"pimentao\b", [(r"verde", "verde"), (r"amarelo", "amarelo"), (r"vermelho", "vermelho"), (r"laranja", "laranja"), (r"palermo|sweet", "sweet palermo"), (r"colorido|misto", "colorido")]),
+    ("repolho", "Repolho", "m", r"repolho\b", [(r"roxo", "roxo"), (r"misto", "misto")]),
+    ("brocolis", "Brócolis", "m", r"brocolis\b", [(r"ninja", "ninja")]),
+    ("alface", "Alface", "f", r"alface\b", [(r"americana|americada", "americana"), (r"cresp", "crespa"), (r"lisa", "lisa"), (r"roxa", "roxa"), (r"mimosa", "mimosa"), (r"baby", "baby"), (r"croc", "crocante")]),
+    ("couve flor", "Couve-flor", "f", r"couve ?flor\b", []),
+    ("couve", "Couve", "f", r"couve\b", [(r"manteiga", "manteiga"), (r"baby", "baby")]),
+]
+# O que não é o produto fresco mesmo começando pelo nome dele: picado, ralado, congelado, conserva, fruta seca, doce, salgadinho, corte de carne ("maçã de peito")...
+# ("batata doce" é legume: "doce" NÃO está aqui.)
+_PROCESSADO_HORTIFRUTI = (r"processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\bseco|\bsecos|\bpassas?\b|conserva|calda|triturad|florete|congelad"
+                          r"|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\bem po\b|flocos|granulad|\bpasta\b|crispy|rodelas|kitano|\bmuda"
+                          r"|pelad|sem pele|peito|\bpre\b|ruffles|lays|pringles|doce de|bananada|mangada|\bsabor\b|temper|\bkit\b|\bcombo\b|\bpara conserva"
+                          # abreviações e marcas de congelado, salgadinho e tempero que o nome sozinho não pega ("BATATA CONG", "ALHO TRITD", "Batata Tex Tubo"...)
+                          r"|\bcong\b|air fryer|tritd|\btubo\b|\btex\b|truffle|\bpo\b|\bmassa\b|azeitona|ervas|speciale|\bsupreme\b|veg ?e? ?tal|sadia|seara"
+                          r"|bem brasil|mais batata|\bmix\b|granola|wafer|sequilhos|torta|capim|amendoa|cobertura")
+_ORGANICO = r"\borg\b|organic|orgchic"
+_IMPORTADA = r"\bimp\b|importad|argentin|chilen"
+
+
+def _produto_do_hortifruti(t):
+    return next((p for p in _PRODUTOS_HORTIFRUTI if re.match(p[3], t)), None)
+
+
+def _hortifruti(t, unidade=None):
+    """Fruta, verdura ou legume fresco: produto, variedade, importada, orgânico e como se compra (por quilo, pacote com peso ou unidade)."""
+    produto = _produto_do_hortifruti(t)
+    t = re.sub(r"\b\d+ a \d+ unidades?\b", " ", t)           # "500 g (1 a 2 unidades)": o Super ABC diz quantas vêm, e não é um multipacote
+    if produto is None or re.search(_PROCESSADO_HORTIFRUTI, t) or re.search(_MULTIPACOTE, t):
+        return None
+    id_, nome, genero, _, variedades = produto
+    variedade = escolher(t, variedades, "")
+    organico, importada = re.search(_ORGANICO, t) is not None, re.search(_IMPORTADA, t) is not None
+    if unidade == "kg":                                          # o preço é de 1 kg, seja qual for o peso que o nome cita (ele é o de cada porção)
+        m = (True, 1000)
+    else:
+        m = medida(t, "massa", varrer=True)
+        if m is None and re.search(r"\b(quilo|kg)\b", t):      # "Batata Bolinha Quilo" (unidade "un", sem número): é o pacote de 1 kg
+            m = (True, 1000)
+    final = "a" if genero == "f" else "o"
+    rotulo = nome + (f" {variedade}" if variedade else "") + (f" importad{final}" if importada else "") + (f" orgânic{final}" if organico else "")
+    if m is None:
+        rotulo += ", unidade"
+    return _Analise([id_, variedade, "importada" if importada else "", "organico" if organico else "", "" if m else "un"], m, rotulo)
+
+
+FAMILIAS.append(Familia("hortifruti", "frutas, verduras e legumes", lambda t: _produto_do_hortifruti(t) is not None, _hortifruti, usa_unidade=True))
+
+
 # ============================== a interface ==============================
 
-def equivalencia(nome, familias=None) -> Optional[Equivalencia]:
+def equivalencia(nome, familias=None, unidade=None) -> Optional[Equivalencia]:
     """A chave e o rótulo do produto, ou None se ele não se encaixa em nenhuma regra.
 
     A primeira família que casa com o nome decide: se ela recusa o produto, ele fica sem chave. Por isso as famílias mais
     específicas ("leite condensado") vêm antes das gerais ("leite"). `familias` troca a lista (os testes usam as 11 originais).
+    `unidade` ("kg": o preço é por quilo; "un" ou vazia) só importa ao hortifrúti.
     """
     t = normalizar(nome)
     if re.search(r"\b\d+ ?x ?\d+", t):      # caixas e multipacotes ("24x40g")
@@ -726,7 +810,7 @@ def equivalencia(nome, familias=None) -> Optional[Equivalencia]:
     for f in (FAMILIAS if familias is None else familias):
         if not f.casa(t):
             continue
-        r = f.analisar(t)
+        r = f.analisar(t, unidade) if f.usa_unidade else f.analisar(t)
         if not r:
             return None
         sufixo = ("" if r.m is None else f"{r.m[1]}{'g' if r.m[0] else 'ml'}")
@@ -743,6 +827,6 @@ def com_equivalencia(produtos):
     """Cópias dos produtos com `chave_equivalencia` e `rotulo_equivalencia` quando o produto se encaixa em alguma família."""
     saida = []
     for p in produtos:
-        e = equivalencia(p.get("nome", ""))
+        e = equivalencia(p.get("nome", ""), unidade=p.get("unidade"))
         saida.append({**p, "chave_equivalencia": e.chave, "rotulo_equivalencia": e.rotulo} if e else p)
     return saida

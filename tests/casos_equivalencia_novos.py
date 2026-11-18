@@ -125,6 +125,8 @@ CASOS = {
         ["Ovos Brancos Mantiqueira Extra 20un", "Ovos Brancos Extra Aviário 20 Unidades"],                                         # adaptado: o 2º é de outra marca
         ["Ovos de Galinha Extra Branco Graciana 10 Unidades Categoria A", "Ovos de Galinha Extra Branco Graciana 10 Unidades Categoria A"],
         ["Ovos Planalto Vermelho Cage Free 20 Unidades", "Ovos Vermelhos Cage Free 20 Unidades"],                                  # adaptado: o 2º é de outra marca
+        # ---- hortifrúti (sem a unidade; os casos com a unidade estão em tests/test_equivalencia_hortifruti.py)
+        ["Banana Prata Sn 1Kg", "Banana Prata Bandeja 1Kg"],                                                                       # adaptado: o 2º, em bandeja de 1 kg
     ],
     "separam": [
         ("Leite UHT Integral Itambé Caixa com Tampa 1l", "Leite UHT Desnatado Itambé Caixa com Tampa 1l"),
