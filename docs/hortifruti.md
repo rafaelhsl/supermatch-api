@@ -1,6 +1,6 @@
 # Hortifrúti (frutas, verduras e legumes)
 
-> **Estado (18/11/2026): etapa 1 pronta; etapa 2 começou pelo SQL.** Existe uma lista de 28 produtos e o coletor sabe lê-los (só leitura), mas **nada de hortifrúti é gravado no banco nem aparece no site ainda**. O motivo está em "Por que ainda não vai para o site". O script que cria a coluna `unidade` está pronto em [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql): quem administra o Supabase o roda no SQL Editor (é seguro e pode repetir); depois vêm o código que a grava e lê, a equivalência e o site.
+> **Estado (18/11/2026): etapa 1 pronta; etapa 2 em andamento (SQL rodado; carga grava e API devolve `unidade`).** Existe uma lista de 28 produtos e o coletor sabe lê-los (só leitura), mas **nada de hortifrúti é gravado no banco nem aparece no site ainda**. O motivo está em "Por que ainda não vai para o site". A coluna `unidade` foi criada pelo [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql) e a carga já a grava (`kg`, `un` ou vazio); a API a devolve em cada opção. Faltam a equivalência por variedade, o "/kg" no site e o Super ABC.
 
 ## O que a etapa 1 entrega
 
@@ -77,7 +77,7 @@ Outras verduras e ervas ficam para depois (cebolinha, salsinha, coentro, rúcula
 
 ## O que falta (etapas seguintes)
 
-1. **O campo `unidade` no banco.** Script pronto em [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql) (uma coluna vazia, `text`, sem restrição, para a carga não quebrar se um mercado mandar uma unidade que não conhecemos). **Falta rodá-lo no Supabase**; depois, o código que normaliza a unidade (`kg`, `un` ou vazio), a grava e a API a devolve. O histórico de preços não precisa dela: o preço de um produto vendido por quilo continua sendo comparável com o dele mesmo.
+1. ~~O campo `unidade` no banco.~~ **Pronto.** Coluna criada por [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql) (`text`, sem restrição, para a carga não quebrar se um mercado mandar uma unidade que não conhecemos). `coletor_vtex.unidade_normalizada` deixa só `kg`, `un` ou vazio; a carga detecta a coluna e a grava; a API a pede (e segue sem ela se o banco não a tiver). O histórico de preços não precisa dela: o preço de um produto vendido por quilo continua sendo comparável com o dele mesmo.
 2. **Equivalência por variedade e forma de venda.** O preço por quilo vira "1 kg" na chave; o pacote de 400 g continua sendo 400 g. As dimensões que importam: variedade (banana prata, nanica, da terra; tomate italiano, salada, uva; maçã fuji, gala), **orgânico**, tipo de embalagem (a granel, bandeja, pacote), e o nome escrito de dois jeitos ("Limão Tahiti" e "Limão-taiti"). O mapa de entrega por mercado também importa: só Supernosso e Atacadão vendem fresco online.
 3. **O site.** Rótulo "R$ 3,79 **/kg**" (e "/maço", "/un"), quantidade da lista em quilos para o que é vendido por quilo, e o aviso quando o preço é por peso aproximado.
 4. **Super ABC.** Sem API; o robô achou tomate (longa vida, italiano, grape), cebola (roxa e branca) e alface, em pacotes de peso aproximado ("400 G, 1 a 2 unidades"), então o preço por quilo dele é uma estimativa. Banana fresca não apareceu. Falta ligar o robô a esta lista.

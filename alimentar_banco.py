@@ -61,6 +61,9 @@ TOLERANCIA_DE_TERMOS_COM_FALHA = 0.10
 # Colunas da tabela `produtos`. As novas vêm de docs/sql/colunas_do_coletor.sql.
 COLUNAS_BASE = ("supermercado", "nome", "preco_varejo", "preco_atacado", "quantidade_atacado", "uf_cobertura", "texto_original")
 COLUNAS_NOVAS = ("ean", "marca", "categoria", "id_origem", "termo")
+# A coluna `unidade` (hortifrúti: "kg" = o preço é por quilo) vem de docs/sql/coluna_unidade.sql e é detectada À PARTE das outras:
+# a carga funciona com ou sem ela, na ordem que o SQL e o código chegarem.
+COLUNAS_DA_UNIDADE = ("unidade",)
 
 # Um robô por mercado, já com repetição automática para falha passageira (site lento).
 ROBOS = {
@@ -180,10 +183,10 @@ async def coletar_por_robo(mercado, alvos, paralelo=1, tolerancia=TOLERANCIA_DE_
 
 # ============================== o banco ==============================
 
-def colunas_novas_existem(banco):
-    """A tabela `produtos` já tem as colunas de docs/sql/colunas_do_coletor.sql? Outro erro (rede, chave) não é resposta: sobe."""
+def colunas_existem(banco, colunas):
+    """A tabela `produtos` tem estas colunas? Outro erro (rede, chave) não é resposta: sobe."""
     try:
-        banco.table("produtos").select(",".join(COLUNAS_NOVAS)).limit(1).execute()
+        banco.table("produtos").select(",".join(colunas)).limit(1).execute()
         return True
     except Exception as erro:
         if "does not exist" in str(erro) or getattr(erro, "code", "") in ("42703", "PGRST204"):
@@ -191,13 +194,25 @@ def colunas_novas_existem(banco):
         raise
 
 
-def para_o_banco(produto, com_colunas_novas=True):
+def colunas_novas_existem(banco):
+    """A tabela `produtos` já tem as colunas de docs/sql/colunas_do_coletor.sql?"""
+    return colunas_existem(banco, COLUNAS_NOVAS)
+
+
+def coluna_unidade_existe(banco):
+    """A tabela `produtos` já tem a coluna de docs/sql/coluna_unidade.sql?"""
+    return colunas_existem(banco, COLUNAS_DA_UNIDADE)
+
+
+def para_o_banco(produto, com_colunas_novas=True, com_unidade=False):
     """A linha de `produtos`: só as colunas que existem, com os valores que o banco exige (NOT NULL)."""
     linha = {coluna: produto.get(coluna) for coluna in COLUNAS_BASE}
     linha["preco_atacado"] = produto.get("preco_atacado") if produto.get("preco_atacado") is not None else produto.get("preco_varejo")
     linha["quantidade_atacado"] = int(produto.get("quantidade_atacado") or 1)
     if com_colunas_novas:
         linha.update({coluna: produto.get(coluna) for coluna in COLUNAS_NOVAS})
+    if com_unidade:
+        linha["unidade"] = coletor_vtex.unidade_normalizada(produto.get("unidade"))      # só "kg", "un" ou vazio chegam ao banco
     return linha
 
 
@@ -207,14 +222,14 @@ def filtro_termos_mantidos(termos):
     return f"termo.is.null,termo.not.in.({lista})"
 
 
-def gravar_mercado(banco, mercado, produtos, inicio, com_colunas_novas=True, termos_mantidos=()):
+def gravar_mercado(banco, mercado, produtos, inicio, com_colunas_novas=True, termos_mantidos=(), com_unidade=False):
     """Grava os produtos novos do mercado e só depois apaga os antigos dele.
 
     As linhas antigas dos `termos_mantidos` (os que falharam nesta carga) ficam. Sem as colunas novas não há como saber o termo
     de uma linha antiga, então nada é mantido por termo (a carga parcial nem chega aqui nesse caso).
     Se a gravação falhar no meio, os dados antigos continuam lá (pode haver duplicados até a próxima carga).
     """
-    linhas = [para_o_banco(p, com_colunas_novas) for p in produtos]
+    linhas = [para_o_banco(p, com_colunas_novas, com_unidade) for p in produtos]
     for i in range(0, len(linhas), TAMANHO_LOTE):
         banco.table('produtos').insert(linhas[i:i + TAMANHO_LOTE]).execute()
     apagar = banco.table('produtos').delete().eq('supermercado', mercado).lt('atualizado_em', inicio)
@@ -244,6 +259,10 @@ def gravar_coletas(banco, coletas, inicio, dia):
     "falhou" ou "nao_gravado" (SEM_GRAVAR)."""
     situacoes = {}
     com_colunas_novas = colunas_novas_existem(banco) if banco is not None else True
+    com_unidade = coluna_unidade_existe(banco) if banco is not None else True
+    if banco is not None and not com_unidade:
+        print("::notice title=Coluna unidade ausente em produtos::rode docs/sql/coluna_unidade.sql no Supabase; enquanto isso a carga não grava a unidade "
+              "(só o hortifrúti precisa dela).")
     if banco is not None and not com_colunas_novas:
         print("::warning title=Colunas novas ausentes em produtos::rode docs/sql/colunas_do_coletor.sql no Supabase; "
               "enquanto isso a carga grava só as colunas antigas e não aceita coleta parcial.")
@@ -266,7 +285,7 @@ def gravar_coletas(banco, coletas, inicio, dia):
             situacoes[mercado] = "nao_gravado"
             continue
         try:
-            gravar_mercado(banco, mercado, coleta.produtos, inicio, com_colunas_novas, coleta.termos_falhos)
+            gravar_mercado(banco, mercado, coleta.produtos, inicio, com_colunas_novas, coleta.termos_falhos, com_unidade)
         except Exception as erro:
             coleta.status = "falhou"
             coleta.motivos.insert(0, f"erro ao gravar no banco: {erro!r}")

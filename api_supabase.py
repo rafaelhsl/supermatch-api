@@ -72,8 +72,11 @@ CATALOGO_VALIDADE_SEGUNDOS = 3600
 TAMANHO_PAGINA = 1000  # limite de linhas por consulta do Supabase
 UF_DA_REGIAO = "MG"    # Belo Horizonte e região metropolitana
 # Só as colunas que a API devolve ou usa na busca e no agrupamento (fica de fora `texto_original`, o texto bruto do robô).
-COLUNAS_DO_CATALOGO = ("id,supermercado,nome,marca,ean,categoria,id_origem,termo,"
+COLUNAS_SEM_UNIDADE = ("id,supermercado,nome,marca,ean,categoria,id_origem,termo,"
                        "preco_varejo,preco_atacado,quantidade_atacado,uf_cobertura,atualizado_em")
+# `unidade` ("kg" = o preço é por quilo; docs/hortifruti.md) vem de docs/sql/coluna_unidade.sql. Se o banco não a tiver, a API segue sem ela
+# em vez de cair: o catálogo é o coração do site.
+COLUNAS_DO_CATALOGO = COLUNAS_SEM_UNIDADE + ",unidade"
 _catalogos = {}   # uf -> (momento em que foi carregado, catálogo indexado)
 _quedas = QuedasDoHistorico()   # preços de 7 dias antes, para o selo de queda
 _travas = {}      # uf -> trava: uma atualização por vez
@@ -89,16 +92,28 @@ def _vencido(guardado) -> bool:
     return time.monotonic() - guardado[0] >= CATALOGO_VALIDADE_SEGUNDOS
 
 
+def _coluna_ausente(erro) -> bool:
+    """O banco respondeu que uma coluna pedida não existe (e não, por exemplo, que a rede caiu)."""
+    return "does not exist" in str(erro) or getattr(erro, "code", "") in ("42703", "PGRST204")
+
+
 def baixar_catalogo(uf: str):
     """Lê do banco todos os produtos da UF (e do Brasil todo), de 1000 em 1000, e devolve o catálogo indexado."""
-    produtos, inicio = [], 0
+    produtos, inicio, colunas = [], 0, COLUNAS_DO_CATALOGO
     while True:
-        pagina = supabase.table('produtos') \
-            .select(COLUNAS_DO_CATALOGO) \
-            .in_('uf_cobertura', [uf, 'BR']) \
-            .order('id') \
-            .range(inicio, inicio + TAMANHO_PAGINA - 1) \
-            .execute().data
+        try:
+            pagina = supabase.table('produtos') \
+                .select(colunas) \
+                .in_('uf_cobertura', [uf, 'BR']) \
+                .order('id') \
+                .range(inicio, inicio + TAMANHO_PAGINA - 1) \
+                .execute().data
+        except Exception as erro:
+            if colunas != COLUNAS_SEM_UNIDADE and _coluna_ausente(erro):
+                print("⚠️ A tabela produtos não tem a coluna `unidade` (docs/sql/coluna_unidade.sql): sigo sem ela.")
+                colunas, produtos, inicio = COLUNAS_SEM_UNIDADE, [], 0
+                continue
+            raise
         produtos.extend(pagina)
         if len(pagina) < TAMANHO_PAGINA:
             break

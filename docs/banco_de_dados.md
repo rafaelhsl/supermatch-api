@@ -31,12 +31,14 @@ tabela inteira é apagada e regravada.
 | `categoria` | `text` | não | coletor por API | Como o mercado classifica, ex.: `Mercearia > Grãos > Arroz` |
 | `id_origem` | `text` | não | coletor por API | Identidade do produto no mercado (`productId:itemId`); é a chave do histórico de preços |
 | `termo` | `text` | não | coletor por API e robô da lista | Termo da [lista de produtos](../dados/lista_de_produtos.json) que trouxe o item, ex.: `arroz`. Vazio nas linhas do modo antigo |
-| `unidade` | `text` | não | coletor por API (hortifrúti; ainda não grava) | Como o mercado vende: `kg` = o **preço é por quilo**; `un` = por unidade ou pacote; vazio = não informado (todo produto de hoje). Veja [`hortifruti.md`](hortifruti.md) |
+| `unidade` | `text` | não | coletor por API (a carga normaliza) | Como o mercado vende: `kg` = o **preço é por quilo**; `un` = por unidade ou pacote; vazio = não informado (o robô do Super ABC) ou unidade desconhecida. Só chegam ao banco esses valores. Veja [`hortifruti.md`](hortifruti.md) |
 | `atualizado_em` | `timestamptz` | sim, automática | banco (`now()` em UTC) | Momento em que a linha foi inserida, ou seja, a hora da coleta |
 
 `ean`, `marca`, `categoria`, `id_origem` e `termo` vêm de [`sql/colunas_do_coletor.sql`](sql/colunas_do_coletor.sql). Sem elas a carga grava só as colunas
-antigas (e não aceita coleta parcial); a API e o site não usam as colunas novas. `unidade` vem de [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql) e é a
-primeira etapa do hortifrúti: a coluna existe e fica vazia até o código que a grava ser publicado (nem a carga nem a API a conhecem ainda).
+antigas (e não aceita coleta parcial); a API e o site não usam as colunas novas. `unidade` vem de [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql) e é detectada **à parte** das outras: a carga grava a unidade se a coluna existe (e
+avisa com um `::notice` se não existir, sem deixar de gravar o resto), e a API a pede e, se o banco responder que ela não existe, segue sem ela em vez
+de cair. Por isso o SQL e o código podem chegar em qualquer ordem. Hoje nenhum produto da lista de 100 termos é vendido por quilo, então a coluna
+só guarda `un`; os `kg` vêm com o hortifrúti ([`hortifruti.md`](hortifruti.md)).
 
 ### Regras que o banco garante e as que só o código assume
 
@@ -260,7 +262,8 @@ A resposta traz ainda `equivalencia_familias`, a lista dos tipos de produto para
 qualquer família vem sem esses dois campos. A chave é calculada pela API ao carregar o catálogo (`equivalencia.py`), não fica
 no banco. Veja [`equivalencia.md`](equivalencia.md).
 
-Cada opção de compra pode trazer também `queda_preco` (`{"preco_antes": 14.99, "percentual": 47, "dias": 7}`) quando o preço do varejo
+Cada opção de compra traz também `unidade` (`kg`, `un` ou ausente), que o site ainda não usa; é ela que vai dizer "R$ 3,79 **/kg**" no hortifrúti.
+Pode trazer ainda `queda_preco` (`{"preco_antes": 14.99, "percentual": 47, "dias": 7}`) quando o preço do varejo
 caiu entre 5% e 70% em relação ao de 7 dias antes; sem queda, o campo não vem. Vem do histórico de preços, lido uma vez por dia, e não fica em
 `produtos`. Veja [`historico_de_precos.md`](historico_de_precos.md#o-selo-caiu-x-em-7-dias).
 

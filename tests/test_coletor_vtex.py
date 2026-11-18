@@ -357,6 +357,12 @@ def teste_peso_variavel_so_entra_no_termo_que_aceita():
     assert not c.passa_no_filtro({**banana_kg, "nome": "Banana Frita Laminada"}, {"termo": "banana", "aceita_peso_variavel": True, "nome_exclui": ["frit"]})
 
 
+def teste_unidade_normalizada():
+    assert c.unidade_normalizada("kg") == "kg" and c.unidade_normalizada(" KG ") == "kg"
+    assert all(c.unidade_normalizada(u) == "un" for u in ("un", "UN", "und", "unid", "unidade", "pc", "pç"))
+    assert all(c.unidade_normalizada(u) is None for u in ("g", "l", "lt", "cx", "m", "", None))          # desconhecida: vazio
+
+
 def teste_linha_traz_a_unidade_e_o_multiplicador():
     # Supernosso/Apoio (API de catálogo): "kg" = o preço é por quilo; o multiplicador é de quanto em quanto se compra
     produto = produto_vtex(1, "Tomate Italiano Supernosso 500g", 18.99, categorias=("/Hortifrúti/Legumes/",), unidade="kg")
