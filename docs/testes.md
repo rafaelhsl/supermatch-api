@@ -4,7 +4,7 @@ Os testes ficam em [`tests/`](../tests). Todos são locais: usam bancos e APIs d
 
 | Arquivos | O que conferem | Precisa de |
 |---|---|---|
-| `tests/test_*.py` | a API, a busca, o agrupamento, a equivalência (`equivalencia.py`), a carga, o histórico, o selo de queda de preço (`quedas.py`), o coletor, o Super ABC, a entrega por cidade e os arquivos de bibliotecas | Python e as bibliotecas do `requirements.txt` |
+| `tests/test_*.py` | a API, a busca, o agrupamento, a equivalência (`equivalencia.py`), a carga, o histórico, o selo de queda de preço (`quedas.py`), os scripts SQL de `docs/sql/` (só aditivos e que podem repetir), o coletor, o Super ABC, a entrega por cidade e os arquivos de bibliotecas | Python e as bibliotecas do `requirements.txt` |
 | `tests/test_*.js` | trechos de `site/index.html`: agrupamento por equivalência, lista de compras, identificador dos itens, aviso dos ocultados, selo de queda de preço e entrega por cidade | Node |
 | `tests/navegador/test_site_*.py` | o site inteiro numa tela de verdade (celular e computador): entrega por cidade, equivalência, identificador dos itens, lista com preços do dia, aviso dos ocultados e selo de queda de preço | Python, Playwright e o Chromium (veja abaixo) |
 
