@@ -43,8 +43,10 @@ def estruturar_produto_regex_json(texto_bruto, supermercado_nome):
         "texto_original": texto_bruto
     }
 
-def resumo_do_erro(erro, limite=300):
-    """Mensagem do erro numa linha só. O Playwright põe o motivo real ("intercepts pointer events", "not visible"...) no 'Call log'."""
+def resumo_do_erro(erro, limite=3000):
+    """Mensagem do erro numa linha só. O Playwright põe o motivo real ("intercepts pointer events", "not visible"...) no 'Call log', no FIM
+    da mensagem: com 300 caracteres a carga de 18/11/2026 cortou o log justamente antes dele ("...waiting for element to be visible, enabled and").
+    O log de um clique que esgotou o tempo cabe em uns 2.000 caracteres; o limite só existe para um erro absurdo não inundar a tela."""
     return " ".join(str(erro).split())[:limite]
 
 

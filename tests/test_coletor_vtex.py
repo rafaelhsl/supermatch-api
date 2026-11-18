@@ -14,6 +14,9 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import coletor_vtex as c  # noqa: E402
+import disjuntor  # noqa: E402
+
+disjuntor.PAUSA_DA_SEGUNDA_RODADA = 0          # nenhum teste espera de verdade pela segunda rodada
 
 
 # ============================== apoio dos testes ==============================
@@ -429,6 +432,167 @@ def teste_coletar_hortifruti_mantem_o_fresco_e_conta_os_itens_por_quilo():
     linhas = resultado["Supernosso"]["tomate"]
     assert not erros and [l["nome"] for l in linhas] == ["Tomate Italiano Quilo", "Tomate Grape Mini Bandeja 300g"]
     assert "1 por kg" in c.resumo_de_termo(linhas) and "por kg" not in c.resumo_de_termo([dict(linhas[1], ean=None, quantidade_atacado=1)])
+
+
+# ============================== o disjuntor e a segunda rodada ==============================
+
+def termos_de(n):
+    return [{"termo": f"termo{i:03d}"} for i in range(n)]
+
+
+def linhas_de(consulta):
+    return [{"id_origem": consulta, "nome": consulta, "categoria": "", "peso_variavel": False}]
+
+
+def teste_mercado_fora_do_ar_para_depois_de_seis_falhas_seguidas():
+    chamadas = {"Atacadao": [], "Supernosso": []}
+
+    def fora_do_ar(http, consulta):
+        chamadas["Atacadao"].append(consulta)
+        raise c.ErroDeColeta(f"HTTP 403 em https://www.atacadao.com.br/api/graphql?q={consulta}")
+
+    def saudavel(http, consulta):
+        chamadas["Supernosso"].append(consulta)
+        return linhas_de(consulta)
+
+    termos = termos_de(100)
+    resultado, erros = c.coletar(None, ["Atacadao", "Supernosso"], termos, 100, baixadores={"Atacadao": fora_do_ar, "Supernosso": saudavel}, segunda_rodada=False)
+    assert len(chamadas["Atacadao"]) == 6                          # parou na sexta falha seguida, em vez de perguntar os 100
+    assert len(chamadas["Supernosso"]) == 100 and len(resultado["Supernosso"]) == 100       # o outro mercado nem percebe
+    atacadao = [e for e in erros if e[0] == "Atacadao"]
+    assert [e[1] for e in atacadao] == [t["termo"] for t in termos]                          # todos os termos aparecem como falha, na ordem da lista
+    assert all("HTTP 403" in e[2] and not disjuntor.foi_pulado(e[2]) for e in atacadao[:6])
+    assert all(disjuntor.foi_pulado(e[2]) and "6 vezes seguidas" in e[2] and "HTTP 403" in e[2] for e in atacadao[6:])
+    assert resultado["Atacadao"] == {}
+
+
+def teste_um_acerto_no_meio_impede_o_disjuntor():
+    chamadas = []
+
+    def baixar(http, consulta):
+        chamadas.append(consulta)
+        if int(consulta[-3:]) % 6 != 5:                           # cinco falhas, um acerto, cinco falhas...
+            raise c.ErroDeColeta("caiu")
+        return linhas_de(consulta)
+
+    resultado, erros = c.coletar(None, ["Apoio Entrega"], termos_de(60), 100, baixadores={"Apoio Entrega": baixar}, segunda_rodada=False)
+    assert len(chamadas) == 60 and len(resultado["Apoio Entrega"]) == 10 and len(erros) == 50
+    assert not any(disjuntor.foi_pulado(e[2]) for e in erros)
+
+
+def teste_limite_de_falhas_vem_do_chamador_e_zero_desliga():
+    def sempre_cai(http, consulta):
+        raise c.ErroDeColeta("caiu")
+
+    for limite, esperado in ((2, 2), (0, 30)):
+        chamadas = []
+
+        def baixar(http, consulta, chamadas=chamadas):
+            chamadas.append(consulta)
+            return sempre_cai(http, consulta)
+
+        c.coletar(None, ["Apoio Entrega"], termos_de(30), 100, baixadores={"Apoio Entrega": baixar}, limite_de_falhas=limite, segunda_rodada=False)
+        assert len(chamadas) == esperado, (limite, len(chamadas))
+
+
+def teste_segunda_rodada_recupera_uma_falha_passageira():
+    vezes, pausas, vistos = {}, [], []
+
+    def baixar(http, consulta):
+        vezes[consulta] = vezes.get(consulta, 0) + 1
+        if consulta == "termo002" and vezes[consulta] == 1:
+            raise c.ErroDeColeta("HTTP 503 passageiro")
+        return linhas_de(consulta)
+
+    termos = termos_de(5)
+    resultado, erros = c.coletar(None, ["Supernosso"], termos, 100, lambda m, t, brutas, esc: vistos.append(t["termo"]),
+                                 baixadores={"Supernosso": baixar}, pausa=45, dormir=pausas.append)
+    assert erros == [] and vezes["termo002"] == 2 and all(vezes[t["termo"]] == (2 if t["termo"] == "termo002" else 1) for t in termos)
+    assert pausas == [45]                                           # esperou antes de tentar de novo
+    assert list(resultado["Supernosso"]) == [t["termo"] for t in termos]      # a ordem da lista, mesmo com o termo recuperado no fim
+    assert sorted(vistos) == [t["termo"] for t in termos] and vistos.count("termo002") == 1   # o aviso de "termo pronto" vale uma vez por termo
+
+
+def teste_sem_falha_nao_ha_segunda_rodada_nem_pausa():
+    pausas = []
+    resultado, erros = c.coletar(None, ["Supernosso"], termos_de(5), 100, baixadores={"Supernosso": lambda h, q: linhas_de(q)}, dormir=pausas.append)
+    assert erros == [] and pausas == [] and len(resultado["Supernosso"]) == 5
+
+
+def teste_segunda_rodada_desligada_nao_repete_nem_espera():
+    chamadas, pausas = [], []
+
+    def baixar(http, consulta):
+        chamadas.append(consulta)
+        raise c.ErroDeColeta("caiu")
+
+    _, erros = c.coletar(None, ["Supernosso"], termos_de(3), 100, baixadores={"Supernosso": baixar}, segunda_rodada=False, dormir=pausas.append)
+    assert len(chamadas) == 3 and pausas == [] and len(erros) == 3
+
+
+def teste_a_pausa_padrao_e_lida_na_hora():
+    pausas = []
+
+    def uma_falha(http, consulta):
+        raise c.ErroDeColeta("caiu")
+
+    anterior = disjuntor.PAUSA_DA_SEGUNDA_RODADA
+    disjuntor.PAUSA_DA_SEGUNDA_RODADA = 7
+    try:
+        c.coletar(None, ["Supernosso"], termos_de(1), 100, baixadores={"Supernosso": uma_falha}, dormir=pausas.append)
+    finally:
+        disjuntor.PAUSA_DA_SEGUNDA_RODADA = anterior
+    assert pausas == [7]
+    c.coletar(None, ["Supernosso"], termos_de(1), 100, baixadores={"Supernosso": uma_falha}, dormir=pausas.append)
+    assert pausas == [7, 0]                                         # (nos testes a constante vale 0, veja o início do arquivo)
+
+
+def teste_mercado_que_volta_na_segunda_rodada_completa_a_coleta():
+    chamadas = []
+
+    def baixar(http, consulta):
+        chamadas.append(consulta)
+        if len(chamadas) <= 6:                                      # fora do ar nas seis primeiras perguntas, depois volta
+            raise c.ErroDeColeta("HTTP 403")
+        return linhas_de(consulta)
+
+    termos = termos_de(100)
+    resultado, erros = c.coletar(None, ["Atacadao"], termos, 100, baixadores={"Atacadao": baixar}, pausa=0, dormir=lambda s: None)
+    assert erros == [] and len(resultado["Atacadao"]) == 100        # inclusive os 94 que o disjuntor pulou na primeira rodada
+    assert len(chamadas) == 6 + 100                                 # 6 que falharam + a segunda rodada inteira
+    assert list(resultado["Atacadao"]) == [t["termo"] for t in termos]
+
+
+def teste_mercado_que_continua_fora_do_ar_desiste_na_segunda_rodada():
+    chamadas = []
+
+    def baixar(http, consulta):
+        chamadas.append(consulta)
+        raise c.ErroDeColeta("HTTP 403")
+
+    termos = termos_de(100)
+    resultado, erros = c.coletar(None, ["Atacadao"], termos, 100, baixadores={"Atacadao": baixar}, dormir=lambda s: None)
+    assert len(chamadas) == 12                                      # 6 na primeira rodada, 6 na segunda: nunca os 200
+    assert resultado["Atacadao"] == {} and len(erros) == 100
+    assert sum(1 for e in erros if not disjuntor.foi_pulado(e[2])) == 6
+    assert [e[1] for e in erros][:6] == [t["termo"] for t in termos][:6]          # o primeiro erro é uma falha de verdade, não um "não tentado"
+
+
+def teste_relatorio_da_linha_de_comando_resume_os_termos_pulados():
+    def baixar(http, consulta):
+        raise c.ErroDeColeta("HTTP 403")
+
+    lista = Path(__file__).resolve().parent / "_lista_do_disjuntor.json"
+    lista.write_text(json.dumps({"teto_por_termo": 100, "termos": termos_de(40)}), encoding="utf-8")
+    saida = io.StringIO()
+    try:
+        with mock.patch.dict(c.BAIXADORES, {"Apoio Entrega": baixar}), mock.patch("sys.stdout", saida), mock.patch.object(c.sys.stdout, "reconfigure", create=True):
+            codigo = c.principal(["--mercados", "Apoio Entrega", "--lista", str(lista)])
+    finally:
+        lista.unlink()
+    texto = saida.getvalue()
+    assert codigo == 1 and texto.count("ERRO Apoio Entrega /") == 6          # as seis falhas de verdade, uma a uma
+    assert "ERRO Apoio Entrega (34 termos)" in texto and "6 vezes seguidas" in texto  # e os 34 que não foram tentados, numa linha só
 
 
 if __name__ == "__main__":

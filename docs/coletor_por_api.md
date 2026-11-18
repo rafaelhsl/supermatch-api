@@ -35,7 +35,7 @@ Regras comuns:
 - **EAN** só vale com 8, 12, 13 ou 14 dígitos e sem repetição óbvia. Códigos internos de marca própria (como "8200") viram vazio.
 - **Atacado**: guarda a primeira faixa acima de 1 unidade, se for mais barata que o varejo. Sem faixa, `preco_atacado = preco_varejo` e `quantidade_atacado = 1`, como no banco hoje.
 - **Peso variável** (vendido por kg ou grama: queijo fatiado, carne, hortifruti) é descartado, a não ser no termo que diz `"aceita_peso_variavel": true`. Só os termos de [`dados/lista_hortifruti.json`](../dados/lista_hortifruti.json) dizem isso, e essa lista **não é lida pela carga diária** (etapa 1 do hortifrúti: veja [`hortifruti.md`](hortifruti.md)). Cada linha traz `unidade` (`kg` quer dizer que o preço é por quilo) e `multiplicador`; a gravação no banco ignora os dois.
-- Falha de rede ou erro 429/5xx: repete até 4 vezes. Erro do GraphQL do Atacadão (já apareceu "Cannot read properties of undefined (reading 'price')" e passou na chamada seguinte): repete até 3 vezes.
+- Falha de rede ou erro 429/5xx: repete até 4 vezes (o 403, não: é bloqueio). Um termo que falha mesmo assim vira erro daquele termo e a coleta segue; depois de 6 termos seguidos com erro o mercado é dado como fora do ar e os que faltam não são tentados, e no fim há uma segunda rodada, depois de 60 s, com o que não deu certo ([`carga_diaria.md`](carga_diaria.md#quando-um-mercado-cai-no-meio-da-carga)). Erro do GraphQL do Atacadão (já apareceu "Cannot read properties of undefined (reading 'price')" e passou na chamada seguinte): repete até 3 vezes.
 - Um termo que falha em um mercado vira erro daquele par; os outros termos continuam. O programa termina com código 1 se houve erro.
 
 ## A lista de produtos

@@ -3,13 +3,18 @@
 Rodar com:  python tests/test_carga.py   (precisa das bibliotecas do requirements.txt)
 """
 import asyncio
+import contextlib
+import io
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import alimentar_banco as ab  # noqa: E402
 import coletor_vtex as c  # noqa: E402
+import disjuntor  # noqa: E402
 from robos_comum import FalhaNoRobo  # noqa: E402
+
+disjuntor.PAUSA_DA_SEGUNDA_RODADA = 0          # nenhum teste espera de verdade pela segunda rodada
 
 
 # ============================== um banco falso que só anota o que lhe pedem ==============================
@@ -201,7 +206,7 @@ def teste_coletar_por_robo():
     anterior = ab.ROBOS
     ab.ROBOS = {"Super ABC": super_abc}
     try:
-        coleta = asyncio.run(ab.coletar_por_robo("Super ABC", ab.alvos_da_lista(termos), paralelo=2))
+        coleta = asyncio.run(ab.coletar_por_robo("Super ABC", ab.alvos_da_lista(termos), paralelo=2, segunda_rodada=False))
     finally:
         ab.ROBOS = anterior
     assert maximo[0] <= 2 and len(chamadas) == 5                                    # nunca mais de 2 navegadores juntos
@@ -259,6 +264,201 @@ def teste_coletas_pela_api():
     apoio, supernosso = coletas["Apoio Entrega"], coletas["Supernosso"]
     assert len(apoio.produtos) == 2 and apoio.termos_falhos == [] and apoio.termos_total == 3     # o mesmo produto em 3 termos entra uma vez
     assert supernosso.termos_falhos == ["feijão"] and "HTTP 503" in supernosso.motivos[0] and len(supernosso.produtos) == 1
+
+
+# ============================== o disjuntor e a segunda rodada ==============================
+
+def alvos_de(n):
+    termos = [{"termo": f"termo{i:03d}"} for i in range(n)]
+    return ab.alvos_da_lista(termos)
+
+
+def com_robo(robo, **opcoes):
+    """Roda coletar_por_robo com um robô falso no lugar do Super ABC."""
+    anterior = ab.ROBOS
+    ab.ROBOS = {"Super ABC": robo}
+    try:
+        return asyncio.run(ab.coletar_por_robo("Super ABC", **opcoes))
+    finally:
+        ab.ROBOS = anterior
+
+
+def teste_robo_fora_do_ar_nao_gasta_a_lista_inteira():
+    chamadas = []
+
+    async def robo(texto):
+        chamadas.append(texto)
+        raise FalhaNoRobo("Super ABC", "não consegui abrir a lista de unidades (Locator.click: Timeout 15000ms exceeded)")
+
+    saida = io.StringIO()
+    with contextlib.redirect_stdout(saida):
+        coleta = com_robo(robo, alvos=alvos_de(100), paralelo=1, segunda_rodada=False)
+    assert len(chamadas) == 6                                       # e não 100 (no incidente de 18/11: 45 minutos perdidos)
+    assert coleta.termos_total == 100 and len(coleta.termos_falhos) == 100 and coleta.produtos == []
+    assert "Timeout 15000ms" in coleta.motivos[0] and not disjuntor.foi_pulado(coleta.motivos[0].split(": ", 1)[1])   # a primeira falha é a real
+    assert sum(1 for m in coleta.motivos if "não tentado" in m) == 94
+    assert saida.getvalue().count("⛔ Super ABC '") == 6 and "94 busca(s) não tentado" in saida.getvalue()   # o log não ganha 94 linhas iguais
+    assert ab.avaliar_coleta(coleta.produtos, coleta.termos_total, coleta.termos_falhos, coleta.tolerancia) == "falhou"
+
+
+def teste_com_varios_navegadores_o_disjuntor_ainda_poupa_a_lista():
+    chamadas = []
+
+    async def robo(texto):
+        chamadas.append(texto)
+        await asyncio.sleep(0.01)
+        raise FalhaNoRobo("Super ABC", "caiu")
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        com_robo(robo, alvos=alvos_de(100), paralelo=3, segunda_rodada=False)
+    assert 6 <= len(chamadas) <= 8                                  # os que já estavam em andamento terminam; nenhum novo começa
+
+
+def teste_robo_com_acerto_no_meio_nao_abre_o_disjuntor():
+    async def robo(texto):
+        if int(texto[-3:]) % 6 != 5:
+            raise FalhaNoRobo("Super ABC", "caiu")
+        return [{"nome": f"{texto} Camil 1kg", "preco_varejo": 5.0}]
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        coleta = com_robo(robo, alvos=alvos_de(60), paralelo=1, segunda_rodada=False)
+    assert len(coleta.termos_falhos) == 50 and len(coleta.produtos) == 10 and not any("não tentado" in m for m in coleta.motivos)
+
+
+def teste_segunda_rodada_do_robo_recupera_o_que_falhou():
+    vezes, pausas = {}, []
+
+    async def robo(texto):
+        vezes[texto] = vezes.get(texto, 0) + 1
+        if texto in ("termo001", "termo003") and vezes[texto] == 1:
+            raise FalhaNoRobo("Super ABC", "busca não realizada")
+        return [{"nome": f"{texto} Camil 1kg", "preco_varejo": 5.0}]
+
+    async def dormir(segundos):
+        pausas.append(segundos)
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        coleta = com_robo(robo, alvos=alvos_de(5), paralelo=2, pausa=30, dormir=dormir)
+    assert coleta.termos_falhos == [] and coleta.motivos == [] and len(coleta.produtos) == 5      # a carga fica "ok", não "parcial"
+    assert pausas == [30] and vezes["termo001"] == 2 and vezes["termo000"] == 1
+    assert ab.avaliar_coleta(coleta.produtos, coleta.termos_total, coleta.termos_falhos, coleta.tolerancia) == "ok"
+
+
+def teste_busca_que_falha_nas_duas_rodadas_continua_falha():
+    vezes = {}
+
+    async def robo(texto):
+        vezes[texto] = vezes.get(texto, 0) + 1
+        if texto == "termo002":
+            raise FalhaNoRobo("Super ABC", "busca não realizada")
+        return [{"nome": f"{texto} Camil 1kg", "preco_varejo": 5.0}]
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        coleta = com_robo(robo, alvos=alvos_de(5), paralelo=2, pausa=0)
+    assert vezes["termo002"] == 2 and coleta.termos_falhos == ["termo002"] and len(coleta.produtos) == 4      # tenta duas vezes, não três
+    assert len(coleta.motivos) == 1 and "busca não realizada" in coleta.motivos[0]
+    assert ab.avaliar_coleta(coleta.produtos, coleta.termos_total, coleta.termos_falhos, coleta.tolerancia) == "parcial"
+
+
+def teste_sem_falha_o_robo_nao_espera_nada():
+    pausas = []
+
+    async def robo(texto):
+        return [{"nome": f"{texto} Camil 1kg", "preco_varejo": 5.0}]
+
+    async def dormir(segundos):
+        pausas.append(segundos)
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        coleta = com_robo(robo, alvos=alvos_de(4), paralelo=2, dormir=dormir)
+    assert pausas == [] and coleta.termos_falhos == [] and len(coleta.produtos) == 4
+
+
+def teste_robo_que_volta_na_segunda_rodada_completa_a_coleta():
+    chamadas = []
+
+    async def robo(texto):
+        chamadas.append(texto)
+        if len(chamadas) <= 6:                                      # o site some por um momento, depois volta
+            raise FalhaNoRobo("Super ABC", "caiu")
+        return [{"nome": f"{texto} Camil 1kg", "preco_varejo": 5.0}]
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        coleta = com_robo(robo, alvos=alvos_de(100), paralelo=1, pausa=0)
+    assert coleta.termos_falhos == [] and len(coleta.produtos) == 100 and len(chamadas) == 106
+    assert ab.avaliar_coleta(coleta.produtos, coleta.termos_total, coleta.termos_falhos, coleta.tolerancia) == "ok"
+
+
+def teste_robo_que_continua_fora_do_ar_gasta_so_duas_rodadas_curtas():
+    chamadas = []
+
+    async def robo(texto):
+        chamadas.append(texto)
+        raise FalhaNoRobo("Super ABC", "caiu")
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        coleta = com_robo(robo, alvos=alvos_de(100), paralelo=1, pausa=0)
+    assert len(chamadas) == 12 and len(coleta.termos_falhos) == 100 and coleta.produtos == []
+
+
+def teste_erro_inesperado_do_robo_tambem_conta_para_o_disjuntor():
+    chamadas = []
+
+    async def robo(texto):
+        chamadas.append(texto)
+        raise ValueError("estourou")
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        coleta = com_robo(robo, alvos=alvos_de(50), paralelo=1, segunda_rodada=False)
+    assert len(chamadas) == 6 and "erro inesperado" in coleta.motivos[0]
+
+
+def teste_coletas_pela_api_com_mercado_fora_do_ar():
+    def baixar_atacadao(http, consulta):
+        raise c.ErroDeColeta(f"HTTP 403 em https://www.atacadao.com.br/api/graphql?termo={consulta}")
+
+    def baixar_apoio(http, consulta):
+        return [linha_api("Apoio Entrega", 1, consulta)]
+
+    termos = [{"termo": f"termo{i:03d}"} for i in range(100)]
+    saida = io.StringIO()
+    with contextlib.redirect_stdout(saida):
+        coletas = ab.coletas_pela_api(["Apoio Entrega", "Atacadao"], termos, 100, http=object(),
+                                      baixadores={"Apoio Entrega": baixar_apoio, "Atacadao": baixar_atacadao})
+    atacadao = coletas["Atacadao"]
+    assert atacadao.termos_total == 100 and len(atacadao.termos_falhos) == 100 and atacadao.produtos == []
+    assert "HTTP 403" in atacadao.motivos[0] and "não tentado" not in atacadao.motivos[0]
+    assert saida.getvalue().count("⛔ Atacadao 'termo") == 6 and "⛔ Atacadao: 94 termo(s) não tentado" in saida.getvalue()
+    assert coletas["Apoio Entrega"].termos_falhos == [] and len(coletas["Apoio Entrega"].produtos) == 1     # o outro mercado segue
+    assert ab.avaliar_coleta(atacadao.produtos, atacadao.termos_total, atacadao.termos_falhos, atacadao.tolerancia) == "falhou"
+
+
+def teste_o_limite_de_falhas_do_robo_vem_do_chamador():
+    for limite, esperado in ((2, 2), (0, 20)):                      # 0 desliga o disjuntor
+        chamadas = []
+
+        async def robo(texto, chamadas=chamadas):
+            chamadas.append(texto)
+            raise FalhaNoRobo("Super ABC", "caiu")
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            com_robo(robo, alvos=alvos_de(20), paralelo=1, limite_de_falhas=limite, segunda_rodada=False)
+        assert len(chamadas) == esperado, (limite, len(chamadas))
+
+
+def teste_coletas_pela_api_repassa_as_opcoes_da_coleta():
+    chamadas, pausas = [], []
+
+    def baixar(http, consulta):
+        chamadas.append(consulta)
+        raise c.ErroDeColeta("caiu")
+
+    termos = [{"termo": f"termo{i}"} for i in range(10)]
+    with contextlib.redirect_stdout(io.StringIO()):
+        ab.coletas_pela_api(["Atacadao"], termos, 100, http=object(), baixadores={"Atacadao": baixar}, limite_de_falhas=2, segunda_rodada=False)
+        assert len(chamadas) == 2                                   # o limite e o "sem segunda rodada" chegaram ao coletor
+        ab.coletas_pela_api(["Atacadao"], termos, 100, http=object(), baixadores={"Atacadao": baixar}, limite_de_falhas=2, pausa=33, dormir=pausas.append)
+    assert len(chamadas) == 2 + 4 and pausas == [33]
 
 
 # ============================== a gravação de ponta a ponta ==============================
