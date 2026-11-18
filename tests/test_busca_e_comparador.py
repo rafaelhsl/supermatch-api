@@ -286,6 +286,92 @@ def teste_grupo_sem_ean_nao_tem_id_do_grupo():
     assert len(grupos) == 2 and all("id_do_grupo" not in g and "ean" not in g for g in grupos)
 
 
+# ============================== preço por quilo não se mistura com preço de pacote ==============================
+
+def kg(nome, **campos):
+    return produto(nome, **campos) | {"unidade": "kg"}
+
+
+def pacote(nome, **campos):
+    return produto(nome, **campos) | {"unidade": "un"}
+
+
+def teste_preco_por_quilo_nao_junta_com_pacote_pelo_nome():
+    # os dois casos reais dos dados de 17/11 que o agrupamento por nome juntava
+    grupos = comp.cruzar_multiplos_produtos([[
+        kg("Repolho Branco Quilo", mercado="Atacadao", preco=3.49),
+        pacote("REPOLHO MISTO 200G", mercado="Supernosso", preco=11.99),
+        kg("Cebola Roxa Quilo", mercado="Atacadao", preco=9.99),
+        pacote("CEBOLA ROXA ORG 400G", mercado="Supernosso", preco=14.99),
+    ]])
+    assert len(grupos) == 4 and all(len(g["opcoes_de_compra"]) == 1 for g in grupos)
+
+
+def teste_preco_por_quilo_nao_junta_com_pacote_pelo_ean():
+    grupos = comp.cruzar_multiplos_produtos([[
+        kg("Tomate Italiano Quilo", mercado="Atacadao", preco=17.9, ean="2000000000017"),
+        pacote("Tomate Italiano Bandeja", mercado="Supernosso", preco=9.5, ean="2000000000017"),     # o mesmo código, vendido de outro jeito
+    ]])
+    assert sorted(g["id_do_grupo"] for g in grupos) == ["2000000000017|", "2000000000017||kg"]
+
+
+def teste_ean_diferente_e_nome_identico_nao_junta_quilo_com_pacote():
+    grupos = comp.cruzar_multiplos_produtos([[
+        kg("Banana Prata", mercado="Atacadao", preco=3.79, ean="2000000000024"),
+        pacote("Banana Prata", mercado="Supernosso", preco=7.99, ean="2000000000031"),
+    ]])
+    assert len(grupos) == 2
+    iguais = comp.cruzar_multiplos_produtos([[
+        kg("Banana Prata", mercado="Atacadao", preco=3.79, ean="2000000000024"),
+        kg("Banana Prata", mercado="Supernosso", preco=7.99, ean="2000000000031"),
+    ]])
+    assert len(iguais) == 1 and len(iguais[0]["opcoes_de_compra"]) == 2          # por quilo com por quilo continua juntando
+
+
+def teste_quilo_com_quilo_e_pacote_com_pacote_continuam_juntando():
+    grupos = comp.cruzar_multiplos_produtos([[
+        kg("Banana Prata Quilo", mercado="Atacadao", preco=3.49),
+        kg("Banana Prata Quilo", mercado="Supernosso", preco=7.99),
+        pacote("Cebola Orgânica 400g", mercado="Supernosso", preco=7.99),
+        pacote("Cebola Orgânica 400g", mercado="Apoio Entrega", preco=8.5),
+    ]])
+    assert sorted(len(g["opcoes_de_compra"]) for g in grupos) == [2, 2]
+
+
+def teste_sem_a_unidade_o_item_nao_entra_em_grupo_por_quilo():
+    # o robô do Super ABC não informa a unidade: sem a informação, não é por quilo
+    grupos = comp.cruzar_multiplos_produtos([[
+        kg("Tomate Longa Vida Quilo", mercado="Atacadao", preco=8.99),
+        produto("Tomate Longa Vida 500 G (1 A 2 Unidades)", mercado="Super ABC", preco=8.45),
+    ]])
+    assert len(grupos) == 2
+    sem_info = comp.cruzar_multiplos_produtos([[
+        produto("Tomate Longa Vida 500g", mercado="Super ABC", preco=8.45),
+        pacote("Tomate Longa Vida 500g", mercado="Supernosso", preco=9.0),
+    ]])
+    assert len(sem_info) == 1                                                    # sem unidade e `un` são do mesmo tipo: juntam
+
+
+def teste_produto_comum_sem_o_campo_unidade_agrupa_como_sempre():
+    grupos = comp.cruzar_multiplos_produtos([[
+        produto("Arroz Branco Camil Tipo 1 5kg", mercado="Apoio Entrega", preco=24.99, ean="7896006711155"),
+        produto("Arroz Camil Tipo 1 5kg", mercado="Super ABC", preco=26.0),
+        produto("Arroz Camil Seleções 5 kg Pacote", mercado="Atacadao", preco=22.5, ean="7896006711155"),
+    ]])
+    assert len(grupos) == 1 and len(grupos[0]["opcoes_de_compra"]) == 3 and "|" not in grupos[0]["id_do_grupo"]
+
+
+def teste_id_do_grupo_por_quilo_nao_muda_o_id_dos_outros():
+    grupos = comp.cruzar_multiplos_produtos([[
+        kg("Tomate Italiano Quilo", mercado="Atacadao", ean="2000000000017"),
+        pacote("Tomate Italiano Bandeja", mercado="Supernosso", ean="2000000000017"),
+        pacote("Arroz Camil 5kg", mercado="Apoio Entrega", ean="7896006711155"),
+    ]])
+    ids = {g["produto_base"]: g["id_do_grupo"] for g in grupos}
+    assert ids["Tomate Italiano Quilo"] == "2000000000017||kg" and ids["Tomate Italiano Bandeja"] == "2000000000017|"
+    assert ids["Arroz Camil 5kg"] == "7896006711155"                                # EAN único: só o código, como sempre
+
+
 if __name__ == "__main__":
     testes = [v for k, v in sorted(globals().items()) if k.startswith("teste_") and callable(v)]
     for t in testes:

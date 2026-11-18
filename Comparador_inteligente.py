@@ -71,6 +71,17 @@ def _medidas_conflitam(medida_a, medida_b):
     return bool(medida_a and medida_b and medida_a != medida_b)
 
 
+def _por_quilo(produto):
+    """O preço deste produto é POR QUILO? (hortifrúti: `unidade = kg`, docs/hortifruti.md). Sem a informação (o robô do Super ABC
+    não a dá), não é: na dúvida, não junta.
+
+    Um preço por quilo e o preço de um pacote não são comparáveis, mesmo que os nomes sejam parecidos e a medida não discorde
+    ("Repolho Branco Quilo" a R$ 3,49 o quilo e "Repolho Misto 200g" a R$ 11,99 o pacote). Por isso um item por quilo só entra num
+    grupo de itens por quilo, e um que não é por quilo, só num grupo dos que não são. A comparação entre as duas formas de venda é
+    do modo equivalente, que as converte para "1 kg"."""
+    return produto.get('unidade') == 'kg'
+
+
 def _entrar_no_grupo(grupo, produto):
     """O grupo guarda uma opção por mercado: a mais barata."""
     mercado = produto['supermercado']
@@ -97,6 +108,8 @@ def _juntar_grupos_de_ean_diferente(grupos, limite=LIMITE_NOME_IDENTICO):
             if id(outro) in removidos or _chave_do_ean(outro['ean']) == _chave_do_ean(grupo['ean']):
                 continue
             if set(grupo['opcoes_dict']) & set(outro['opcoes_dict']) or _medidas_conflitam(grupo['medida'], outro['medida']):
+                continue
+            if grupo['por_quilo'] != outro['por_quilo']:
                 continue
             if grupo['tags'] != outro['tags'] and grupo['tags'] and outro['tags']:
                 continue
@@ -129,7 +142,7 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
     for produto in (p for p in todos_produtos if p.get('ean')):
         medida_produto = extrair_medida(produto['nome'])
         candidatos = grupos_por_ean.setdefault(_chave_do_ean(produto['ean']), [])
-        grupo = next((g for g in candidatos if not _medidas_conflitam(medida_produto, g['medida'])), None)
+        grupo = next((g for g in candidatos if not _medidas_conflitam(medida_produto, g['medida']) and g['por_quilo'] == _por_quilo(produto)), None)
         if grupo is None:
             grupo = {
                 "produto_base": produto['nome'],
@@ -137,6 +150,7 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
                 "medida": medida_produto,
                 "tags": extrair_tags_chave(produto['nome']),
                 "ean": produto['ean'],
+                "por_quilo": _por_quilo(produto),
                 "opcoes_dict": {},
             }
             candidatos.append(grupo)
@@ -166,6 +180,10 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
             if _medidas_conflitam(medida_produto, medida_grupo):
                 continue
 
+            # 1b. Preço por quilo nunca se mistura com preço de pacote (veja _por_quilo)
+            if _por_quilo(produto) != grupo['por_quilo']:
+                continue
+
             # 2. Se um for "Grão" e o outro "Pó" (ou Extraforte vs Tradicional), bloqueia!
             if tags_produto != tags_grupo and (len(tags_produto) > 0 and len(tags_grupo) > 0):
                 continue
@@ -182,6 +200,7 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
                 "nome_limpo": nome_limpo,
                 "medida": medida_produto,
                 "tags": tags_produto,
+                "por_quilo": _por_quilo(produto),
                 "opcoes_dict": { produto['supermercado']: produto }
             })
 
@@ -210,7 +229,7 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
         if grupo.get('ean'):
             resultado["ean"] = grupo['ean']
             chave = _chave_do_ean(grupo['ean'])
-            resultado["id_do_grupo"] = chave if grupos_por_ean[chave] == 1 else f"{chave}|{grupo['medida'] or ''}"
+            resultado["id_do_grupo"] = chave if grupos_por_ean[chave] == 1 else f"{chave}|{grupo['medida'] or ''}" + ("|kg" if grupo['por_quilo'] else "")
         resultados_finais.append(resultado)
 
     return resultados_finais

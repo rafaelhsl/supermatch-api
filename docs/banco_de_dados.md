@@ -229,12 +229,19 @@ limit 1000 offset <0, 1000, 2000, ...>;
       Apoio costuma diferir nos últimos dígitos). `Heineken Zero` e `Heineken` (pontuação ~86) ficam separados.
    3. **Sem EAN** (o robô do Super ABC não o lê): entra no grupo mais parecido pelo nome, como sempre foi
       (mesma medida, mesmas tags, similaridade a partir de 75).
+
+   Nas três regras vale mais uma: **preço por quilo não se mistura com preço de pacote.** Um item com
+   `unidade = kg` (hortifrúti vendido a peso) só entra num grupo de itens por quilo, e um que não é por quilo
+   (`un`, vazio, ou sem a informação, como o do Super ABC) só num grupo dos que não são. Sem isso, "Repolho Branco
+   Quilo" (R$ 3,49 o quilo) se juntava a "Repolho Misto 200g" (R$ 11,99 o pacote). A comparação entre as duas
+   formas de venda é do modo equivalente, que as converte para "1 kg" ([`equivalencia.md`](equivalencia.md)).
    O grupo traz `ean` quando tem um, e também `id_do_grupo`, o identificador que o site usa para saber se um
    produto já está na lista. O nome do grupo (`produto_base`) é o do primeiro produto que entrou nele, e a ordem
    dos produtos muda a cada carga, então o nome varia de um dia para o outro; o código de barras não. O
    `id_do_grupo` é o EAN sem zeros à esquerda (`630941446201`); quando dois grupos da mesma resposta dividem o
    mesmo EAN (cadastro repetido por engano, com tamanhos diferentes: em 11 das 100 buscas da lista de 09/11/2026),
-   o tamanho desempata (`7896478801361|200.0ml` e `7896478801361|1000.0ml`). Grupo sem EAN não tem `id_do_grupo`
+   o tamanho desempata (`7896478801361|200.0ml` e `7896478801361|1000.0ml`; um grupo por quilo ganha `|kg` no fim, e dois grupos que só se
+   distinguem por isso ficam `7896478801361|` e `7896478801361||kg`). Grupo sem EAN não tem `id_do_grupo`
    (o site usa o nome). Em dados reais de 05/11/2026 (6,7 mil produtos), o número de grupos
    comparáveis (com 2 ou mais mercados) nas 15 buscas mais comuns subiu de 321 para 475, e os grupos que
    misturavam EANs diferentes por nome parecido (Skol com Kaiser, Fanta com Guaraná, Coca Zero com Coca) deixaram de existir.
