@@ -63,7 +63,7 @@ def resposta(com_unidade=True):
               opcao("Supernosso", "Alface Crespa Unidade", 3.49, "a1", u("un")),
               opcao("Atacadao", "Alface Crespa Unidade", 2.99, "a1", u("un"))),
         # 3. família de banana: um mercado vende por quilo, o outro a bandeja de 1 kg (preço do pacote, que é o mesmo quilo)
-        grupo("Banana Prata Kg", "b1", opcao("Supernosso", "Banana Prata Kg", 5.99, "b1", u("kg"), BANANA, ROTULO_BANANA)),
+        grupo("Banana Prata Sn 800g", "b1", opcao("Supernosso", "Banana Prata Sn 800g", 5.99, "b1", u("kg"), BANANA, ROTULO_BANANA)),     # por quilo: o 800g é o da porção
         grupo("Banana Prata Bandeja 1Kg", "b2", opcao("Atacadao", "Banana Prata Bandeja 1Kg", 6.49, "b2", u("un"), BANANA, ROTULO_BANANA)),
         # 4. o robô do Super ABC não informa a unidade: sem `unidade`, é como está
         grupo("Cenoura Pacote 1kg", "c1", opcao("Supernosso", "Cenoura Pacote 1kg", 4.5, "c1"), opcao("Atacadao", "Cenoura Pacote 1kg", 4.2, "c1")),
@@ -172,13 +172,16 @@ async def rodar():
 
             # --- 3. o cartão: "1 kg na lista" e os rótulos dos botões
             tomate, detergente = cartao(pg, "Tomate Italiano"), cartao(pg, "Detergente")
+            confere(limpo(await tomate.locator("h3").inner_text()) == "Tomate Italiano", f"título do tomate por quilo, sem o «500g» da porção: «{limpo(await tomate.locator('h3').inner_text())}»")
+            confere(limpo(await detergente.locator("h3").inner_text()) == "Detergente Ypê Neutro 500ml", "título do detergente: o peso do produto comum fica")
+            confere(limpo(await cartao(pg, "Cenoura").locator("h3").inner_text()) == "Cenoura Pacote 1kg", "título da cenoura sem `unidade`: o nome inteiro")
             await clicar(tomate.locator("[data-add]"))
             await clicar(detergente.locator("[data-add]"))
             await pg.locator("#cupom .linha").first.wait_for()
             confere(limpo(await tomate.get_by_text("na lista").first.inner_text()) == "1 kg na lista", "cartão do tomate: «1 kg na lista»")
             confere(limpo(await detergente.get_by_text("na lista").first.inner_text()) == "1 na lista", "cartão do detergente: «1 na lista», sem kg")
-            confere(await tomate.locator("button[aria-label='Tirar 1 kg de Tomate Italiano 500g']").count() == 1, "botão − do tomate: «Tirar 1 kg de Tomate Italiano 500g»")
-            confere(await tomate.locator("button[aria-label='Colocar mais 1 kg de Tomate Italiano 500g']").count() == 1, "botão + do tomate: «Colocar mais 1 kg de…»")
+            confere(await tomate.locator("button[aria-label='Tirar 1 kg de Tomate Italiano']").count() == 1, "botão − do tomate: «Tirar 1 kg de Tomate Italiano» (sem o 500g)")
+            confere(await tomate.locator("button[aria-label='Colocar mais 1 kg de Tomate Italiano']").count() == 1, "botão + do tomate: «Colocar mais 1 kg de…»")
             confere(await detergente.locator("button[aria-label='Tirar uma unidade de Detergente Ypê Neutro 500ml']").count() == 1, "botão − do detergente: o texto de sempre («uma unidade»)")
             confere(await detergente.locator("button[aria-label='Colocar mais uma unidade de Detergente Ypê Neutro 500ml']").count() == 1, "botão + do detergente: o texto de sempre")
 
@@ -186,6 +189,8 @@ async def rodar():
             await clicar(pg.locator("[data-mercado='Supernosso']"))
             await pg.wait_for_timeout(300)
             lt, ld = pg.locator("#cupom .linha").nth(0), pg.locator("#cupom .linha").nth(1)
+            confere("Tomate Italiano 500g" not in limpo(await pg.locator("#cupom").inner_text()) and "Tomate Italiano" in limpo(await lt.inner_text()), "cupom: o tomate por quilo aparece sem o «500g»")
+            confere("sai da pesagem" in limpo(await pg.locator("#cupom").inner_text()), "cupom com item por quilo: avisa que o valor final sai da pesagem")
             confere(await contas_do_cupom(pg) == "2 itens, 1 unidade e 1 kg", f"cabeçalho do cupom com 1 kg de tomate e 1 detergente: «{await contas_do_cupom(pg)}»")
             confere(limpo(await lt.locator(".un").inner_text()) == "1 kg × R$ 7,99/kg", f"cupom, tomate, 1 kg: «{limpo(await lt.locator('.un').inner_text())}»")
             confere(limpo(await lt.locator("output").inner_text()) == "1 kg", f"cupom, tomate, controle: «{limpo(await lt.locator('output').inner_text())}»")
@@ -196,7 +201,7 @@ async def rodar():
             confere(limpo(await lt.locator(".un").inner_text()) == "2 kg × R$ 7,99/kg", f"cupom, tomate, 2 kg: «{limpo(await lt.locator('.un').inner_text())}»")
             confere(limpo(await lt.locator(".valor").inner_text()) == "R$ 15,98", f"cupom, tomate, 2 kg = R$ 15,98: «{limpo(await lt.locator('.valor').inner_text())}»")
             confere(limpo(await pg.locator("#cupom .total strong").inner_text()) == "R$ 18,97", f"total no Supernosso (2 × 7,99 + 2,99): «{limpo(await pg.locator('#cupom .total strong').inner_text())}»")
-            confere(await lt.locator("button[aria-label='Tirar 1 kg de Tomate Italiano 500g']").count() == 1, "cupom: botão − do tomate diz «Tirar 1 kg de…»")
+            confere(await lt.locator("button[aria-label='Tirar 1 kg de Tomate Italiano']").count() == 1, "cupom: botão − do tomate diz «Tirar 1 kg de…»")
             await clicar(detergente.locator("[data-mais]"))
             await pg.wait_for_timeout(200)
             ld = pg.locator("#cupom .linha").nth(1)
@@ -212,7 +217,7 @@ async def rodar():
             await pg.wait_for_timeout(300)
             falta = pg.locator("#cupom .linha.falta")
             confere(await falta.count() == 1 and "Tomate" in await falta.inner_text(), "cupom do Apoio: o tomate aparece como «sem preço» (o Apoio não o vende)")
-            confere(await falta.locator("button[aria-label='Tirar 1 kg de Tomate Italiano 500g']").count() == 1, "linha «sem preço» do tomate: os botões também falam em quilos")
+            confere(await falta.locator("button[aria-label='Tirar 1 kg de Tomate Italiano']").count() == 1, "linha «sem preço» do tomate: os botões também falam em quilos")
             await ctx.close()
 
             # --- 6. modo equivalente: banana por quilo (Supernosso) e a bandeja de 1 kg (Atacadão) na mesma família
@@ -222,6 +227,8 @@ async def rodar():
             banana = cartao(pg, ROTULO_BANANA)
             confere(await banana.count() == 1, f"modo equivalente: um cartão «{ROTULO_BANANA}»: {await banana.count()}")
             confere(limpo(await banana.locator("li.pilula", has_text="Supernosso").locator(".valor").inner_text()) == "R$ 5,99/kg", "banana, Supernosso (por quilo): R$ 5,99/kg")
+            confere(limpo(await banana.locator("li.pilula", has_text="Supernosso").locator(".real").inner_text()) == "Banana Prata Sn", "modo equivalente, produto por quilo: o nome do mercado sai sem o «800g» da porção")
+            confere(limpo(await banana.locator("li.pilula", has_text="Atacadão").locator(".real").inner_text()) == "Banana Prata Bandeja 1kg", "modo equivalente, bandeja (pacote): o peso do pacote fica")
             confere(limpo(await banana.locator("li.pilula", has_text="Atacadão").locator(".valor").inner_text()) == "R$ 6,49", "banana, Atacadão (bandeja de 1 kg): R$ 6,49, sem /kg (é o preço do pacote)")
             await clicar(banana.locator("[data-add]"))
             await pg.locator("#cupom .linha").first.wait_for()
@@ -230,6 +237,10 @@ async def rodar():
             await clicar(pg.locator("[data-mercado='Atacadao']"))
             await pg.wait_for_timeout(300)
             confere(limpo(await pg.locator("#cupom .linha").nth(0).locator(".un").inner_text()) == "1 kg × R$ 6,49/kg", "cupom do Atacadão (bandeja de 1 kg): 1 kg × R$ 6,49/kg")
+            await clicar(pg.locator("[data-mercado='Supernosso']"))
+            await pg.wait_for_timeout(300)
+            confere("Leva: Banana Prata Sn" in limpo(await pg.locator("#cupom .linha").nth(0).inner_text()) and "800g" not in limpo(await pg.locator("#cupom .linha").nth(0).inner_text()),
+                    "cupom no Supernosso, modo equivalente: «Leva: Banana Prata Sn», sem o peso da porção")
             await foto_da_pagina_inteira(pg, SAIDA / f"hortifruti-{rotulo}-3-equivalente.png")
             await ctx.close()
 
@@ -243,6 +254,8 @@ async def rodar():
             await pg.wait_for_timeout(300)
             confere(limpo(await pg.locator("#cupom .linha").nth(0).locator(".un").inner_text()) == "", "sem `unidade`: o cupom não escreve nada embaixo de 1 unidade")
             confere(await contas_do_cupom(pg) == "1 item, 1 unidade", f"sem `unidade`: o cabeçalho do cupom é o de sempre: «{await contas_do_cupom(pg)}»")
+            confere("sai da pesagem" not in limpo(await pg.locator("#cupom").inner_text()), "sem `unidade`: nenhum aviso de pesagem")
+            confere(limpo(await cartao(pg, "Tomate Italiano").locator("h3").inner_text()) == "Tomate Italiano 500g", "sem `unidade`: o título é o nome inteiro, com o 500g")
             await ctx.close()
         await nav.close()
 

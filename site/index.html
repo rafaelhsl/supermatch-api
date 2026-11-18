@@ -562,7 +562,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     return melhor;
   };
   // O grupo equivalente já tem um nome pronto ("Arroz branco tipo 1, 5 kg"); o exato vem do mercado e precisa de capitalização.
-  const nomeDoGrupo = (g) => (g.equivalente ? g.produto_base : nomeBonito(g.produto_base));
+  const nomeDoGrupo = (g) => (g.equivalente ? g.produto_base : grupoPorQuilo(g) ? semPesoDaPorcao(nomeBonito(g.produto_base)) : nomeBonito(g.produto_base));
   const cidadeAtendida = (cidade) => {
     const [nome, uf] = String(cidade || "").split("/");
     return uf === "MG" && CIDADES_ATENDIDAS.some((c) => semAcento(c) === semAcento(nome));
@@ -654,6 +654,14 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     const u = `${unidades} ${unidades === 1 ? "unidade" : "unidades"}`;
     return !quilos ? u : unidades ? `${u} e ${quilos} kg` : `${quilos} kg`;
   };
+  // Em item por quilo, o peso do nome ("500g") é o da porção que o mercado vende, NÃO a base do preço (a base é o quilo; o Supernosso mostra
+  // "R$ 7,99 /kg" e, ao lado, "R$ 4,00" pela porção, e avisa que o preço final sai da pesagem). Mostrar os dois ("Batata Doce Roxa 500g R$ 7,99/kg")
+  // parece contradição, então o nome mostrado de um item por quilo fica sem o peso.
+  const semPesoDaPorcao = (nome) => {
+    const s = String(nome).replace(/\s*\b\d+(?:[.,]\d+)?\s*(?:kg|g)\b/gi, "").replace(/\s{2,}/g, " ").trim();
+    return s.length >= 3 ? s : String(nome);
+  };
+  const nomeDaOpcao = (opcao) => (porQuilo(opcao) ? semPesoDaPorcao(nomeBonito(opcao.nome)) : nomeBonito(opcao.nome));
   /* @unidade-fim */
 
   /* ---------- busca ---------- */
@@ -931,7 +939,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     estado, MERCADOS, mercadosAtivos, situacaoDeEntrega, CIDADES_ATENDIDAS, cidadeAtendida, mercadoPorId, aoMudar: (f) => ouvintes.push(f), iniciar,
     definirCep, definirModo, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo, atualizarPrecosDaLista,
     notasDaBusca: () => notasDaBusca(estado.busca, new Set(mercadosAtivos().map((m) => m.id))),
-    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora, quedaDaOpcao, porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, textoDasQuantidades },
+    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora, quedaDaOpcao, porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, textoDasQuantidades, semPesoDaPorcao, nomeDaOpcao },
   };
 })();
 </script>
@@ -1041,7 +1049,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
         if (!o) return `<li class="pilula sem"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">Não vende</span></li>`;
         const e = o.preco_varejo === menor && comparavel;
         const at = o.quantidade_atacado > 1 && o.preco_atacado < o.preco_varejo ? `<span class="atacado">${U.moeda(o.preco_atacado)} a partir de ${o.quantidade_atacado} un.</span>` : "";
-        const real = equivalente ? `<span class="real">${U.esc(U.nomeBonito(o.nome))}</span>` : "";
+        const real = equivalente ? `<span class="real">${U.esc(U.nomeDaOpcao(o))}</span>` : "";
         const q = U.quedaDaOpcao(o);
         const queda = q ? `<span class="queda"><span aria-hidden="true">↓</span> Caiu ${q.percentual}% em&nbsp;${q.dias}&nbsp;dias</span><span class="era">Era ${U.moeda(q.antes)}</span>` : "";
         return `<li class="pilula${e ? " menor" : ""}"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">${U.moeda(o.preco_varejo)}${U.porQuilo(o) ? `<span class="por">/kg</span>` : ""}</span>${queda}${at}${real}</li>`;
@@ -1092,6 +1100,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
         ${ehVencedor ? `<div class="carimbo-vaga"><div class="carimbo${bate}">${SOL}Mais barato</div></div>` : ""}
         <div class="total"><span>Total no ${nomeSel}</span><strong>${U.moeda(sel.total)}</strong></div>
         <p class="economia">${frase}</p>
+        ${c.quantidades.quilos ? `<p class="aviso-entrega">Itens por quilo: o valor final sai da pesagem no ${nomeSel}, então pode variar um pouco.</p>` : ""}
         ${sel.mercado.parcial ? `<p class="aviso-entrega">O ${nomeSel} entrega só em parte de ${U.esc((e.cidade || "").split("/")[0])}. Confira no site dele se atende o seu endereço.</p>` : ""}
       </div>
       <div class="cupom-rodape"><button class="limpar" type="button" id="limpar">Limpar lista</button><a class="volta" href="#barracasBloco">Ver outra barraca</a></div>
@@ -1109,7 +1118,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     // por quilo, a linha sempre diz quantos quilos e o preço do quilo (o preço da lista é por kg, não do pacote que o nome cita)
     const un = kg ? `${l.qtd} kg × ${U.moeda(l.unitario)}/kg` : l.qtd > 1 ? `${l.qtd} × ${U.moeda(l.unitario)}${l.atacado ? ", atacado" : ""}` : l.atacado ? "preço de atacado" : "";
     // item equivalente: o cupom diz qual produto aquele mercado entregaria
-    const real = l.grupo.equivalente ? `<span class="real">Qualquer marca. Leva: ${U.esc(U.nomeBonito(l.opcao.nome))}</span>` : "";
+    const real = l.grupo.equivalente ? `<span class="real">Qualquer marca. Leva: ${U.esc(U.nomeDaOpcao(l.opcao))}</span>` : "";
     // o selo é do preço do varejo: se o cupom está cobrando o de atacado, ele não vale
     const q = l.atacado ? null : U.quedaDaOpcao(l.opcao);
     const queda = q ? `<span class="real queda-linha"><span aria-hidden="true">↓</span> Caiu ${q.percentual}% em ${q.dias} dias (era ${U.moeda(q.antes)})</span>` : "";

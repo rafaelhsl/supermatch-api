@@ -58,7 +58,15 @@ confere(chave(("Tomate Italiano Supernosso 500g", KG)) != chave(("Tomate Italian
 confere(chave(("Tomate Italiano Supernosso 500g", KG)) != chave(("Tomate Italiano Supernosso 500g", None)), "sem a unidade, vale o peso do nome (500 g), não o quilo")
 juntam(("Batata Inglesa Bolinha Pacote 1 Kg", UN), ("Batata Bolinha Quilo", UN))                       # pacote de 1 kg = o preço do quilo; "Quilo" sem número vale 1 kg
 juntam(("Maçã Gala Bandeja 800g", UN), ("Maçã Gala 800g", UN))                                          # adaptado: o 2º, sem "Bandeja"
-juntam(("Batata Doce Quilo", KG), ("Batata Doce Branca 1Kg", KG))                                       # a cor da batata-doce não separa
+# a cor da batata-doce SEPARA: a roxa e a branca são outras batatas-doces (e custam outro preço), e o nome sem cor não diz qual é
+# (o cartão "Batata Doce Roxa 500g" com a "Batata Doce Quilo" do Atacadão, visto em produção em 18/11/2026, era esse erro)
+separam(("Batata Doce Quilo", KG), ("Batata Doce Branca 1Kg", KG))
+separam(("Batata Doce Quilo", KG), ("Batata Doce Roxa 500g", KG))
+separam(("Batata Doce Roxa 500g", KG), ("Batata Doce Branca 1Kg", KG))
+juntam(("Batata Doce Roxa 500g", KG), ("Batata Doce Roxa Quilo", KG))                                      # adaptado: a mesma variedade junta, qualquer que seja o peso da porção
+juntam(("Batata Doce Branca 1Kg", KG), ("Batata Doce Branca Quilo", KG))                                    # adaptado
+separam(("Batata Doce 800 G (1 A 2 Unidades)", None), ("Batata Doce Roxa 800 G (1 A 2 Unidades)", None))   # os dois do Super ABC (nomes reais)
+juntam(("Batata Doce Quilo", KG), ("Batata Doce Quilo", KG))
 
 # ============================== sinônimos e jeitos de escrever ==============================
 juntam(("Banana Nanica Quilo", KG), ("Banana Caturra Sn 1Kg", KG))                                     # caturra é nanica

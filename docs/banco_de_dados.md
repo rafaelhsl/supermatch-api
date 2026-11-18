@@ -234,7 +234,10 @@ limit 1000 offset <0, 1000, 2000, ...>;
    Nas três regras vale mais uma: **preço por quilo não se mistura com preço de pacote.** Um item com
    `unidade = kg` (hortifrúti vendido a peso) só entra num grupo de itens por quilo, e um que não é por quilo
    (`un`, vazio, ou sem a informação, como o do Super ABC) só num grupo dos que não são. Sem isso, "Repolho Branco
-   Quilo" (R$ 3,49 o quilo) se juntava a "Repolho Misto 200g" (R$ 11,99 o pacote). A comparação entre as duas
+   Quilo" (R$ 3,49 o quilo) se juntava a "Repolho Misto 200g" (R$ 11,99 o pacote). Ainda no hortifrúti, **o nome parecido não basta**:
+   um produto de hortifrúti (o que a API marca com chave de equivalência `hortifruti|…`) só junta com quem tem a **mesma chave**, e não junta
+   com quem não é hortifrúti. "Batata Doce Quilo" (Atacadão) e "Batata Doce Roxa 500g" (Supernosso) têm 85 de similaridade e são variedades
+   diferentes; a chave de cada uma (`batata|doce` e `batata|doce roxa`) os separa. A comparação entre as duas
    formas de venda é do modo equivalente, que as converte para "1 kg" ([`equivalencia.md`](equivalencia.md)).
    O grupo traz `ean` quando tem um, e também `id_do_grupo`, o identificador que o site usa para saber se um
    produto já está na lista. O nome do grupo (`produto_base`) é o do primeiro produto que entrou nele, e a ordem

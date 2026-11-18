@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import busca  # noqa: E402
 import Comparador_inteligente as comp  # noqa: E402
+import equivalencia as eq  # noqa: E402
 
 
 def produto(nome, termo=None, mercado="Apoio Entrega", preco=10.0, ean=None):
@@ -370,6 +371,73 @@ def teste_id_do_grupo_por_quilo_nao_muda_o_id_dos_outros():
     ids = {g["produto_base"]: g["id_do_grupo"] for g in grupos}
     assert ids["Tomate Italiano Quilo"] == "2000000000017||kg" and ids["Tomate Italiano Bandeja"] == "2000000000017|"
     assert ids["Arroz Camil 5kg"] == "7896006711155"                                # EAN único: só o código, como sempre
+
+
+# ============================== hortifrúti só junta com a mesma chave de equivalência ==============================
+
+def hf(nome, unidade="kg", **campos):
+    """Como a API entrega: com a chave de equivalência (hortifrúti) já calculada."""
+    p = produto(nome, **campos) | {"unidade": unidade}
+    r = eq.equivalencia(nome, unidade=unidade)
+    return p | ({"chave_equivalencia": r.chave} if r else {})
+
+
+def teste_hortifruti_de_variedade_diferente_nao_junta_mesmo_com_nome_parecido():
+    # o cartão visto em produção em 18/11/2026: "Batata Doce Quilo" (Atacadão) com "Batata Doce Roxa 500g" (Supernosso)
+    grupos = comp.cruzar_multiplos_produtos([[
+        hf("Batata Doce Quilo", mercado="Atacadao", preco=3.99),
+        hf("Batata Doce Roxa 500g", mercado="Supernosso", preco=7.99),
+    ]])
+    assert len(grupos) == 2 and all(len(g["opcoes_de_compra"]) == 1 for g in grupos)
+
+
+def teste_hortifruti_da_mesma_chave_continua_juntando_pelo_nome():
+    grupos = comp.cruzar_multiplos_produtos([[
+        hf("Banana Prata Quilo", mercado="Atacadao", preco=3.79),
+        hf("Banana Prata Sn 1Kg", mercado="Supernosso", preco=7.99),
+    ]])
+    assert len(grupos) == 1 and len(grupos[0]["opcoes_de_compra"]) == 2
+
+
+def teste_hortifruti_nao_junta_com_quem_nao_e_hortifruti():
+    grupos = comp.cruzar_multiplos_produtos([[
+        hf("Batata Doce Quilo", mercado="Atacadao", preco=3.99),
+        hf("Batata Doce Quilo Congelada", mercado="Supernosso", preco=9.99),                      # processado: sem chave de hortifrúti
+    ]])
+    assert len(grupos) == 2
+
+
+def teste_hortifruti_com_ean_diferente_so_junta_com_a_mesma_chave():
+    separados = comp.cruzar_multiplos_produtos([[
+        hf("Batata Doce Roxa", mercado="Atacadao", preco=3.99, ean="2000000000100"),
+        hf("Batata Doce Branca", mercado="Supernosso", preco=7.99, ean="2000000000117"),        # 91 de similaridade: abaixo do limite, mas o teste vale pela chave
+    ]])
+    assert len(separados) == 2
+    iguais = comp.cruzar_multiplos_produtos([[
+        hf("Banana Prata Quilo", mercado="Atacadao", preco=3.79, ean="2000000000124"),
+        hf("Banana Prata Quilo", mercado="Supernosso", preco=7.99, ean="2000000000131"),         # nome idêntico, EAN diferente, mesma chave
+    ]])
+    assert len(iguais) == 1 and len(iguais[0]["opcoes_de_compra"]) == 2
+    # nome IDÊNTICO (100 de similaridade, bem acima do limite de 95) e EAN diferente, mas a chave diz que são outro produto: não junta
+    outra_chave = comp.cruzar_multiplos_produtos([[
+        hf("Banana Prata Quilo", mercado="Atacadao", preco=3.79, ean="2000000000124"),
+        hf("Banana Prata Quilo", mercado="Supernosso", preco=7.99, ean="2000000000131") | {"chave_equivalencia": "hortifruti|banana|nanica||||1000g"},
+    ]])
+    assert len(outra_chave) == 2
+    sem_chave = comp.cruzar_multiplos_produtos([[
+        hf("Banana Prata Quilo", mercado="Atacadao", preco=3.79, ean="2000000000124"),
+        hf("Banana Prata Quilo", mercado="Supernosso", preco=7.99, ean="2000000000131") | {"chave_equivalencia": None},     # um é hortifrúti e o outro não
+    ]])
+    assert len(sem_chave) == 2
+
+
+def teste_produto_comum_nao_depende_da_chave():
+    # sem chave de hortifrúti nenhuma, nada muda (o agrupamento de sempre)
+    grupos = comp.cruzar_multiplos_produtos([[
+        produto("Arroz Camil Tipo 1 5kg", mercado="Apoio Entrega", preco=24.9) | {"chave_equivalencia": "arroz|branco|tipo 1|5000g"},
+        produto("Arroz Camil Tipo 1 5kg", mercado="Atacadao", preco=23.9),
+    ]])
+    assert len(grupos) == 1 and len(grupos[0]["opcoes_de_compra"]) == 2
 
 
 if __name__ == "__main__":
