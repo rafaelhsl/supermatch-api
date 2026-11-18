@@ -98,11 +98,11 @@ A API manda `unidade: "kg"` na opção de compra quando **o preço é por quilo*
 
 - **no quadro do mercado**, "R$ 7,99/kg": o "/kg" vem em corpo menor ao lado do preço (`.por`), na cor do texto secundário (e no quadro amarelo do mais barato, no marrom escuro do selo de atacado). O leitor de tela lê "R$ 7,99/kg";
 - **no cartão**, "1 kg na lista" no lugar de "1 na lista", e os botões dizem "Tirar 1 kg de…" e "Colocar mais 1 kg de…". Num item por quilo, cada passo da lista é **1 kg**;
-- **no cupom**, o controle mostra "2 kg" e a linha diz sempre "2 kg × R$ 7,99/kg" (também com 1 kg), porque o nome do produto cita a bandeja ("500g") e o preço é do quilo. O subtotal é quilos × preço do quilo. No mercado que não vende o item, a linha "sem preço" também fala em quilos.
+- **no cupom**, o controle mostra "2 kg" e a linha diz sempre "2 kg × R$ 7,99/kg" (também com 1 kg), porque o nome do produto cita a bandeja ("500g") e o preço é do quilo. O subtotal é quilos × preço do quilo. No mercado que não vende o item, a linha "sem preço" também fala em quilos. O **cabeçalho do cupom** conta quilos e unidades à parte, porque não se somam: "2 itens, 3 unidades e 2 kg"; só quilos, "1 item, 1 kg"; só produtos comuns, "2 itens, 3 unidades", como sempre.
 
 A decisão do quadro é **da opção** (cada mercado diz o seu), a do cartão e a do cupom é **do grupo**: basta uma opção por quilo. No modo equivalente, a bandeja de 1 kg de um mercado (`un`) divide o cartão "Banana prata, 1 kg" com o preço por quilo de outro, porque a chave de equivalência as trata como o mesmo quilo ([`equivalencia.md`](equivalencia.md)); o quadro da bandeja não ganha "/kg" (é o preço do pacote), mas a lista conta em quilos e o cupom escreve "1 kg × R$ 6,49/kg", que é a mesma conta.
 
-O código fica no bloco `@unidade-inicio` / `@unidade-fim` (`porQuilo`, `grupoPorQuilo`, `passoDaLista`, `quantidadeNaLista`). `node tests/test_unidade.js` confere a regra e `python tests/navegador/test_site_hortifruti.py` confere a tela (celular, celular estreito e computador): o "/kg" só onde o preço é por quilo, o contraste (mínimo 4,5:1), a conta do cupom (2 kg × R$ 7,99 = R$ 15,98), o mercado que não vende o item, o modo equivalente e a API antiga, sem o campo.
+O código fica no bloco `@unidade-inicio` / `@unidade-fim` (`porQuilo`, `grupoPorQuilo`, `passoDaLista`, `quantidadeNaLista`, `quantidadesDaLista`, `textoDasQuantidades`). `node tests/test_unidade.js` confere a regra e `python tests/navegador/test_site_hortifruti.py` confere a tela (celular, celular estreito e computador): o "/kg" só onde o preço é por quilo, o contraste (mínimo 4,5:1), a conta do cupom (2 kg × R$ 7,99 = R$ 15,98), o mercado que não vende o item, o modo equivalente e a API antiga, sem o campo.
 
 ## Regras da comparação
 

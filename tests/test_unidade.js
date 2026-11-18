@@ -8,8 +8,8 @@ const html = fs.readFileSync(path.join(__dirname, "..", "site", "index.html"), "
 
 const a = html.indexOf("/* @unidade-inicio */"), b = html.indexOf("/* @unidade-fim */");
 if (a < 0 || b < 0) throw new Error("marcadores @unidade-inicio / @unidade-fim não encontrados em site/index.html");
-const { porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista } = new Function(
-  html.slice(a, b) + "; return { porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista };")();
+const { porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, quantidadesDaLista, textoDasQuantidades } = new Function(
+  html.slice(a, b) + "; return { porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, quantidadesDaLista, textoDasQuantidades };")();
 
 let ok = 0; const erros = [];
 const confere = (cond, texto) => { if (cond) ok++; else erros.push(texto); };
@@ -45,6 +45,21 @@ igual(quantidadeNaLista(3, true), "3 kg", "3 quilos na lista");
 igual(quantidadeNaLista(1, true), "1 kg", "1 quilo na lista");
 igual(quantidadeNaLista(3, false), "3", "item comum: só o número, como antes");
 igual(quantidadeNaLista(1, false), "1", "item comum, uma unidade");
+
+// ---- o cabeçalho do cupom: quilos e unidades não se somam ----
+const item = (qtd, ...unidades) => ({ grupo: grupo(...unidades), qtd });
+igual(quantidadesDaLista([]), { unidades: 0, quilos: 0 }, "lista vazia");
+igual(quantidadesDaLista([item(3, "un"), item(2, undefined)]), { unidades: 5, quilos: 0 }, "só produtos comuns: soma de unidades, como sempre");
+igual(quantidadesDaLista([item(2, "kg", "kg")]), { unidades: 0, quilos: 2 }, "só item por quilo: quilos");
+igual(quantidadesDaLista([item(2, "kg"), item(3, "un"), item(1, "kg")]), { unidades: 3, quilos: 3 }, "misturado: cada um com a sua conta");
+igual(quantidadesDaLista([item(1, "un", "kg")]), { unidades: 0, quilos: 1 }, "grupo com uma opção por quilo conta em quilos");
+igual(textoDasQuantidades({ unidades: 1, quilos: 0 }), "1 unidade", "uma unidade (singular, como antes)");
+igual(textoDasQuantidades({ unidades: 4, quilos: 0 }), "4 unidades", "várias unidades (como antes)");
+igual(textoDasQuantidades({ unidades: 0, quilos: 1 }), "1 kg", "um quilo");
+igual(textoDasQuantidades({ unidades: 0, quilos: 2.5 }), "2.5 kg", "quilos");
+igual(textoDasQuantidades({ unidades: 1, quilos: 2 }), "1 unidade e 2 kg", "unidade e quilos");
+igual(textoDasQuantidades({ unidades: 3, quilos: 1 }), "3 unidades e 1 kg", "unidades e quilo");
+igual(textoDasQuantidades({ unidades: 0, quilos: 0 }), "0 unidades", "lista vazia: como antes");
 
 console.log(`${ok} verificações passaram, ${erros.length} falharam`);
 if (erros.length) { for (const e of erros) console.log("  ✗ " + e); process.exit(1); }
