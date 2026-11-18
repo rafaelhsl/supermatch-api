@@ -126,7 +126,7 @@ Betim; Apoio e Supernosso recusam Uberlândia; o Super ABC recusa Contagem (sem 
 
 ## A carga e as falhas
 
-Desde a carga pela API, só o **Super ABC** é coletado pelo robô (nos 100 termos da lista, 3 navegadores por vez); os outros três
+Desde a carga pela API, só o **Super ABC** é coletado pelo robô (nos 128 termos da lista: 100 de prateleira e 28 de hortifrúti, 3 navegadores por vez); os outros três
 mercados vêm da [API pública](coletor_por_api.md). Os robôs do Apoio, do Atacadão e do Supernosso seguem no código e voltam a ser
 usados quando a carga é disparada à mão com `coleta = robos` (modo antigo, 11 itens, tudo ou nada).
 

@@ -9,7 +9,7 @@ O Super ABC não tem API aberta (responde 403) e continua pelo robô (`Scraper_S
 ## Como rodar
 
 ```
-python coletor_vtex.py                                  # os 100 termos, os 3 mercados
+python coletor_vtex.py                                  # os 128 termos da carga (100 de produtos + 28 de hortifrúti), os 3 mercados
 python coletor_vtex.py --termos "arroz,óleo"            # só alguns termos
 python coletor_vtex.py --mercados "Atacadao"            # só um mercado
 python coletor_vtex.py --saida coleta.json              # guarda as linhas coletadas
@@ -83,7 +83,7 @@ Executada no GitHub em 05/11/2026 ([run 42007495508](https://github.com/rafaelhs
 - **Filtro por nome é conservador.** Produto com a marca antes do tipo ("Camil Arroz…") não passa nos alimentos. Na dúvida, não entra.
 - **Cobertura varia por mercado.** Algumas lojas simplesmente não têm o produto em estoque na região (por exemplo, ovos no Atacadão, papinha no Apoio e no Atacadão, ração no Atacadão). O relatório de cada execução mostra onde.
 - **Termos que se sobrepõem**: o mesmo produto pode aparecer em dois termos (por exemplo, "Leite em Pó Integral" em "leite integral" e "leite em pó", embora o filtro tente separar). Na carga, a linha vale uma vez por mercado.
-- **Fase 2** (hortifruti e peso variável) fica de fora **da carga diária**, de propósito. A coleta de reconhecimento do hortifrúti existe (`--lista dados/lista_hortifruti.json`, só leitura), mas gravar esses produtos exige antes um campo `unidade` no banco e o site mostrar "/kg": veja [`hortifruti.md`](hortifruti.md).
+- **Hortifrúti** entra na carga diária desde 18/11/2026, com a própria lista (`dados/lista_hortifruti.json`, 28 termos) coletada **junto** com a de 100 (`carregar_lista_da_carga`): é preciso o campo `unidade`, a equivalência e o "/kg" no site, e as três existem. O resto do **peso variável** (queijo e frios a peso, carne moída, frango) continua de fora: veja [`hortifruti.md`](hortifruti.md).
 - O catálogo do Apoio muda de região para região (canal de vendas); o coletor usa o de Betim, como a carga diária.
 
 ## Próximos passos

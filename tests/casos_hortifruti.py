@@ -353,6 +353,43 @@ CASOS = {
 }
 
 # Nomes inventados (ou, nos de couve-flor e abóbora, reais) para os termos que o bruto de 17/11 não cobria. Todos têm de SAIR.
+# Nomes REAIS do robô do Super ABC (18/11/2026, CEP de Betim). O robô não traz categoria: só o nome separa o fresco do resto.
+# Entram (termo -> nomes) e saem (termo -> nomes). Produtos com peso aproximado no nome ("400 G (1 A 2 Unidades)") entram: é como o ABC vende.
+SUPER_ABC = {
+    "entram": {
+        "banana": ["Banana Caturra 1,2 Kg (5 A 6 Unidades)", "Banana Prata 1,2 Kg (5 A 6 Unidades))"],
+        "maçã": ["Maçã Gala 150/165 300g (1 A 2 Unidades)", "Maca Pink Lady Kg"],
+        "laranja": ["Laranja Pera Rio 400 G (1 A 2 Unidades)"],
+        "limão": ["Limão Tahiti 400 G (3 A 4 Unidades)"],
+        "mamão": ["Mamão Havai 700 G", "Mamão Formosa 1.5 Kg"],
+        "melancia": ["Melancia Inteira 10 Kg (1 Unidade)", "Melancia Baby Amarela Inteira 3 Kg"],
+        "abacaxi": ["Abacaxi Und"],
+        "manga": ["Manga Palmer 600 G (1 A 2 Unidades)", "Manga Tommy 900 G (1 A 2 Unidades)"],
+        "uva": ["Uva Vitória 500 G", "Uva Thompson 500 G"],
+        "abacate": ["Abacate 1kg ( 1 A 2 Unidades )"],
+        "tomate": ["Tomate Longa Vida 500 G (1 A 2 Unidades)", "Tomate Grape Bandeja", "Tomate Italiano 600 G (3 A 4 Unidades)"],
+        "batata": ["Batata Doce 800 G (1 A 2 Unidades)", "Batata Doce Roxa 800 G (1 A 2 Unidades)", "Batata 400 G (1 A 2 Unidades)"],
+        "cebola": ["Cebola Roxa 400 G (1 A 2 Unidades)", "Cebola Branca 400 G (1 A 2 Unidades)"],
+        "cenoura": ["Cenoura Vermelha 2a 300 G (1 A 2 Unidades)", "Cenoura Branca Bandeja"],
+        "alho": ["Alho Granel Número 4 300g (1 A 2 Unidades)", "Alho Premium Abc 350g Embalagem"],
+        "pepino": ["Pepino Japonês 350g (1 A 2 Unidades)", "Pepino Caipira Unidade 300g"],
+        "abóbora": ["Abóbora Híbrida 2.5 Kg (1 Unidade)", "Abóbora Menina 500g"],
+        "chuchu": ["Chuchu 400 G (1 A 2 Unidades)"],
+        "beterraba": ["Beterraba Unidade 300 G (1 A 2 Unidades)"],
+        "pimentão": ["Pimentão Verde 500 G (1 A 2 Unidades)", "Pimentão Misto 600 G (1 A 2 Unidades)"],
+        "repolho": ["Repolho Verde Inteiro", "Repolho Roxo Embalagem 550g"],
+        "brócolis": ["Brócolis Ninja Bandeja", "Brócolis Und", "Brocólis Ninja Edl Bandeja"],
+        "alface": ["Alface Und", "Alface Americana Unidade", "Alface Roxa Und"],
+        "couve": ["Couve Unidade"],
+        "couve-flor": ["Couve Flor 300 G"],
+    },
+    "saem": {
+        "maçã": ["Maca Peito Bovina Peça/Pedaço 500g", "Maca Peito Bovina Peça Principal 500g"],                 # corte de carne, não fruta
+        "tomate": ["Tomate Pelado La Pastina Lata 240g", "Tomate Pelado Inteiro Sacciali Lata 1,5kg", "Tomate Pelado Sacciali Lata 240g"],   # conserva
+        "batata": ["Batata Ondulada Bem Brasil 2kg Pct"],                                                          # congelada
+    },
+}
+
 ADAPTADOS = {
     'abóbora': [
         ('Abóbora Italiana Quilo', 'Hortifrúti > Legumes e vegetais > Legume e vegetal'),
