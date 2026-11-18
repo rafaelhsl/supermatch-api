@@ -8,8 +8,8 @@ const html = fs.readFileSync(path.join(__dirname, "..", "site", "index.html"), "
 
 const a = html.indexOf("/* @unidade-inicio */"), b = html.indexOf("/* @unidade-fim */");
 if (a < 0 || b < 0) throw new Error("marcadores @unidade-inicio / @unidade-fim não encontrados em site/index.html");
-const { porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, quantidadesDaLista, textoDasQuantidades } = new Function(
-  html.slice(a, b) + "; return { porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, quantidadesDaLista, textoDasQuantidades };")();
+const { porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, quantidadesDaLista, textoDasQuantidades, semPesoDaPorcao, nomeDaOpcao } = new Function("nomeBonito",
+  html.slice(a, b) + "; return { porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, quantidadesDaLista, textoDasQuantidades, semPesoDaPorcao, nomeDaOpcao };")((s) => s);
 
 let ok = 0; const erros = [];
 const confere = (cond, texto) => { if (cond) ok++; else erros.push(texto); };
@@ -60,6 +60,25 @@ igual(textoDasQuantidades({ unidades: 0, quilos: 2.5 }), "2.5 kg", "quilos");
 igual(textoDasQuantidades({ unidades: 1, quilos: 2 }), "1 unidade e 2 kg", "unidade e quilos");
 igual(textoDasQuantidades({ unidades: 3, quilos: 1 }), "3 unidades e 1 kg", "unidades e quilo");
 igual(textoDasQuantidades({ unidades: 0, quilos: 0 }), "0 unidades", "lista vazia: como antes");
+
+// ---- o nome de um item por quilo não mostra o peso da porção ("500g" é o que o mercado vende por vez; o preço é o do quilo) ----
+for (const [nome, esperado] of [
+  ["Batata Doce Roxa 500g", "Batata Doce Roxa"],
+  ["Abóbora Vermelha 1.5Kg", "Abóbora Vermelha"],
+  ["Melancia  Sn 2Kg", "Melancia Sn"],
+  ["Banana Prata Orgânica 800g", "Banana Prata Orgânica"],
+  ["Maca Pink Lady  Sn 600g", "Maca Pink Lady Sn"],
+  ["Tomate Italiano 1,5 kg", "Tomate Italiano"],
+  ["Banana Prata Sn 1Kg", "Banana Prata Sn"],
+  ["Laranja Serra D'Água Pacote 1Kg", "Laranja Serra D'Água Pacote"],
+  ["Banana Prata Quilo", "Banana Prata Quilo"],            // sem número: nada a tirar
+  ["Alface Crespa Unidade", "Alface Crespa Unidade"],
+  ["500g", "500g"],                                         // sobraria nada: fica o nome original
+  ["", ""],
+]) igual(semPesoDaPorcao(nome), esperado, `nome sem o peso da porção: «${nome}»`);
+igual(nomeDaOpcao({ nome: "Batata Doce Roxa 500g", unidade: "kg" }), "Batata Doce Roxa", "opção por quilo: nome sem o peso");
+igual(nomeDaOpcao({ nome: "Banana Prata Bandeja 1Kg", unidade: "un" }), "Banana Prata Bandeja 1Kg", "opção de pacote: o peso é o do pacote e fica");
+igual(nomeDaOpcao({ nome: "Cenoura Pacote 1kg" }), "Cenoura Pacote 1kg", "opção sem unidade (Super ABC, produto comum): o nome inteiro");
 
 console.log(`${ok} verificações passaram, ${erros.length} falharam`);
 if (erros.length) { for (const e of erros) console.log("  ✗ " + e); process.exit(1); }

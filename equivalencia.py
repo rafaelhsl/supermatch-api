@@ -736,7 +736,7 @@ _PRODUTOS_HORTIFRUTI = [
     ("morango", "Morango", "m", r"morango\b", []),
     ("abacate", "Abacate", "m", r"abacate\b", [(r"avocado|hass", "avocado")]),
     ("tomate", "Tomate", "m", r"tomate\b", [(r"com rama|\brama\b", "com rama"), (r"italiano", "italiano"), (r"salada|longa vida", "salada"), (r"cereja", "cereja"), (r"uva|grape", "uva"), (r"maca", "maçã")]),
-    ("batata", "Batata", "f", r"batata\b", [(r"doce", "doce"), (r"baroa", "baroa"), (r"bolinha", "bolinha"), (r"asterix|vermelha|rosada", "vermelha"), (r"inglesa|ingelsa|lavada", "inglesa")]),
+    ("batata", "Batata", "f", r"batata\b", [(r"doce.*\broxa\b|\broxa\b.*doce", "doce roxa"), (r"doce.*\bbranca\b|\bbranca\b.*doce", "doce branca"), (r"doce", "doce"), (r"baroa", "baroa"), (r"bolinha", "bolinha"), (r"asterix|vermelha|rosada", "vermelha"), (r"inglesa|ingelsa|lavada", "inglesa")]),
     ("cebola", "Cebola", "f", r"cebola\b", [(r"roxa", "roxa"), (r"branca", "branca"), (r"mini|perola", "mini")]),
     ("cenoura", "Cenoura", "f", r"cenoura\b", [(r"baroa", "baroa")]),
     ("alho poro", "Alho-poró", "m", r"alho poro\b", []),
