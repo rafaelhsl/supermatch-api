@@ -648,6 +648,12 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   const grupoPorQuilo = (grupo) => !!grupo && (grupo.opcoes_de_compra || []).some(porQuilo);
   const passoDaLista = (kg) => (kg ? "1 kg" : "uma unidade");
   const quantidadeNaLista = (qtd, kg) => (kg ? `${qtd} kg` : `${qtd}`);
+  // O cabeçalho do cupom conta o que há na lista. Quilos e unidades não se somam ("2 kg + 3 unidades" não são 5 de nada): cada um tem a sua conta.
+  const quantidadesDaLista = (itens) => itens.reduce((t, { grupo, qtd }) => (grupoPorQuilo(grupo) ? { ...t, quilos: t.quilos + qtd } : { ...t, unidades: t.unidades + qtd }), { unidades: 0, quilos: 0 });
+  const textoDasQuantidades = ({ unidades, quilos }) => {
+    const u = `${unidades} ${unidades === 1 ? "unidade" : "unidades"}`;
+    return !quilos ? u : unidades ? `${u} e ${quilos} kg` : `${quilos} kg`;
+  };
   /* @unidade-fim */
 
   /* ---------- busca ---------- */
@@ -896,7 +902,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       porMercado, ranking, melhor, maisCaro,
       economia: melhor && melhor.completo && maisCaro ? maisCaro.total - melhor.total : 0,
       itens: linhasBase.length,
-      unidades: linhasBase.reduce((s, l) => s + l.qtd, 0),
+      quantidades: quantidadesDaLista(linhasBase),
     };
   }
 
@@ -925,7 +931,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     estado, MERCADOS, mercadosAtivos, situacaoDeEntrega, CIDADES_ATENDIDAS, cidadeAtendida, mercadoPorId, aoMudar: (f) => ouvintes.push(f), iniciar,
     definirCep, definirModo, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo, atualizarPrecosDaLista,
     notasDaBusca: () => notasDaBusca(estado.busca, new Set(mercadosAtivos().map((m) => m.id))),
-    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora, quedaDaOpcao, porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista },
+    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora, quedaDaOpcao, porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, textoDasQuantidades },
   };
 })();
 </script>
@@ -1079,7 +1085,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     ultimoVencedorNoCupom = ehVencedor ? v.mercado.id : ultimoVencedorNoCupom;
     el.innerHTML = `<div class="cupom-sombra"><section class="cupom">
       <div class="cupom-topo"><h2>Sua lista</h2><span class="chip"><i style="background:${sel.mercado.cor}"></i>${nomeSel}</span></div>
-      <p class="meta">${itens(c.itens)}, ${c.unidades} ${c.unidades === 1 ? "unidade" : "unidades"}<br>${U.esc(onde)}${em ? ". Preços de " + U.dataHora(em) : ""}${notaDosPrecos(S.estado.listaStatus)}</p>
+      <p class="meta">${itens(c.itens)}, ${U.textoDasQuantidades(c.quantidades)}<br>${U.esc(onde)}${em ? ". Preços de " + U.dataHora(em) : ""}${notaDosPrecos(S.estado.listaStatus)}</p>
       <ol class="linhas" id="linhas" aria-label="Itens no cupom do ${nomeSel}">${linhas}</ol>
       ${botaoMostrar}
       <div class="fecho" aria-live="polite">

@@ -112,6 +112,11 @@ def limpo(texto):
     return " ".join(texto.replace("\xa0", " ").split())
 
 
+async def contas_do_cupom(pg):
+    """A primeira linha do cabeçalho do cupom: "2 itens, 1 unidade e 1 kg"."""
+    return limpo((await pg.locator("#cupom .meta").inner_text()).split("\n")[0])
+
+
 def cartao(pg, base):
     return pg.locator("article.produto", has=pg.locator("h3", has_text=base))
 
@@ -181,6 +186,7 @@ async def rodar():
             await clicar(pg.locator("[data-mercado='Supernosso']"))
             await pg.wait_for_timeout(300)
             lt, ld = pg.locator("#cupom .linha").nth(0), pg.locator("#cupom .linha").nth(1)
+            confere(await contas_do_cupom(pg) == "2 itens, 1 unidade e 1 kg", f"cabeçalho do cupom com 1 kg de tomate e 1 detergente: «{await contas_do_cupom(pg)}»")
             confere(limpo(await lt.locator(".un").inner_text()) == "1 kg × R$ 7,99/kg", f"cupom, tomate, 1 kg: «{limpo(await lt.locator('.un').inner_text())}»")
             confere(limpo(await lt.locator("output").inner_text()) == "1 kg", f"cupom, tomate, controle: «{limpo(await lt.locator('output').inner_text())}»")
             confere(limpo(await ld.locator("output").inner_text()) == "1" and limpo(await ld.locator(".un").inner_text()) == "", "cupom, detergente, 1: «1» e sem texto embaixo, como antes")
@@ -194,6 +200,7 @@ async def rodar():
             await clicar(detergente.locator("[data-mais]"))
             await pg.wait_for_timeout(200)
             ld = pg.locator("#cupom .linha").nth(1)
+            confere(await contas_do_cupom(pg) == "2 itens, 2 unidades e 2 kg", f"cabeçalho do cupom com 2 kg de tomate e 2 detergentes: «{await contas_do_cupom(pg)}»")
             confere(limpo(await ld.locator(".un").inner_text()) == "2 × R$ 2,99", f"cupom, detergente, 2: «{limpo(await ld.locator('.un').inner_text())}» (como antes)")
             await foto_da_pagina_inteira(pg, SAIDA / f"hortifruti-{rotulo}-2-cupom.png")
 
@@ -219,6 +226,7 @@ async def rodar():
             await clicar(banana.locator("[data-add]"))
             await pg.locator("#cupom .linha").first.wait_for()
             confere("1 kg na lista" in limpo(await banana.inner_text()), "cartão da banana: «1 kg na lista»")
+            confere(await contas_do_cupom(pg) == "1 item, 1 kg", f"cabeçalho do cupom só com 1 kg de banana: «{await contas_do_cupom(pg)}»")
             await clicar(pg.locator("[data-mercado='Atacadao']"))
             await pg.wait_for_timeout(300)
             confere(limpo(await pg.locator("#cupom .linha").nth(0).locator(".un").inner_text()) == "1 kg × R$ 6,49/kg", "cupom do Atacadão (bandeja de 1 kg): 1 kg × R$ 6,49/kg")
@@ -234,6 +242,7 @@ async def rodar():
             await clicar(pg.locator("[data-mercado='Supernosso']"))
             await pg.wait_for_timeout(300)
             confere(limpo(await pg.locator("#cupom .linha").nth(0).locator(".un").inner_text()) == "", "sem `unidade`: o cupom não escreve nada embaixo de 1 unidade")
+            confere(await contas_do_cupom(pg) == "1 item, 1 unidade", f"sem `unidade`: o cabeçalho do cupom é o de sempre: «{await contas_do_cupom(pg)}»")
             await ctx.close()
         await nav.close()
 
