@@ -118,6 +118,18 @@ def vendido_por_peso(unidade_de_medida, marca_de_peso_variavel=""):
     return str(unidade_de_medida or "").strip().lower() in ("kg", "g") or str(marca_de_peso_variavel or "").strip().lower() in ("yes", "sim", "true")
 
 
+def unidade_normalizada(texto):
+    """A unidade de venda que o banco guarda: "kg" (o preço é por quilo), "un" (por unidade ou pacote) ou None (não informada ou desconhecida).
+
+    Só estes valores chegam à coluna `unidade` (docs/sql/coluna_unidade.sql): uma unidade que não conhecemos ("g", "l", "cx"...) vira vazio,
+    em vez de uma palavra solta que o site teria de adivinhar.
+    """
+    valor = str(texto or "").strip().lower()
+    if valor == "kg":
+        return "kg"
+    return "un" if valor in ("un", "und", "unid", "unidade", "pc", "pç", "peca", "peça") else None
+
+
 def caminho_da_categoria(texto):
     """'/Mercearia/Grãos/Arroz/' -> ['Mercearia', 'Grãos', 'Arroz']."""
     return [parte.strip() for parte in str(texto or "").split("/") if parte.strip()]
@@ -182,7 +194,7 @@ def linha_do_catalogo(mercado, produto, item, oferta, termo):
         "peso_variavel": vendido_por_peso(item.get("measurementUnit"), (produto.get("Peso variável") or [""])[0]),
         # Como o mercado vende: "kg" = o PREÇO É POR QUILO (e o multiplicador é de quanto em quanto se compra: 0.5 = meio quilo);
         # "un" = por unidade ou por pacote (o peso, se houver, está no nome). Só o hortifrúti usa (docs/hortifruti.md); a gravação ignora.
-        "unidade": str(item.get("measurementUnit") or "").strip().lower() or None,
+        "unidade": unidade_normalizada(item.get("measurementUnit")),
         "multiplicador": numero(item.get("unitMultiplier")) or None,
     }
 
@@ -329,7 +341,7 @@ def baixar_atacadao(http, consulta):
             "marca": ((no.get("brand") or {}).get("brandName") or "").strip() or None, "ean": None, "categoria": categoria,
             "preco_varejo": varejo, "preco_atacado": atacado, "quantidade_atacado": minimo,
             "uf_cobertura": MERCADOS["Atacadao"]["uf"], "termo": consulta, "peso_variavel": vendido_por_peso(no.get("measurementUnit")),
-            "unidade": str(no.get("measurementUnit") or "").strip().lower() or None, "multiplicador": numero(no.get("unitMultiplier")) or None,
+            "unidade": unidade_normalizada(no.get("measurementUnit")), "multiplicador": numero(no.get("unitMultiplier")) or None,
         })
         ids.append(produto_id)
     eans = eans_do_atacadao(http, ids) if ids else {}

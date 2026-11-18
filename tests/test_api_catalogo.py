@@ -21,12 +21,17 @@ class Resposta:
         self.data = data
 
 
+class ErroDeColuna(Exception):
+    code = "42703"
+
+
 class ConsultaFalsa:
-    def __init__(self, linhas, chamadas):
-        self.linhas, self.chamadas, self.inicio, self.fim = linhas, chamadas, 0, 999
+    def __init__(self, linhas, chamadas, sem_unidade=False):
+        self.linhas, self.chamadas, self.inicio, self.fim, self.sem_unidade, self.colunas = linhas, chamadas, 0, 999, sem_unidade, ""
 
     def select(self, colunas):
         self.chamadas.append(("select", colunas))
+        self.colunas = colunas
         return self
 
     def in_(self, coluna, valores):
@@ -42,6 +47,8 @@ class ConsultaFalsa:
         return self
 
     def execute(self):
+        if self.sem_unidade and "unidade" in self.colunas:
+            raise ErroDeColuna("column produtos.unidade does not exist")
         return Resposta(self.linhas[self.inicio:self.fim + 1])
 
 
@@ -49,10 +56,11 @@ class BancoFalso:
     def __init__(self, n):
         self.linhas = [{"id": i, "nome": f"Produto {i}", "supermercado": "Apoio Entrega", "termo": "arroz"} for i in range(n)]
         self.chamadas = []
+        self.sem_unidade = False
 
     def table(self, nome):
         assert nome == "produtos"
-        return ConsultaFalsa(self.linhas, self.chamadas)
+        return ConsultaFalsa(self.linhas, self.chamadas, self.sem_unidade)
 
 
 VALIDADE_PADRAO = api.CATALOGO_VALIDADE_SEGUNDOS
@@ -107,6 +115,72 @@ def teste_baixar_catalogo_pagina_e_pede_so_as_colunas_usadas():
     for coluna in ("id", "supermercado", "nome", "preco_varejo", "preco_atacado", "quantidade_atacado", "atualizado_em", "ean", "termo"):
         assert coluna in api.COLUNAS_DO_CATALOGO.split(","), coluna                                    # o site e a busca precisam delas
     assert ("in", "uf_cobertura", ("MG", "BR")) in chamadas
+
+
+def teste_catalogo_pede_a_unidade_e_a_devolve_nas_opcoes():
+    banco = BancoFalso(0)
+    banco.linhas = [{"id": 1, "nome": "Banana Prata Quilo", "supermercado": "Atacadao", "termo": "banana", "unidade": "kg", "preco_varejo": 3.79},
+                    {"id": 2, "nome": "Banana Prata Bandeja 600g", "supermercado": "Supernosso", "termo": "banana", "unidade": "un", "preco_varejo": 7.99}]
+    anterior = api.supabase
+    api.supabase = banco
+    try:
+        catalogo = api.baixar_catalogo("MG")
+    finally:
+        api.supabase = anterior
+    assert api.COLUNAS_DO_CATALOGO.endswith(",unidade") and {c[1] for c in banco.chamadas if c[0] == "select"} == {api.COLUNAS_DO_CATALOGO}
+    assert {e.produto["id"]: e.produto["unidade"] for e in catalogo} == {1: "kg", 2: "un"}
+    import busca
+    anteriores = (api.carregar_catalogo, api.obter_uf_pelo_cep)
+    api.carregar_catalogo = lambda uf: catalogo
+    api.obter_uf_pelo_cep = lambda cep: "MG"
+    try:
+        r = api.buscar_e_comparar(cep="32607600", item="banana")
+    finally:
+        api.carregar_catalogo, api.obter_uf_pelo_cep = anteriores
+    opcoes = {o["id"]: o for g in r["carrinho_comparativo"] for o in g["opcoes_de_compra"]}
+    assert opcoes[1]["unidade"] == "kg" and opcoes[2]["unidade"] == "un"              # o site recebe a unidade em cada opção
+
+
+def teste_catalogo_sem_a_coluna_unidade_segue_sem_ela_em_vez_de_cair():
+    banco = BancoFalso(2300)
+    banco.sem_unidade = True
+    anterior = api.supabase
+    api.supabase = banco
+    saida = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(saida):
+            catalogo = api.baixar_catalogo("MG")
+    finally:
+        api.supabase = anterior
+    log = saida.getvalue()
+    assert len(catalogo) == 2300, len(catalogo)                                       # nenhum produto perdido nem repetido na volta
+    selects = [c[1] for c in banco.chamadas if c[0] == "select"]
+    assert selects[0] == api.COLUNAS_DO_CATALOGO and set(selects[1:]) == {api.COLUNAS_SEM_UNIDADE}, selects
+    assert "docs/sql/coluna_unidade.sql" in log and "sigo sem ela" in log, log
+
+
+def teste_outro_erro_do_banco_nao_vira_coluna_ausente():
+    """Queda de rede tem de subir de primeira (o catálogo anterior continua valendo): sem uma 2ª tentativa e sem dizer que falta a coluna."""
+    chamadas = []
+
+    class Quebrado:
+        def table(self, nome):
+            chamadas.append(nome)
+            raise ConnectionError("sem rede")
+
+    anterior = api.supabase
+    api.supabase = Quebrado()
+    saida = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(saida):
+            api.baixar_catalogo("MG")
+    except ConnectionError:
+        pass
+    else:
+        raise AssertionError("o erro de rede tinha de subir")
+    finally:
+        api.supabase = anterior
+    assert len(chamadas) == 1 and "sigo sem ela" not in saida.getvalue(), (chamadas, saida.getvalue())
 
 
 def capturar(funcao):

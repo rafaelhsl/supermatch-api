@@ -56,6 +56,8 @@ class ConsultaFalsa:
     def execute(self):
         if self.op == "select" and "ean" in self.dados and not self.banco.tem_colunas_novas:
             raise ErroDeColuna("column produtos.ean does not exist")
+        if self.op == "select" and "unidade" in self.dados and not self.banco.tem_unidade:
+            raise ErroDeColuna("column produtos.unidade does not exist")
         if self.banco.erro_ao_inserir and self.op == "insert":
             raise RuntimeError("insert caiu")
         self.banco.chamadas.append((self.tabela, self.op, self.dados if self.op == "insert" else None, self.filtros))
@@ -63,8 +65,9 @@ class ConsultaFalsa:
 
 
 class BancoFalso:
-    def __init__(self, tem_colunas_novas=True, erro_ao_inserir=False):
+    def __init__(self, tem_colunas_novas=True, erro_ao_inserir=False, tem_unidade=None):
         self.chamadas, self.tem_colunas_novas, self.erro_ao_inserir = [], tem_colunas_novas, erro_ao_inserir
+        self.tem_unidade = tem_colunas_novas if tem_unidade is None else tem_unidade       # um banco sem as colunas novas também não tem `unidade`
 
     def table(self, nome):
         return ConsultaFalsa(self, nome)
@@ -143,6 +146,32 @@ def teste_colunas_novas_existem():
 
     try:
         ab.colunas_novas_existem(BancoQuebrado())
+    except ConnectionError:
+        return
+    raise AssertionError("erro de rede não pode virar 'coluna não existe'")
+
+
+def teste_unidade_so_chega_ao_banco_normalizada():
+    base = linha_api("Supernosso", 1)
+    for bruto, esperado in (("kg", "kg"), ("KG", "kg"), (" un ", "un"), ("und", "un"), ("g", None), ("l", None), ("cx", None), ("", None), (None, None)):
+        assert ab.para_o_banco({**base, "unidade": bruto}, com_unidade=True)["unidade"] == esperado, bruto            # uma unidade desconhecida vira vazio
+    assert "unidade" not in ab.para_o_banco({**base, "unidade": "kg"})                                                   # sem pedir, a coluna não é enviada (banco sem o SQL)
+    assert ab.para_o_banco(base, com_unidade=True)["unidade"] is None                                                    # robô do Super ABC: sem unidade
+    assert set(ab.para_o_banco(base, com_unidade=True)) == set(ab.COLUNAS_BASE) | set(ab.COLUNAS_NOVAS) | {"unidade"}
+    assert ab.COLUNAS_DA_UNIDADE == ("unidade",) and "unidade" not in ab.COLUNAS_NOVAS                                    # detectada à parte das cinco colunas
+
+
+def teste_coluna_unidade_existe():
+    assert ab.coluna_unidade_existe(BancoFalso()) is True
+    assert ab.coluna_unidade_existe(BancoFalso(tem_unidade=False)) is False
+    assert ab.colunas_novas_existem(BancoFalso(tem_unidade=False)) is True              # uma não depende da outra
+
+    class BancoQuebrado:
+        def table(self, nome):
+            raise ConnectionError("sem rede")
+
+    try:
+        ab.coluna_unidade_existe(BancoQuebrado())
     except ConnectionError:
         return
     raise AssertionError("erro de rede não pode virar 'coluna não existe'")
@@ -279,6 +308,32 @@ def teste_gravar_coletas_sem_colunas_novas(historico):
     assert situacoes == {"Apoio Entrega": "atualizado", "Atacadao": "falhou"}                          # parcial exige as colunas: senão apagaria os termos que falharam
     assert "colunas novas" in coletas["Atacadao"].motivos[-1]
     assert set(banco.inserts()[0][2][0]) == set(ab.COLUNAS_BASE) and len(banco.inserts()) == 1
+
+
+@com_historico_falso
+def teste_gravar_coletas_grava_a_unidade_quando_a_coluna_existe(historico):
+    coleta = coleta_de("Supernosso", 3, 100)
+    coleta.produtos[0]["unidade"], coleta.produtos[1]["unidade"] = "kg", "un"          # o terceiro vem sem unidade (como o robô)
+    banco = BancoFalso()
+    assert ab.gravar_coletas(banco, {"Supernosso": coleta}, "inicio", None) == {"Supernosso": "atualizado"}
+    assert [l["unidade"] for l in banco.inserts()[0][2]] == ["kg", "un", None]
+
+
+@com_historico_falso
+def teste_gravar_coletas_sem_a_coluna_unidade_segue_gravando_o_resto(historico):
+    import contextlib
+    import io
+    banco = BancoFalso(tem_colunas_novas=True, tem_unidade=False)
+    coletas = {"Apoio Entrega": coleta_de("Apoio Entrega", 3, 100), "Atacadao": coleta_de("Atacadao", 3, 100, falhos=["arroz"])}
+    for c in coletas.values():
+        c.produtos[0]["unidade"] = "kg"
+    saida = io.StringIO()
+    with contextlib.redirect_stdout(saida):
+        situacoes = ab.gravar_coletas(banco, coletas, "inicio", None)
+    assert situacoes == {"Apoio Entrega": "atualizado", "Atacadao": "parcial"}         # a falta da coluna não derruba nem a coleta parcial
+    for insercao in banco.inserts():
+        assert all("unidade" not in linha and set(linha) == set(ab.COLUNAS_BASE) | set(ab.COLUNAS_NOVAS) for linha in insercao[2])
+    assert "docs/sql/coluna_unidade.sql" in saida.getvalue() and saida.getvalue().count("::notice") == 1
 
 
 @com_historico_falso
