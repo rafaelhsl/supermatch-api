@@ -150,6 +150,8 @@ h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02
 .pilula .nome { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; }
 .pilula .nome i { width: 9px; height: 9px; border-radius: 50%; flex: none; box-shadow: 0 0 0 1.5px var(--branco); }
 .pilula .valor { font-weight: 800; font-size: 20px; line-height: 1.2; letter-spacing: -.01em; }
+.pilula .valor .por { margin-left: 3px; font-size: 12.5px; font-weight: 600; letter-spacing: 0; color: var(--tinta-2); }
+.pilula.menor .valor .por { color: #3b3400; }
 .pilula .atacado { font-size: 11.5px; color: var(--tinta-2); line-height: 1.25; display: block; }
 .pilula.menor .atacado { color: #3b3400; }
 .pilula.sem { border-style: dashed; color: var(--tinta-2); }
@@ -206,6 +208,7 @@ h1 { font: 800 clamp(29px, 4.4vw, 50px)/1.08 var(--titulo); letter-spacing: -.02
 .quant button { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--picote); background: var(--branco); cursor: pointer; font-size: 17px; line-height: 1; display: grid; place-items: center; padding: 0 0 2px; }
 .quant button:hover { background: var(--tinta); color: var(--branco); border-color: var(--tinta); }
 .quant output { min-width: 26px; text-align: center; font: 600 13px/1 var(--mono); }
+.quant output small { font: 500 10.5px/1 var(--mono); }
 .mostrar { align-self: center; margin: 14px 0 2px; min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border: 1.5px solid var(--tinta); border-radius: 999px; background: var(--branco); cursor: pointer; font-weight: 700; font-size: 14px; }
 .mostrar:hover { background: var(--tinta); color: var(--branco); }
 .mostrar svg { transition: transform .2s; }
@@ -636,6 +639,17 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   }
   /* @queda-fim */
 
+  /* @unidade-inicio */
+  /* ---------- preço por quilo ----------
+     A API manda `unidade: "kg"` na opção quando o PREÇO É POR QUILO (hortifrúti vendido a peso; docs/hortifruti.md). Sem avisar, a pessoa leria
+     "Tomate Italiano 500g: R$ 18,99" como o preço da bandeja, e é o do quilo. Qualquer outro valor (ou nenhum) é o preço do produto como está.
+     Num item por quilo, cada passo da lista é 1 kg. */
+  const porQuilo = (opcao) => !!opcao && opcao.unidade === "kg";
+  const grupoPorQuilo = (grupo) => !!grupo && (grupo.opcoes_de_compra || []).some(porQuilo);
+  const passoDaLista = (kg) => (kg ? "1 kg" : "uma unidade");
+  const quantidadeNaLista = (qtd, kg) => (kg ? `${qtd} kg` : `${qtd}`);
+  /* @unidade-fim */
+
   /* ---------- busca ---------- */
   let numeroDaBusca = 0;   // respostas atrasadas de uma busca antiga não podem sobrescrever a atual
   async function buscar(termo, { todos = false } = {}) {
@@ -911,7 +925,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     estado, MERCADOS, mercadosAtivos, situacaoDeEntrega, CIDADES_ATENDIDAS, cidadeAtendida, mercadoPorId, aoMudar: (f) => ouvintes.push(f), iniciar,
     definirCep, definirModo, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo, atualizarPrecosDaLista,
     notasDaBusca: () => notasDaBusca(estado.busca, new Set(mercadosAtivos().map((m) => m.id))),
-    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora, quedaDaOpcao },
+    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora, quedaDaOpcao, porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista },
   };
 })();
 </script>
@@ -1010,6 +1024,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 
   function produto(g, i) {
     const qtd = S.qtdNaLista(g), nome = U.esc(U.nomeDoGrupo(g)), equivalente = !!g.equivalente;
+    const kg = U.grupoPorQuilo(g), passo = U.passoDaLista(kg);
     // em cada mercado, o produto que sai mais barato (no grupo exato há um só)
     const porMercado = S.mercadosAtivos().map((m) => ({ m, o: U.opcaoDoMercado(g, m.id, 1) }));
     const precos = porMercado.filter((x) => x.o).map((x) => x.o.preco_varejo);
@@ -1023,10 +1038,10 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
         const real = equivalente ? `<span class="real">${U.esc(U.nomeBonito(o.nome))}</span>` : "";
         const q = U.quedaDaOpcao(o);
         const queda = q ? `<span class="queda"><span aria-hidden="true">↓</span> Caiu ${q.percentual}% em&nbsp;${q.dias}&nbsp;dias</span><span class="era">Era ${U.moeda(q.antes)}</span>` : "";
-        return `<li class="pilula${e ? " menor" : ""}"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">${U.moeda(o.preco_varejo)}</span>${queda}${at}${real}</li>`;
+        return `<li class="pilula${e ? " menor" : ""}"><span class="nome"><i style="background:${m.cor}"></i>${U.esc(m.nome)}</span><span class="valor">${U.moeda(o.preco_varejo)}${U.porQuilo(o) ? `<span class="por">/kg</span>` : ""}</span>${queda}${at}${real}</li>`;
       }).join("");
     const acao = qtd
-      ? `<div class="passos" role="group" aria-label="Quantidade na lista"><button type="button" data-foco="p-menos-${i}" data-menos="${i}" aria-label="Tirar uma unidade de ${nome}">−</button><span>${qtd} na lista</span><button type="button" data-foco="p-mais-${i}" data-mais="${i}" aria-label="Colocar mais uma unidade de ${nome}">+</button></div>`
+      ? `<div class="passos" role="group" aria-label="Quantidade na lista"><button type="button" data-foco="p-menos-${i}" data-menos="${i}" aria-label="Tirar ${passo} de ${nome}">−</button><span>${U.quantidadeNaLista(qtd, kg)} na lista</span><button type="button" data-foco="p-mais-${i}" data-mais="${i}" aria-label="Colocar mais ${passo} de ${nome}">+</button></div>`
       : `<button class="botao" type="button" data-foco="p-add-${i}" data-add="${i}" aria-label="Adicionar ${nome} à lista">Adicionar à lista</button>`;
     return `<article class="produto"><h3>${nome}</h3>${equivalente ? `<p class="qualquer">Qualquer marca. Em cada mercado entra o mais barato.</p>` : ""}<ul class="pilulas">${pilulas}</ul><div class="acao">${acao}</div></article>`;
   }
@@ -1082,9 +1097,11 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 
   function linha(l, i, sel) {
     const nome = U.esc(U.nomeDoGrupo(l.grupo));
-    const ctrl = `<span class="quant"><button type="button" data-foco="c-menos-${i}" data-lmenos="${i}" aria-label="Tirar uma unidade de ${nome}">−</button><output>${l.qtd}</output><button type="button" data-foco="c-mais-${i}" data-lmais="${i}" aria-label="Colocar mais uma unidade de ${nome}">+</button></span>`;
+    const kg = U.grupoPorQuilo(l.grupo), passo = U.passoDaLista(kg);   // do grupo, não só da opção: o cupom de um mercado sem o item também conta em kg
+    const ctrl = `<span class="quant"><button type="button" data-foco="c-menos-${i}" data-lmenos="${i}" aria-label="Tirar ${passo} de ${nome}">−</button><output>${l.qtd}${kg ? "<small> kg</small>" : ""}</output><button type="button" data-foco="c-mais-${i}" data-lmais="${i}" aria-label="Colocar mais ${passo} de ${nome}">+</button></span>`;
     if (!l.opcao) return `<li class="linha falta"><span class="nome">${nome}</span><span class="valor">sem preço</span>${ctrl}<span class="un">${U.esc(sel.mercado.nome)} não vende</span></li>`;
-    const un = l.qtd > 1 ? `${l.qtd} × ${U.moeda(l.unitario)}${l.atacado ? ", atacado" : ""}` : l.atacado ? "preço de atacado" : "";
+    // por quilo, a linha sempre diz quantos quilos e o preço do quilo (o preço da lista é por kg, não do pacote que o nome cita)
+    const un = kg ? `${l.qtd} kg × ${U.moeda(l.unitario)}/kg` : l.qtd > 1 ? `${l.qtd} × ${U.moeda(l.unitario)}${l.atacado ? ", atacado" : ""}` : l.atacado ? "preço de atacado" : "";
     // item equivalente: o cupom diz qual produto aquele mercado entregaria
     const real = l.grupo.equivalente ? `<span class="real">Qualquer marca. Leva: ${U.esc(U.nomeBonito(l.opcao.nome))}</span>` : "";
     // o selo é do preço do varejo: se o cupom está cobrando o de atacado, ele não vale
