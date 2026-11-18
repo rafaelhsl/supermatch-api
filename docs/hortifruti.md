@@ -1,6 +1,6 @@
 # Hortifrúti (frutas, verduras e legumes)
 
-> **Estado (18/11/2026): etapa 1 pronta; etapa 2 em andamento (SQL rodado; carga grava e API devolve `unidade`; equivalência pronta).** Existe uma lista de 28 produtos e o coletor sabe lê-los (só leitura), mas **nada de hortifrúti é gravado no banco nem aparece no site ainda**. O motivo está em "Por que ainda não vai para o site". A coluna `unidade` foi criada pelo [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql) e a carga já a grava (`kg`, `un` ou vazio); a API a devolve em cada opção. A equivalência por variedade e orgânico está pronta (`equivalencia.py`, família "frutas, verduras e legumes"). Faltam o "/kg" no site e o Super ABC.
+> **Estado (18/11/2026): etapa 1 pronta; etapa 2 em andamento (SQL rodado; carga grava e API devolve `unidade`; equivalência pronta; site com "/kg" pronto).** Existe uma lista de 28 produtos e o coletor sabe lê-los (só leitura), mas **nada de hortifrúti é gravado no banco nem aparece no site ainda**. O motivo está em "Por que ainda não vai para o site". A coluna `unidade` foi criada pelo [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql) e a carga já a grava (`kg`, `un` ou vazio); a API a devolve em cada opção. A equivalência por variedade e orgânico está pronta (`equivalencia.py`, família "frutas, verduras e legumes"). O site já mostra "/kg" e conta a lista em quilos. Falta o Super ABC (e ligar o hortifrúti na carga diária).
 
 ## O que a etapa 1 entrega
 
@@ -79,7 +79,7 @@ Outras verduras e ervas ficam para depois (cebolinha, salsinha, coentro, rúcula
 
 1. ~~O campo `unidade` no banco.~~ **Pronto.** Coluna criada por [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql) (`text`, sem restrição, para a carga não quebrar se um mercado mandar uma unidade que não conhecemos). `coletor_vtex.unidade_normalizada` deixa só `kg`, `un` ou vazio; a carga detecta a coluna e a grava; a API a pede (e segue sem ela se o banco não a tiver). O histórico de preços não precisa dela: o preço de um produto vendido por quilo continua sendo comparável com o dele mesmo.
 2. ~~Equivalência por variedade e forma de venda.~~ **Pronta.** Uma família só, guiada por uma tabela de 28 produtos: o preço por quilo vira "1 kg" na chave; o pacote vale o peso do nome; sem peso, "unidade". Dimensões: variedade, importada, **orgânico**; sinônimos (caturra = nanica, aipim = mandioca, "abóbora italiana" = abobrinha, "Limão Tahiti" = "Limão-taiti"). Nos 175 itens da coleta de 17/11: todos com chave, 132 grupos, **30 comparáveis**. Veja [`equivalencia.md`](equivalencia.md).
-3. **O site.** Rótulo "R$ 3,79 **/kg**" (e "/maço", "/un"), quantidade da lista em quilos para o que é vendido por quilo, e o aviso quando o preço é por peso aproximado.
+3. ~~O site.~~ **Pronto.** "R$ 3,79**/kg**" no quadro do mercado, "2 kg na lista" no cartão e "2 kg × R$ 3,79/kg" no cupom, só onde `unidade = kg` (veja [`site.md`](site.md#preço-por-quilo-hortifrúti)). Ficam de fora, por ora, "/maço" e o aviso de peso aproximado: o produto sem `unidade kg` aparece como qualquer outro, com o nome dizendo o que é ("Alface Crespa Unidade").
 4. **Super ABC.** Sem API; o robô achou tomate (longa vida, italiano, grape), cebola (roxa e branca) e alface, em pacotes de peso aproximado ("400 G, 1 a 2 unidades"), então o preço por quilo dele é uma estimativa. Banana fresca não apareceu. Falta ligar o robô a esta lista.
 
 ## Limites conhecidos desta etapa
@@ -87,7 +87,8 @@ Outras verduras e ervas ficam para depois (cebolinha, salsinha, coentro, rúcula
 - Perde uns poucos itens frescos que o Supernosso guarda em categoria genérica (um tomate grape orgânico, o alho-poró "Unidade"): a regra por categoria prefere perder 4 itens a deixar entrar tempero e conserva.
 - Sem estoque, não há linha: o Supernosso não tinha mamão nem morango fresco no dia (0 itens), e o Atacadão só tinha brócolis congelado.
 - Frutas e verduras com o nome começando por outra palavra ("Aipim", "Cheiro-verde") dependem de sinônimos, só feitos para a mandioca e a abobrinha.
-- "Alho-poró" entra no termo "alho" (o nome começa por "alho"); a etapa 2 os separa por variedade.
+- "Alho-poró" entra no termo "alho" (o nome começa por "alho"); a equivalência os separa por variedade.
+- **Modo exato mistura quilo com pacote (a resolver antes de ligar o hortifrúti na carga).** O agrupamento por nome (`Comparador_inteligente.py`) foi feito para produto de prateleira: nos dados de 17/11, 2 dos 10 grupos com mais de um mercado juntaram um preço **por quilo** com o de um **pacote** ("Repolho Branco Quilo" do Atacadão, R$ 3,49/kg, com "Repolho Misto 200g" do Supernosso, R$ 11,99; "Cebola Roxa Quilo" com "Cebola Roxa Org 400g", que ainda é orgânica). No modo equivalente isso não acontece (a família separa os dois). O conserto é no agrupamento: nunca juntar um item `kg` com um que não seja `kg`.
 
 ## Testes
 
