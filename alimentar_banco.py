@@ -27,6 +27,7 @@ from Scraper_SuperABC import buscar_na_plataforma_regex
 from robos_comum import FalhaNoRobo, com_novas_tentativas
 from historico import RepositorioSupabase, hoje_em_brasilia, normalizar_nome, registrar_falha, registrar_mercado
 import coletor_vtex
+import disjuntor
 
 # --- 1. CONFIGURAÇÃO DO SEU BANCO DE DADOS SUPABASE ---
 # Usando a URL exata que você me passou
@@ -113,14 +114,14 @@ def avaliar_coleta(produtos, termos_total, termos_falhos, tolerancia=TOLERANCIA_
     return "parcial" if len(termos_falhos) <= max(1, math.floor(tolerancia * termos_total)) else "falhou"
 
 
-def coletas_pela_api(mercados, termos, teto, http=None, baixadores=None):
+def coletas_pela_api(mercados, termos, teto, http=None, baixadores=None, **opcoes):
     """Coleta os mercados pela API pública. -> {mercado: Coleta}. Bloqueante (rodar numa linha de execução à parte)."""
     http = http or coletor_vtex.ClienteHttp()
 
     def progresso(mercado, termo, brutos, escolhidas):
         print(f"   ✅ {mercado} '{termo['termo']}': {len(escolhidas)} itens ({brutos} lidos)", flush=True)
 
-    resultado, erros = coletor_vtex.coletar(http, list(mercados), termos, teto, progresso, baixadores)
+    resultado, erros = coletor_vtex.coletar(http, list(mercados), termos, teto, progresso, baixadores, **opcoes)
     coletas = {}
     for mercado in mercados:
         coleta = Coleta(mercado, termos_total=len(termos))
@@ -130,36 +131,72 @@ def coletas_pela_api(mercados, termos, teto, http=None, baixadores=None):
                 if linha["id_origem"] not in vistos:       # o mesmo produto pode aparecer em dois termos
                     vistos.add(linha["id_origem"])
                     coleta.produtos.append(linha)
+        pulados = []
         for m, termo, erro in erros:
             if m == mercado:
-                print(f"   ⛔ {mercado} '{termo}': {erro}", flush=True)
+                if disjuntor.foi_pulado(erro):
+                    pulados.append(erro)
+                else:
+                    print(f"   ⛔ {mercado} '{termo}': {erro}", flush=True)
                 coleta.termos_falhos.append(termo)
                 coleta.motivos.append(f"'{termo}': {erro}")
+        if pulados:
+            print(f"   ⛔ {mercado}: {len(pulados)} termo(s) {pulados[0]}", flush=True)
         coletas[mercado] = coleta
     return coletas
 
 
-async def coletar_por_robo(mercado, alvos, paralelo=1, tolerancia=TOLERANCIA_DE_TERMOS_COM_FALHA):
+async def coletar_por_robo(mercado, alvos, paralelo=1, tolerancia=TOLERANCIA_DE_TERMOS_COM_FALHA, limite_de_falhas=None, segunda_rodada=True, pausa=None,
+                           dormir=None):
     """Coleta um mercado pelo robô. alvos: [(termo, texto da busca, regras do termo ou None)].
 
     Com regras (a lista de 100 termos), o resultado passa pelo mesmo filtro do coletor por API (nome e categorias proibidas).
     Busca que o site responde sem nenhum produto devolve [] e não é falha; só o robô que levanta erro conta como termo falho.
+
+    Se o robô falhar `limite_de_falhas` vezes seguidas, o mercado é dado como fora do ar: as buscas que faltam não são tentadas
+    (cada uma custaria minutos). No fim há uma segunda rodada, depois de uma pausa, com o que não deu certo (veja disjuntor.py).
     """
     uf = MERCADOS[mercado]
     semaforo = asyncio.Semaphore(paralelo)
     coleta = Coleta(mercado, termos_total=len({alvo[0] for alvo in alvos}), tolerancia=tolerancia)   # um termo pode ter mais de uma busca
+    resultados = {}          # posição do alvo -> (produtos ou None, motivo da falha)
 
-    async def um(termo, texto, regras):
-        async with semaforo:
-            try:
-                return termo, regras, await ROBOS[mercado](texto), None
-            except Exception as erro:
-                motivo = erro.motivo if isinstance(erro, FalhaNoRobo) else f"erro inesperado: {erro!r}"
-                print(f"   ⛔ {mercado} '{texto}': {motivo}", flush=True)
-                return termo, regras, None, motivo
+    async def rodada(posicoes):
+        corte = disjuntor.Disjuntor(limite_de_falhas)
+
+        async def um(posicao):
+            texto = alvos[posicao][1]
+            async with semaforo:
+                if corte.aberto:
+                    return posicao, None, corte.motivo_de_pulo()
+                try:
+                    produtos = await ROBOS[mercado](texto)
+                except Exception as erro:
+                    motivo = erro.motivo if isinstance(erro, FalhaNoRobo) else f"erro inesperado: {erro!r}"
+                    print(f"   ⛔ {mercado} '{texto}': {motivo}", flush=True)
+                    corte.errou(motivo)
+                    return posicao, None, motivo
+                corte.acertou()
+                return posicao, produtos, None
+
+        for posicao, produtos, motivo in await asyncio.gather(*(um(p) for p in posicoes)):
+            resultados[posicao] = (produtos, motivo)
+
+    await rodada(range(len(alvos)))
+    pendentes = [p for p in range(len(alvos)) if resultados[p][0] is None]
+    if segunda_rodada and pendentes:
+        espera = disjuntor.PAUSA_DA_SEGUNDA_RODADA if pausa is None else pausa
+        print(f"🔁 {mercado}: {len(pendentes)} busca(s) sem resultado; tento de novo, uma vez, depois de {espera} s.", flush=True)
+        await (dormir or asyncio.sleep)(espera)
+        await rodada(pendentes)
+    pulados = [motivo for _, motivo in resultados.values() if disjuntor.foi_pulado(motivo)]
+    if pulados:
+        print(f"   ⛔ {mercado}: {len(pulados)} busca(s) {pulados[0]}", flush=True)
 
     vistos = set()
-    for termo, regras, produtos, motivo in await asyncio.gather(*(um(*alvo) for alvo in alvos)):
+    for posicao in range(len(alvos)):
+        termo, _, regras = alvos[posicao]
+        produtos, motivo = resultados[posicao]
         if produtos is None:
             if termo not in coleta.termos_falhos:
                 coleta.termos_falhos.append(termo)

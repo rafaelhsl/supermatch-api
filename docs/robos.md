@@ -141,6 +141,7 @@ Cada mercado recebe um destes resultados:
 - Termo sem resultado **não é falha**. O Super ABC responde "Ops... Nenhum produto foi encontrado para a busca realizada"
   quando não vende o que foi buscado; o robô confere duas vezes (com uma espera) e devolve lista vazia. Já uma página sem
   produtos e sem essa mensagem continua sendo falha passageira (página lida cedo demais) e repete, agora até 3 vezes.
+- **Mercado fora do ar.** Depois de 6 falhas seguidas as buscas que faltam **não são tentadas** (cada uma custaria uns 2 minutos no robô) e, no fim, há **uma segunda rodada** depois de 60 s com tudo o que não deu certo. Veja [`carga_diaria.md`](carga_diaria.md#quando-um-mercado-cai-no-meio-da-carga).
 - A gravação insere os produtos novos primeiro e só depois apaga os antigos do mesmo mercado (`atualizado_em` anterior ao
   início da carga), exceto os de termos que falharam.
 - **Sem robô de reserva automático.** Se a API de um mercado falhar, ficam os dados do dia anterior e a execução avisa. Trocar

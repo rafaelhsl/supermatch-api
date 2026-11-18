@@ -27,6 +27,7 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import disjuntor
 from busca import sem_acento
 
 RAIZ = Path(__file__).resolve().parent
@@ -402,33 +403,60 @@ def selecionar(linhas, termo, teto):
     return escolhidas
 
 
-def _coletar_mercado(http, mercado, termos, teto, ao_terminar_termo, baixadores):
-    por_termo, erros = {}, []
-    for termo in termos:
-        try:
-            brutas = []
-            for consulta in termo.get("consultas") or [termo["termo"]]:
-                brutas += baixadores[mercado](http, consulta)
-            escolhidas = selecionar(brutas, termo, teto)
-        except ErroDeColeta as erro:
-            erros.append((mercado, termo["termo"], str(erro)))
-            continue
-        for linha in escolhidas:
-            linha["termo"] = termo["termo"]
-        por_termo[termo["termo"]] = escolhidas
-        if ao_terminar_termo:
-            ao_terminar_termo(mercado, termo, len(brutas), escolhidas)
-    return por_termo, erros
+def _coletar_mercado(http, mercado, termos, teto, ao_terminar_termo, baixadores, limite_de_falhas=None, segunda_rodada=True, pausa=None, dormir=None):
+    """Coleta os termos de um mercado. -> ({termo: [linhas]}, [(mercado, termo, erro)]), tudo na ordem da lista.
+
+    Primeira rodada: um termo que falha vira erro e os demais continuam, até o disjuntor abrir (`limite_de_falhas` falhas seguidas):
+    daí em diante os termos que faltam não são tentados (erro "não tentado"). Segunda rodada: depois da `pausa`, tenta de novo, uma
+    vez, tudo o que ainda não deu certo (inclusive o que o disjuntor pulou), com um disjuntor novo.
+    """
+    por_termo, erros = {}, {}
+
+    def rodada(lista):
+        corte = disjuntor.Disjuntor(limite_de_falhas)
+        for termo in lista:
+            nome = termo["termo"]
+            if corte.aberto:
+                erros[nome] = corte.motivo_de_pulo()
+                continue
+            try:
+                brutas = []
+                for consulta in termo.get("consultas") or [nome]:
+                    brutas += baixadores[mercado](http, consulta)
+                escolhidas = selecionar(brutas, termo, teto)
+            except ErroDeColeta as erro:
+                erros[nome] = str(erro)
+                corte.errou(erro)
+                continue
+            corte.acertou()
+            erros.pop(nome, None)
+            for linha in escolhidas:
+                linha["termo"] = nome
+            por_termo[nome] = escolhidas
+            if ao_terminar_termo:
+                ao_terminar_termo(mercado, termo, len(brutas), escolhidas)
+
+    rodada(termos)
+    pendentes = [t for t in termos if t["termo"] in erros]
+    if segunda_rodada and pendentes:
+        espera = disjuntor.PAUSA_DA_SEGUNDA_RODADA if pausa is None else pausa
+        print(f"🔁 {mercado}: {len(pendentes)} termo(s) sem resultado; tento de novo, uma vez, depois de {espera} s.", flush=True)
+        (dormir or time.sleep)(espera)
+        rodada(pendentes)
+    return ({t["termo"]: por_termo[t["termo"]] for t in termos if t["termo"] in por_termo},
+            [(mercado, t["termo"], erros[t["termo"]]) for t in termos if t["termo"] in erros])
 
 
-def coletar(http, mercados, termos, teto, ao_terminar_termo=None, baixadores=None):
+def coletar(http, mercados, termos, teto, ao_terminar_termo=None, baixadores=None, limite_de_falhas=None, segunda_rodada=True, pausa=None, dormir=None):
     """({mercado: {termo: [linhas]}}, [erros]). Cada mercado roda em sua própria linha de execução (são sites diferentes).
 
-    Uma falha em um termo vira erro daquele (mercado, termo); os demais termos continuam.
+    Uma falha em um termo vira erro daquele (mercado, termo); os demais termos continuam. Depois de `limite_de_falhas` falhas seguidas
+    o mercado é dado como fora do ar (veja disjuntor.py) e, no fim, os termos sem resultado têm uma segunda rodada.
     """
     baixadores = baixadores or BAIXADORES
     with ThreadPoolExecutor(max_workers=max(1, len(mercados))) as pool:
-        futuros = {m: pool.submit(_coletar_mercado, http, m, termos, teto, ao_terminar_termo, baixadores) for m in mercados}
+        futuros = {m: pool.submit(_coletar_mercado, http, m, termos, teto, ao_terminar_termo, baixadores, limite_de_falhas, segunda_rodada, pausa, dormir)
+                   for m in mercados}
         feitos = {m: futuros[m].result() for m in mercados}
     return {m: feitos[m][0] for m in mercados}, [erro for m in mercados for erro in feitos[m][1]]
 
@@ -469,8 +497,14 @@ def principal(argv=None):
     resultado, erros = coletar(http, mercados, termos, teto, ao_terminar)
     total = sum(len(l) for por_termo in resultado.values() for l in por_termo.values())
     print(f"\n{total} linhas em {time.time() - inicio:.0f}s, {http.chamadas} chamadas, {len(erros)} erro(s), {len(http.avisos)} aviso(s)")
+    pulados = {}
     for mercado, termo, erro in erros:
-        print(f"  ERRO {mercado} / {termo}: {erro}")
+        if disjuntor.foi_pulado(erro):
+            pulados.setdefault(mercado, []).append(erro)
+        else:
+            print(f"  ERRO {mercado} / {termo}: {erro}")
+    for mercado, lista in pulados.items():
+        print(f"  ERRO {mercado} ({len(lista)} termos): {lista[0]}")
     if args.saida:
         Path(args.saida).write_text(json.dumps(resultado, ensure_ascii=False, indent=1), encoding="utf-8")
     return 1 if erros else 0

@@ -88,6 +88,22 @@ gh api -X POST repos/rafaelhsl/supermatch-api/actions/workflows/main.yml/dispatc
 - **O cron-job.org avisou de falha (401):** o token venceu ou foi apagado; veja abaixo.
 - **Rodou duas vezes no mesmo dia:** é inofensivo (carga repetida não duplica nada; só repete o trabalho). Se acontecer sempre, confira se o `run-name` do `main.yml` ainda traz `gravar=` e `mercados=`.
 
+## Quando um mercado cai no meio da carga
+
+Na carga de 18/11/2026 (disparada de uma branch de teste e cancelada depois de 47 minutos), o Atacadão respondeu **HTTP 403 a todos os 100 termos** e o Super ABC não conseguiu **abrir a lista de unidades em nenhum**. O coletor perguntou os 100 termos mesmo assim, e o robô gastou três tentativas de uns 45 segundos em cada um (324 falhas, quase uma hora). Dois mecanismos, em [`disjuntor.py`](../disjuntor.py), evitam esse desperdício:
+
+- **Disjuntor por mercado.** Depois de **6 falhas seguidas** (um acerto no meio zera a conta) o mercado é dado como fora do ar e **os termos que faltam não são tentados**; ficam registrados como "não tentado: o mercado falhou 6 vezes seguidas; a última: ...". No log aparecem as 6 falhas de verdade e **uma linha** com o total de termos pulados, em vez de 94 linhas iguais. Cada mercado tem o seu disjuntor: um mercado caído não atrapalha os outros.
+- **Segunda rodada.** Quando a primeira rodada acaba com termos sem resultado (falhos ou pulados), a carga **espera 60 segundos** e tenta **uma vez** cada um deles, com um disjuntor novo. Um bloqueio ou uma lentidão que passou em um minuto deixa de custar o dia daquele mercado, e a falha passageira de um termo deixa de tornar a coleta "parcial". Se o mercado continua fora do ar, o disjuntor abre de novo e a carga desiste: no pior caso são 12 tentativas por mercado, em vez de 100 (API) ou 300 (robô, com as repetições).
+
+O que sobra de falha segue a regra de sempre (tabela em [`robos.md`](robos.md#a-carga-e-as-falhas)): até 10% dos termos, a coleta é **parcial**; acima disso o mercado **não é gravado**, os dados do dia anterior ficam e a execução fica vermelha. Quem decide é o restante da carga, não o disjuntor: ele só economiza o tempo e o desgaste de insistir.
+
+Duas decisões:
+
+- O **HTTP 403 não entrou** na lista de status que o coletor repete na hora (`STATUS_QUE_REPETE`). Um 403 costuma ser bloqueio, e martelar o site em seguida só piora; quem cuida dele é a segunda rodada, depois da pausa.
+- A mensagem de erro do Super ABC deixou de ser cortada em 300 caracteres (agora 3.000). O motivo real de um clique que esgota o tempo ("element intercepts pointer events", "not visible"...) vem no **fim** do log do Playwright, e o corte o escondia justamente ali ("...waiting for element to be visible, enabled and").
+
+Os dois números, `LIMITE_DE_FALHAS_SEGUIDAS = 6` e `PAUSA_DA_SEGUNDA_RODADA = 60` (segundos), ficam no topo de `disjuntor.py`. Os testes: `python tests/test_disjuntor.py` (a regra), `tests/test_coletor_vtex.py` (a coleta pela API) e `tests/test_carga.py` (o robô e a carga).
+
 ## Renovar o token
 
 Um token do GitHub vence. O token criado em 13/11/2026 vale até **13/11/2027** (a data também aparece no cabeçalho `github-authentication-token-expiration` da resposta do teste). O GitHub costuma avisar por e-mail poucos dias antes, mas não conte só com isso: anote a data numa agenda. Na renovação, aproveite para trocar também o valor do cabeçalho `X-GitHub-Api-Version` por uma versão mais nova: o GitHub avisa (cabeçalho `Sunset` da resposta) que a `2022-11-28` deixa de funcionar em **10/03/2028**. Para renovar: Developer settings → Fine-grained tokens → abra o token → **Regenerate token** (mesmas permissões) → copie o valor novo → no cron-job.org, edite a tarefa e troque o valor do header `Authorization`. Enquanto o token estiver vencido a reserva do GitHub continua carregando, só que no fim do dia.

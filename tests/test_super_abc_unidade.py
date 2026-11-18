@@ -100,7 +100,17 @@ def teste_resumo_do_erro():
     erro = Exception('Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator("div.trocar-loja").first\n    - element intercepts pointer events')
     texto = resumo_do_erro(erro)
     assert "\n" not in texto and "intercepts pointer events" in texto, texto   # o motivo real sobrevive (antes o log cortava em 90)
-    assert len(resumo_do_erro(Exception("x" * 1000))) == 300
+    assert len(resumo_do_erro(Exception("x" * 10000))) == 3000          # um erro absurdo é cortado, para não inundar o log
+
+
+def teste_resumo_do_erro_guarda_o_fim_do_log_do_playwright():
+    """Na carga de 18/11/2026 o corte em 300 caracteres parou em "...waiting for element to be visible, enabled and": o motivo vem DEPOIS."""
+    tentativas = "".join(f"\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n    - waiting {100 * n}ms" for n in range(1, 13))
+    erro = Exception('Locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator("div.trocar-loja").first' + tentativas
+                     + '\n    - element is not stable\n    - <div class="overlay"> intercepts pointer events')
+    assert len(str(erro)) > 1000                                          # é do tamanho de um log de verdade
+    texto = resumo_do_erro(erro)
+    assert "\n" not in texto and texto.endswith("intercepts pointer events"), texto[-120:]
 
 
 if __name__ == "__main__":
