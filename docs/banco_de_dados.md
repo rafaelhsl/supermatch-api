@@ -37,8 +37,8 @@ tabela inteira é apagada e regravada.
 `ean`, `marca`, `categoria`, `id_origem` e `termo` vêm de [`sql/colunas_do_coletor.sql`](sql/colunas_do_coletor.sql). Sem elas a carga grava só as colunas
 antigas (e não aceita coleta parcial); a API e o site não usam as colunas novas. `unidade` vem de [`sql/coluna_unidade.sql`](sql/coluna_unidade.sql) e é detectada **à parte** das outras: a carga grava a unidade se a coluna existe (e
 avisa com um `::notice` se não existir, sem deixar de gravar o resto), e a API a pede e, se o banco responder que ela não existe, segue sem ela em vez
-de cair. Por isso o SQL e o código podem chegar em qualquer ordem. Hoje nenhum produto da lista de 100 termos é vendido por quilo, então a coluna
-só guarda `un`; os `kg` vêm com o hortifrúti ([`hortifruti.md`](hortifruti.md)).
+de cair. Por isso o SQL e o código podem chegar em qualquer ordem. Nenhum produto da lista de 100 termos é vendido por quilo, então a coluna
+só guarda `kg` para o hortifrúti ([`hortifruti.md`](hortifruti.md)), que a carga coleta junto desde 18/11/2026.
 
 ### Regras que o banco garante e as que só o código assume
 
@@ -141,10 +141,11 @@ catálogo crescer a ponto de não caber em memória).
 [`alimentar_banco.py`](../alimentar_banco.py), disparado diariamente pelo workflow
 [`.github/workflows/main.yml`](../.github/workflows/main.yml):
 
-1. Lê a lista de 100 produtos ([`dados/lista_de_produtos.json`](../dados/lista_de_produtos.json), até 100 por termo e
+1. Lê a lista de 128 produtos: os 100 de prateleira ([`dados/lista_de_produtos.json`](../dados/lista_de_produtos.json)) e os 28 de
+   hortifrúti ([`dados/lista_hortifruti.json`](../dados/lista_hortifruti.json)), numa coleta só (até 100 por termo e
    mercado). **Apoio Entrega, Atacadão e Supernosso** são coletados pela API pública
    ([`coletor_por_api.md`](coletor_por_api.md)), em paralelo, no CEP fixo `32607600` (Betim). O **Super ABC**, que não
-   tem API aberta, é coletado pelo robô nos mesmos 100 termos (3 navegadores por vez), com o mesmo filtro de nome.
+   tem API aberta, é coletado pelo robô nos mesmos 128 termos (3 navegadores por vez), com o mesmo filtro de nome.
    Cada robô informa o CEP **antes** de buscar e só segue se o site confirmar a localização (veja [`robos.md`](robos.md)).
 2. Define `uf_cobertura` e guarda tudo em memória, por mercado.
 3. Grava **um mercado por vez**, conforme o resultado da coleta (veja [A carga e as falhas](robos.md#a-carga-e-as-falhas)):
@@ -269,7 +270,7 @@ A resposta traz ainda `equivalencia_familias`, a lista dos tipos de produto para
 qualquer família vem sem esses dois campos. A chave é calculada pela API ao carregar o catálogo (`equivalencia.py`), não fica
 no banco. Veja [`equivalencia.md`](equivalencia.md).
 
-Cada opção de compra traz também `unidade` (`kg`, `un` ou ausente), que o site ainda não usa; é ela que vai dizer "R$ 3,79 **/kg**" no hortifrúti.
+Cada opção de compra traz também `unidade` (`kg`, `un` ou ausente); o site a usa para dizer "R$ 3,79 **/kg**" no hortifrúti ([`site.md`](site.md#preço-por-quilo-hortifrúti)).
 Pode trazer ainda `queda_preco` (`{"preco_antes": 14.99, "percentual": 47, "dias": 7}`) quando o preço do varejo
 caiu entre 5% e 70% em relação ao de 7 dias antes; sem queda, o campo não vem. Vem do histórico de preços, lido uma vez por dia, e não fica em
 `produtos`. Veja [`historico_de_precos.md`](historico_de_precos.md#o-selo-caiu-x-em-7-dias).

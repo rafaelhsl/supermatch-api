@@ -1,7 +1,8 @@
 """Carga diária: coleta os mercados e grava o banco de produtos e o histórico de preços.
 
 Apoio Entrega, Atacadão e Supernosso são coletados pela API pública (coletor_vtex.py, docs/coletor_por_api.md) e o Super ABC,
-que não tem API aberta, pelo robô (Scraper_SuperABC.py), com os 100 termos de dados/lista_de_produtos.json.
+que não tem API aberta, pelo robô (Scraper_SuperABC.py), com os 128 termos de dados/lista_de_produtos.json (100, de prateleira) e de
+dados/lista_hortifruti.json (28, frutas, verduras e legumes: o preço é por quilo, docs/hortifruti.md), numa coleta só.
 
 Quando uma parte da coleta falha, a carga não perde tudo nem grava dado duvidoso:
 - falharam poucos termos (até 10%): grava o que veio, mantém as linhas antigas dos termos que falharam e registra a coleta como
@@ -351,7 +352,7 @@ async def coletar_tudo(mercados):
         feitas = await asyncio.gather(*(coletar_por_robo(m, alvos, paralelo=1, tolerancia=0) for m in mercados))
         return dict(zip(mercados, feitas))
 
-    teto, termos = coletor_vtex.carregar_lista()
+    teto, termos = coletor_vtex.carregar_lista_da_carga()      # produtos de prateleira + hortifrúti, numa coleta só (a gravação apaga o resto do mercado)
     pela_api = [m for m in mercados if m in MERCADOS_PELA_API]
     por_robo = [m for m in mercados if m not in MERCADOS_PELA_API]
     print(f"📋 Lista de {len(termos)} produtos (até {teto} por termo). API: {', '.join(pela_api) or '-'}. Robô: {', '.join(por_robo) or '-'}.")

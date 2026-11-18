@@ -1,7 +1,7 @@
 {
  "versao": 1,
  "teto_por_termo": 100,
- "observacao": "LISTA DE RECONHECIMENTO, NÃO É LIDA PELA CARGA DIÁRIA. Hortifrúti vende a peso: em `unidade: kg` o preço é por quilo. Só o coletor de linha de comando a usa (--lista). Veja docs/hortifruti.md.",
+ "observacao": "Hortifrúti. A carga diária coleta esta lista JUNTO com dados/lista_de_produtos.json (coletor_vtex.carregar_lista_da_carga), numa coleta só. Vende a peso: em `unidade: kg` o preço é por quilo. Gerada por um script; mexa nas regras com cuidado e confira tests/casos_hortifruti.py. Veja docs/hortifruti.md.",
  "termos": [
   {
    "termo": "banana",
@@ -14,7 +14,7 @@
     "^banana\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -34,7 +34,7 @@
     "^maca\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -54,7 +54,7 @@
     "^laranja\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -74,7 +74,7 @@
     "^limao\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -94,7 +94,7 @@
     "^mamao\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -114,7 +114,7 @@
     "^melancia\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -134,7 +134,7 @@
     "^abacaxi\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -154,7 +154,7 @@
     "^manga\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -174,7 +174,7 @@
     "^uva\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -194,7 +194,7 @@
     "^morango\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -214,7 +214,7 @@
     "^abacate\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -234,7 +234,7 @@
     "^tomate\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -254,7 +254,7 @@
     "^batata\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -274,7 +274,7 @@
     "^cebola\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -294,7 +294,7 @@
     "^cenoura\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -314,7 +314,7 @@
     "^alho\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -334,7 +334,7 @@
     "^pepino\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -355,7 +355,7 @@
     "^(abobrinha|abobora italiana)\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -375,7 +375,7 @@
     "^abobora(?! italiana)\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -395,7 +395,7 @@
     "^chuchu\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -416,7 +416,7 @@
     "^(mandioca|aipim|macaxeira)\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -436,7 +436,7 @@
     "^beterraba\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -456,7 +456,7 @@
     "^pimentao\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -476,7 +476,7 @@
     "^repolho\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -496,7 +496,7 @@
     "^brocolis\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -516,7 +516,7 @@
     "^alface\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda"
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b"
    ],
    "categorias": [
     "^hortifruti(?: > |$)"
@@ -536,7 +536,7 @@
     "^couve\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda",
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b",
     "couve[ -]?flor"
    ],
    "categorias": [
@@ -557,7 +557,7 @@
     "^couve[ -]?flor\\b"
    ],
    "nome_exclui": [
-    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda",
+    "processad|higieniz|ralad|picad|fatiad|descascad|cozid|vapor|a vacuo|rosti|frit|\\bseco|\\bsecos|\\bpassas?\\b|conserva|calda|triturad|florete|congelad|polpa|suco|geleia|chips|palha|molho|extrato|pure|desidratad|cristalizad|\\bem po\\b|flocos|granulad|\\bpasta\\b|crispy|rodelas|kitano|\\bmuda|\\blata\\b|\\bpelad|ondulad|\\bpalito|bem brasil|mccain|\\bbovin|\\bpeito\\b",
     "mix|azeitona|speciale|sadia|broc|legumes|cong"
    ],
    "categorias": [

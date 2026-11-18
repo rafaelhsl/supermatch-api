@@ -348,7 +348,7 @@ def teste_lista_de_produtos_do_repositorio():
         assert c.passa_no_filtro(linha, racao) is cao and c.passa_no_filtro(linha, gatos) is gato, nome
 
 
-# ============================== hortifrúti (etapa 1: só a coleta, fora da carga diária) ==============================
+# ============================== hortifrúti (a lista própria, que a carga diária coleta junto com a de produtos) ==============================
 
 def teste_peso_variavel_so_entra_no_termo_que_aceita():
     banana_kg = {"id_origem": "1", "nome": "Banana Prata Quilo", "categoria": "Hortifrúti > Frutas", "peso_variavel": True}
@@ -400,22 +400,99 @@ def teste_lista_de_hortifruti_do_repositorio():
             assert c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": True}, por_termo[termo]), f"{termo}: deveria entrar: {nome} [{categoria}]"
         for nome, categoria in caso["saem"]:
             assert not c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": True}, por_termo[termo]), f"{termo}: deveria sair: {nome} [{categoria}]"
+    # o robô do Super ABC não traz categoria (nem o campo peso_variavel): só o nome decide
+    from casos_hortifruti import SUPER_ABC
+    for termo, nomes in SUPER_ABC["entram"].items():
+        for nome in nomes:
+            assert c.passa_no_filtro({"nome": nome, "preco_varejo": 5.0}, por_termo[termo]), f"Super ABC, {termo}: deveria entrar: {nome}"
+    for termo, nomes in SUPER_ABC["saem"].items():
+        for nome in nomes:
+            assert not c.passa_no_filtro({"nome": nome, "preco_varejo": 5.0}, por_termo[termo]), f"Super ABC, {termo}: deveria sair: {nome}"
     for termo, itens in ADAPTADOS.items():
         for nome, categoria in itens:
             assert not c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": True}, por_termo[termo]), f"{termo}: deveria sair: {nome} [{categoria}]"
 
 
-def teste_a_carga_diaria_nao_le_a_lista_de_hortifruti():
-    """Hortifrúti vende a peso (o preço é por quilo) e o site ainda não sabe mostrar isso: gravar esses produtos agora faria o site exibir
-    "Tomate Italiano 500g: R$ 18,99" quando o preço é de 1 kg. Por isso a lista fica à parte e a carga não a lê (docs/hortifruti.md)."""
+def teste_a_carga_diaria_coleta_a_lista_de_produtos_e_a_de_hortifruti_numa_coleta_so():
+    """A gravação apaga os produtos antigos do mercado: uma carga que usasse SÓ a lista de hortifrúti (28 termos) apagaria os outros ~2.000
+    produtos de cada mercado, e uma que usasse só a de produtos apagaria o hortifrúti. Por isso as duas vão juntas, por um caminho só."""
     teto, padrao = c.carregar_lista()
-    assert not [t["termo"] for t in padrao if t.get("aceita_peso_variavel") or t.get("grupo") == "Hortifrúti"], "a lista da carga diária não pode ter hortifrúti"
-    assert c.LISTA_PADRAO.name == "lista_de_produtos.json"
-    for arquivo in ("alimentar_banco.py", "api_supabase.py"):
-        assert "lista_hortifruti" not in (c.RAIZ / arquivo).read_text(encoding="utf-8"), f"{arquivo} não pode ler a lista de hortifrúti ainda"
-    # e a lista de hortifrúti não carrega termos do dia a dia (uma carga com ela apagaria os outros produtos do mercado)
-    _, hortifruti = c.carregar_lista(c.RAIZ / "dados" / "lista_hortifruti.json")
+    assert not [t["termo"] for t in padrao if t.get("aceita_peso_variavel") or t.get("grupo") == "Hortifrúti"], "a lista de produtos não tem hortifrúti"
+    assert c.LISTA_PADRAO.name == "lista_de_produtos.json" and c.LISTA_HORTIFRUTI.name == "lista_hortifruti.json"
+    _, hortifruti = c.carregar_lista(c.LISTA_HORTIFRUTI)
+    assert hortifruti and all(t.get("aceita_peso_variavel") and t.get("grupo") == "Hortifrúti" for t in hortifruti)
     assert not {t["termo"] for t in hortifruti} & {t["termo"] for t in padrao}
+
+    teto_da_carga, termos = c.carregar_lista_da_carga()
+    assert teto_da_carga == teto == 100 and len(termos) == len(padrao) + len(hortifruti) == 128
+    assert [t["termo"] for t in termos] == [t["termo"] for t in padrao] + [t["termo"] for t in hortifruti]       # a de produtos primeiro: o repetido fica com ela
+
+    # a carga lê a lista pelo caminho único; nada mais lê um arquivo de lista (o robô e a API usam o que a carga lhes entrega)
+    carga = (c.RAIZ / "alimentar_banco.py").read_text(encoding="utf-8")
+    assert "carregar_lista_da_carga()" in carga and "carregar_lista(" not in carga and "LISTA_HORTIFRUTI" not in carga and "LISTA_PADRAO" not in carga
+    assert "lista_hortifruti" not in (c.RAIZ / "api_supabase.py").read_text(encoding="utf-8")
+
+
+def teste_listas_com_termo_repetido_ou_teto_diferente_nao_sobem_para_a_carga():
+    import tempfile
+    padrao = {"teto_por_termo": 100, "termos": [{"termo": "tomate"}, {"termo": "arroz"}]}
+    hortifruti = {"teto_por_termo": 100, "termos": [{"termo": "Tomaté"}]}                    # o mesmo termo, só mudam o acento e a caixa
+    with tempfile.TemporaryDirectory() as pasta:
+        a, b = Path(pasta) / "a.json", Path(pasta) / "b.json"
+        a.write_text(json.dumps(padrao), encoding="utf-8")
+        b.write_text(json.dumps(hortifruti), encoding="utf-8")
+        with mock.patch.object(c, "LISTA_PADRAO", a), mock.patch.object(c, "LISTA_HORTIFRUTI", b):
+            try:
+                c.carregar_lista_da_carga()
+            except ValueError as erro:
+                assert "repetidos" in str(erro)
+            else:
+                raise AssertionError("termo repetido entre as listas devia ser recusado")
+            hortifruti.update(termos=[{"termo": "banana"}], teto_por_termo=50)
+            b.write_text(json.dumps(hortifruti), encoding="utf-8")
+            try:
+                c.carregar_lista_da_carga()
+            except ValueError as erro:
+                assert "teto" in str(erro)
+            else:
+                raise AssertionError("teto diferente entre as listas devia ser recusado")
+
+
+def teste_a_linha_de_comando_usa_a_lista_da_carga_e_aceita_uma_so():
+    vistos = []
+
+    def coletar_falso(http, mercados, termos, teto, ao_terminar=None, **resto):
+        vistos.append([t["termo"] for t in termos])
+        return {m: {} for m in mercados}, []
+
+    with mock.patch.object(c, "coletar", coletar_falso), mock.patch("sys.stdout", io.StringIO()), mock.patch.object(c.sys.stdout, "reconfigure", create=True):
+        c.principal(["--termos", "arroz,tomate,banana", "--mercados", "Supernosso"])                                    # sem --lista: a lista da carga (as duas)
+        c.principal(["--termos", "arroz,tomate,banana", "--mercados", "Supernosso", "--lista", str(c.LISTA_HORTIFRUTI)])    # com --lista: só aquela
+        c.principal(["--termos", "arroz,tomate,banana", "--mercados", "Supernosso", "--lista", str(c.LISTA_PADRAO)])
+    assert vistos == [["arroz", "banana", "tomate"], ["banana", "tomate"], ["arroz"]]
+
+
+def teste_item_por_quilo_nao_leva_faixa_de_atacado():
+    por_quilo = {"unidade": "kg", "preco_varejo": 4.99, "preco_atacado": 3.99, "quantidade_atacado": 6}
+    assert c.sem_atacado_se_por_quilo(por_quilo) == {"unidade": "kg", "preco_varejo": 4.99, "preco_atacado": 4.99, "quantidade_atacado": 1}
+    pacote = {"unidade": "un", "preco_varejo": 7.99, "preco_atacado": 6.99, "quantidade_atacado": 4}
+    assert c.sem_atacado_se_por_quilo(dict(pacote)) == pacote                           # o atacado do pacote continua valendo
+    sem_unidade = {"unidade": None, "preco_varejo": 7.99, "preco_atacado": 6.99, "quantidade_atacado": 4}
+    assert c.sem_atacado_se_por_quilo(dict(sem_unidade)) == sem_unidade
+    sem_faixa = {"unidade": "kg", "preco_varejo": 4.99, "preco_atacado": 4.99, "quantidade_atacado": 1}
+    assert c.sem_atacado_se_por_quilo(dict(sem_faixa)) == sem_faixa
+
+
+def teste_a_coleta_tira_o_atacado_do_item_por_quilo_e_deixa_o_do_pacote():
+    termo = {"termo": "cebola", "aceita_peso_variavel": True, "nome_inclui": ["^cebola\\b"]}
+
+    def baixar(http, consulta):
+        return [{"id_origem": "1", "nome": "Cebola Quilo", "categoria": "", "unidade": "kg", "peso_variavel": True, "preco_varejo": 6.99, "preco_atacado": 5.5, "quantidade_atacado": 5},
+                {"id_origem": "2", "nome": "Cebola 19kg", "categoria": "", "unidade": "un", "peso_variavel": False, "preco_varejo": 170.8, "preco_atacado": 160.0, "quantidade_atacado": 2}]
+
+    resultado, erros = c.coletar(None, ["Atacadao"], [termo], 100, baixadores={"Atacadao": baixar})
+    kilo, saco = resultado["Atacadao"]["cebola"]
+    assert not erros and (kilo["preco_atacado"], kilo["quantidade_atacado"]) == (6.99, 1) and (saco["preco_atacado"], saco["quantidade_atacado"]) == (160.0, 2)
 
 
 def teste_coletar_hortifruti_mantem_o_fresco_e_conta_os_itens_por_quilo():
