@@ -92,6 +92,12 @@ O site **não confia cegamente na marca**: `quedaDaOpcao` (bloco `@queda-inicio`
 
 `node tests/test_queda.js` confere a regra do site e `python tests/navegador/test_site_queda.py` confere a tela (celular, celular estreito e computador).
 
+## Aviso de preço velho
+
+Os preços vêm da carga diária (07:30 de Brasília; a de reserva do GitHub às vezes atrasa umas horas). Um preço com **até 36 horas** de idade é normal. Passou disso, a coleta de um dia não veio e o site avisa, na busca ("Atenção: Estes preços são de 16/11 (há 3 dias): a atualização mais recente ainda não chegou. Confira no site do mercado antes de comprar.") e no cupom, com a data de Brasília. Vale o preço **mais antigo da tela**: um mercado em dia e outro atrasado avisam, com a data do atrasado. Data ilegível ou no futuro (relógio errado) não avisa.
+
+O limite (`PRECO_VELHO_HORAS = 36`) e a regra (`avisoDePrecoVelho`) estão no bloco `@preco-velho-inicio` / `@preco-velho-fim`. `node tests/test_preco_velho.js` confere a regra e `python tests/navegador/test_site_preco_velho.py` confere a tela (datas calculadas a partir de agora: 3, 24 e 35 h não avisam; 37 h e 3 dias avisam). Para o dono, a falha de uma carga continua chegando por e-mail do GitHub; este aviso é o que a **pessoa que usa o site** vê. Os preços de uma lista guardada também passam por aqui: o cupom usa a data mais antiga da lista.
+
 ## Privacidade do CEP
 
 O rodapé tem o link "Privacidade e seus dados", e a janela do CEP diz para que ele serve e leva ao mesmo aviso ("Como tratamos seus dados"). A janela diz o que fica no aparelho, para onde o CEP vai (BrasilAPI, ViaCEP e a nossa API) e o que os serviços de hospedagem veem, e tem o botão "Apagar meus dados deste aparelho" (`esquecerTudo`: apaga as chaves `sm_...` e as da versão anterior). O que cada frase afirma, o que a garante (a API só escreve os 5 primeiros dígitos do CEP no log) e o que ainda falta decidir (contato, controlador) está em [`privacidade.md`](privacidade.md). `node tests/test_privacidade.js` trava os endereços externos do site contra o aviso, e `python tests/navegador/test_site_privacidade.py` confere a tela.
