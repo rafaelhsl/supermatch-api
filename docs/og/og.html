@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Imagem de divulgação do Supermatch (1200 x 630)</title>
+<!-- Fonte da imagem site/og.png (a que aparece quando o link é compartilhado). Para refazer: python docs/og/gerar_og.py
+     Usa as cores e as letras do site (site/index.html): o toldo das quatro barracas e a placa amarela de "mais barato".
+     Sem preços: a imagem não pode prometer um valor que o site não confirma. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;700&family=Unbounded:wght@800&display=swap" rel="stylesheet">
+<style>
+:root { --calcada: #edf1f6; --tinta: #182848; --sol: #ffd23f; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+body { position: relative; background: var(--tinta); color: #fff; font-family: "Hanken Grotesk", system-ui, sans-serif; }
+
+/* o toldo: quatro barracas, cada uma com as listras da cor do mercado, e a barra serrilhada embaixo */
+.toldo { position: absolute; left: 0; top: 0; width: 1200px; height: 150px; display: flex; }
+.toldo svg { display: block; width: 300px; height: 150px; }
+
+.conteudo { position: absolute; left: 72px; top: 196px; width: 1056px; }
+h1 { margin: 0; font: 800 82px/1.06 "Unbounded", system-ui, sans-serif; letter-spacing: -.02em; }
+.sub { margin: 26px 0 0; font: 500 36px/1.3 "Hanken Grotesk", system-ui, sans-serif; color: #c7d4ec; max-width: 800px; }
+
+.marca { position: absolute; left: 72px; bottom: 48px; display: flex; align-items: center; gap: 16px; font: 800 38px/1 "Unbounded", system-ui, sans-serif; letter-spacing: -.01em; }
+.marca svg { width: 64px; height: 55px; }
+
+.placa { position: absolute; right: 64px; bottom: 40px; transform: rotate(-4deg); display: flex; align-items: center; gap: 14px; background: var(--sol); color: var(--tinta); padding: 18px 32px; border-radius: 22px; font: 800 38px/1 "Unbounded", system-ui, sans-serif; box-shadow: 0 8px 0 rgba(0, 0, 0, .28); }
+.placa svg { width: 46px; height: 46px; }
+</style>
+</head>
+<body>
+<div class="toldo" id="toldo"></div>
+
+<div class="conteudo">
+  <h1>Onde a sua compra sai mais barata?</h1>
+  <p class="sub">Compare a sua lista em 4 supermercados online de BH e região.</p>
+</div>
+
+<div class="marca">
+  <svg viewBox="0 0 30 26" aria-hidden="true"><path d="M2 10Q2 2 8 2H22Q28 2 28 10Z" fill="#ffd23f"/><path d="M2 10h26" stroke="#fff" stroke-width="2"/><path d="M5 10v13M25 10v13" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M8 2l-2 8M15 2v8M22 2l2 8" stroke="#182848" stroke-width="1.6"/></svg>
+  Supermatch
+</div>
+
+<div class="placa">
+  <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.4" fill="#182848"/><g stroke="#182848" stroke-width="1.6" stroke-linecap="round"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13"/></g></svg>
+  Mais barato
+</div>
+
+<script>
+// as cores dos quatro mercados (as mesmas de MERCADOS em site/index.html)
+const CORES = ["#2a78d6", "#eb6834", "#6250d6", "#1baf7a"];
+document.getElementById("toldo").innerHTML = CORES.map((cor) => {
+  // 5 listras de 60 px por barraca, alternando a cor e o branco; a barra de baixo é serrilhada em meia-lua
+  const listras = [0, 1, 2, 3, 4].map((i) => `<rect x="${i * 60}" y="0" width="60" height="118" fill="${i % 2 === 0 ? cor : "#ffffff"}"/>`).join("");
+  const luas = [0, 1, 2, 3, 4].map((i) => `<path d="M${i * 60} 118 a30 30 0 0 0 60 0 Z" fill="${i % 2 === 0 ? cor : "#ffffff"}"/>`).join("");
+  return `<svg viewBox="0 0 300 150" aria-hidden="true">${listras}${luas}</svg>`;
+}).join("");
+</script>
+</body>
+</html>

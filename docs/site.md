@@ -98,6 +98,15 @@ Os preços vêm da carga diária (07:30 de Brasília; a de reserva do GitHub às
 
 O limite (`PRECO_VELHO_HORAS = 36`) e a regra (`avisoDePrecoVelho`) estão no bloco `@preco-velho-inicio` / `@preco-velho-fim`. `node tests/test_preco_velho.js` confere a regra e `python tests/navegador/test_site_preco_velho.py` confere a tela (datas calculadas a partir de agora: 3, 24 e 35 h não avisam; 37 h e 3 dias avisam). Para o dono, a falha de uma carga continua chegando por e-mail do GitHub; este aviso é o que a **pessoa que usa o site** vê. Os preços de uma lista guardada também passam por aqui: o cupom usa a data mais antiga da lista.
 
+## Pré-visualização do link (tags OG)
+
+Quando o link é compartilhado (WhatsApp, Instagram, Facebook, X, Telegram), quem monta a prévia lê as tags `og:*` do `<head>` e a imagem `site/og.png` (1200 x 630, ~70 KB): o título, a descrição e um toldo listrado com as cores dos quatro mercados, o título do site e a placa amarela "Mais barato", **sem preço nenhum** (a imagem não promete um valor que o site não confirma).
+
+- **O endereço é um só e absoluto**, nas três tags `canonical`, `og:url` e `og:image` (`https://spontaneous-hamster-cd3133.netlify.app`). Quem monta a prévia não roda o site, então não dá para calcular isso por JavaScript. **Se o site ganhar um domínio próprio, troque os três** (e o `tests/test_og.py` confere que continuam iguais).
+- **Refazer a imagem:** edite `docs/og/og.html` (a fonte: cores e letras do site) e rode `python docs/og/gerar_og.py`. Confira o resultado antes de publicar.
+- **Depois de publicar,** as redes guardam a prévia antiga por um tempo. Para forçar a atualização: no Facebook, o [Depurador de Compartilhamento](https://developers.facebook.com/tools/debug/) ("Buscar novas informações"); no WhatsApp, compartilhar o link com um parâmetro novo (`?v=2`) mostra a prévia nova.
+- `python tests/test_og.py` confere as tags, que a imagem existe, tem 1200 x 630 e menos de 300 KB, e que os endereços batem.
+
 ## Privacidade do CEP
 
 O rodapé tem o link "Privacidade e seus dados", e a janela do CEP diz para que ele serve e leva ao mesmo aviso ("Como tratamos seus dados"). A janela diz o que fica no aparelho, para onde o CEP vai (BrasilAPI, ViaCEP e a nossa API) e o que os serviços de hospedagem veem, e tem o botão "Apagar meus dados deste aparelho" (`esquecerTudo`: apaga as chaves `sm_...` e as da versão anterior). O que cada frase afirma, o que a garante (a API só escreve os 5 primeiros dígitos do CEP no log) e o que ainda falta decidir (contato, controlador) está em [`privacidade.md`](privacidade.md). `node tests/test_privacidade.js` trava os endereços externos do site contra o aviso, e `python tests/navegador/test_site_privacidade.py` confere a tela.
