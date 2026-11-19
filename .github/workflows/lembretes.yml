@@ -1,0 +1,53 @@
+name: Lembretes por data
+
+# Todo dia confere dados/lembretes.json e, quando chega o dia de um lembrete, abre UMA issue no repositório (o GitHub manda o e-mail ao dono).
+# Hoje serve para o token do cron-job.org (vence em 13/11/2027) e para a versão da API do GitHub que ele usa (2022-11-28 deixa de funcionar em
+# 10/03/2028). Veja docs/carga_diaria.md ("Renovar o token") e lembretes.py.
+# Não usa segredo nenhum: só o token que o próprio GitHub dá à execução, e só com a permissão de abrir issue.
+on:
+  schedule:
+    - cron: '23 12 * * *'        # 09:23 em Brasília (evita o minuto 00, em que o GitHub mais atrasa)
+  workflow_dispatch:
+    inputs:
+      criar:
+        description: 'Abrir as issues de verdade? Com "nao" só mostra o que faria'
+        type: choice
+        options:
+          - nao
+          - sim
+        default: nao
+      hoje:
+        description: 'Para testar: finge que hoje é este dia (AAAA-MM-DD). Vazio = hoje de verdade'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  lembrar:
+    name: Abrir as issues dos lembretes que chegaram
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Puxando o código do projeto
+      uses: actions/checkout@v7
+
+    - name: Configurando o Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.11'
+
+    - name: Conferindo os lembretes
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        # agendado cria sempre; disparado à mão só cria se pedir "sim"
+        CRIAR: ${{ github.event_name == 'schedule' || inputs.criar == 'sim' }}
+        HOJE: ${{ inputs.hoje }}
+      run: |
+        argumentos=""
+        [ "$CRIAR" = "true" ] && argumentos="$argumentos --criar"
+        [ -n "$HOJE" ] && argumentos="$argumentos --hoje $HOJE"
+        python lembretes.py $argumentos

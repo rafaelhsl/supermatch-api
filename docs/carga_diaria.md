@@ -108,6 +108,23 @@ Os dois números, `LIMITE_DE_FALHAS_SEGUIDAS = 6` e `PAUSA_DA_SEGUNDA_RODADA = 6
 
 Um token do GitHub vence. O token criado em 13/11/2026 vale até **13/11/2027** (a data também aparece no cabeçalho `github-authentication-token-expiration` da resposta do teste). O GitHub costuma avisar por e-mail poucos dias antes, mas não conte só com isso: anote a data numa agenda. Na renovação, aproveite para trocar também o valor do cabeçalho `X-GitHub-Api-Version` por uma versão mais nova: o GitHub avisa (cabeçalho `Sunset` da resposta) que a `2022-11-28` deixa de funcionar em **10/03/2028**. Para renovar: Developer settings → Fine-grained tokens → abra o token → **Regenerate token** (mesmas permissões) → copie o valor novo → no cron-job.org, edite a tarefa e troque o valor do header `Authorization`. Enquanto o token estiver vencido a reserva do GitHub continua carregando, só que no fim do dia.
 
+### O lembrete automático
+
+Não depende de lembrar de olhar a agenda: o workflow [`lembretes.yml`](../.github/workflows/lembretes.yml) roda todo dia (09:23 em Brasília), lê [`dados/lembretes.json`](../dados/lembretes.json) e, quando chega o dia de um lembrete, **abre uma issue no repositório, atribuída ao dono** (o GitHub manda o e-mail). Hoje são três:
+
+| Quando | O quê |
+|---|---|
+| 13/10/2027 | **Renovar o token** (vence em 13/11/2027). A issue traz o passo a passo, manda trocar também o `X-GitHub-Api-Version` e **acrescentar os próximos lembretes** |
+| 06/11/2027 | **Última chamada**: faltam 7 dias para o token vencer |
+| 10/02/2028 | **Trocar a versão da API do GitHub** (a `2022-11-28` deixa de funcionar em 10/03/2028), caso não tenha sido trocada na renovação |
+
+- **Uma issue por lembrete**, uma vez só: se já existe uma com o mesmo título (aberta ou **fechada**), não abre outra. Se o workflow ficar parado, o lembrete atrasado sai quando ele voltar.
+- **Depois de renovar o token, acrescente os próximos lembretes** em `dados/lembretes.json` (o vencimento novo menos 30 dias e menos 7 dias): sem isso o ciclo para depois de 2028. A issue de renovação repete este pedido.
+- Se o workflow falhar (o GitHub não conseguiu listar ou abrir issues), a execução fica vermelha e o GitHub avisa por e-mail: ele **nunca** abre issue sem conferir antes o que já existe.
+- O workflow só tem a permissão de abrir issue (`issues: write`) e ler o código; não usa nenhum segredo.
+- **Ver o que cada lembrete faria** (não abre nada): `python lembretes.py` (precisa do `gh` logado) ou, no GitHub, Actions → "Lembretes por data" → Run workflow (com `criar = nao`). Para **testar de verdade**, rode com `criar = sim` e `hoje = 2027-10-14`: abre a issue do token; feche-a em seguida.
+- `python tests/test_lembretes.py` confere a regra (quando abre, não repete, o arquivo mal formado é recusado), que as datas batem com esta página e que o workflow só pode abrir issue.
+
 ## Mudar o horário
 
 É só editar o horário da tarefa no cron-job.org; não precisa mexer em código. O horário das 07:30 foi escolhido para os preços estarem prontos (≈ 07:45) antes das compras da manhã. (O comentário antigo do `main.yml` dizia que o Apoio não tinha preços antes das 7h; a causa real daquelas falhas era outra e já foi corrigida, então não há horário proibido.)
