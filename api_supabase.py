@@ -1,8 +1,11 @@
 import sys
 import os
+import re
 import time
 import threading
+import logging
 import uvicorn
+import urllib.parse
 import urllib.request
 import json
 from contextlib import asynccontextmanager
@@ -39,9 +42,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def cep_para_o_log(cep) -> str:
+    """Só os 5 primeiros dígitos do CEP vão para o log do servidor ("30130-***"). O CEP inteiro, junto com o IP que o provedor registra,
+    localiza uma casa; os 5 primeiros apontam um trecho da cidade. O parâmetro é livre (qualquer um pode chamar a API): o que não for
+    CEP não é escrito no log. Veja o aviso de privacidade em site/index.html e docs/privacidade.md."""
+    digitos = re.sub(r"\D", "", str(cep))
+    return f"{digitos[:5]}-***" if len(digitos) >= 5 else "(CEP inválido)"
+
+
+class EsconderCepDoLogDeAcesso(logging.Filter):
+    """O uvicorn registra cada chamada com o endereço inteiro ("GET /comparar?cep=30130010&item=arroz"): troca o CEP por "30130-***"."""
+
+    def filter(self, registro):
+        argumentos = registro.args
+        if isinstance(argumentos, tuple) and len(argumentos) >= 3 and isinstance(argumentos[2], str):
+            novo = re.sub(r"(?i)\bcep=([^&\s]*)", lambda m: "cep=" + cep_para_o_log(urllib.parse.unquote(m.group(1))), argumentos[2])
+            registro.args = argumentos[:2] + (novo,) + argumentos[3:]
+        return True
+
+
+logging.getLogger("uvicorn.access").addFilter(EsconderCepDoLogDeAcesso())
+
+
 def obter_uf_pelo_cep(cep: str):
+    digitos = re.sub(r"\D", "", str(cep))
+    if len(digitos) != 8:                       # o parâmetro é livre: não vira endereço de consulta
+        return "BR"
     try:
-        url = f"https://viacep.com.br/ws/{cep}/json/"
+        url = f"https://viacep.com.br/ws/{digitos}/json/"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=3) as response:
             dados = json.loads(response.read().decode())
@@ -196,7 +224,7 @@ def saude():
 
 @app.get("/comparar")
 def buscar_e_comparar(cep: str, item: str, todos: bool = False):
-    print(f"\n📡 API Recebeu pedido ULTRA-RÁPIDO! Item: '{item}' | CEP: '{cep}'")
+    print(f"\n📡 API Recebeu pedido ULTRA-RÁPIDO! Item: '{item}' | CEP: '{cep_para_o_log(cep)}'")
 
     uf_cliente = obter_uf_pelo_cep(cep)
 

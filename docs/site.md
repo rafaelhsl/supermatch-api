@@ -92,6 +92,10 @@ O site **não confia cegamente na marca**: `quedaDaOpcao` (bloco `@queda-inicio`
 
 `node tests/test_queda.js` confere a regra do site e `python tests/navegador/test_site_queda.py` confere a tela (celular, celular estreito e computador).
 
+## Privacidade do CEP
+
+O rodapé tem o link "Privacidade e seus dados", e a janela do CEP diz para que ele serve e leva ao mesmo aviso ("Como tratamos seus dados"). A janela diz o que fica no aparelho, para onde o CEP vai (BrasilAPI, ViaCEP e a nossa API) e o que os serviços de hospedagem veem, e tem o botão "Apagar meus dados deste aparelho" (`esquecerTudo`: apaga as chaves `sm_...` e as da versão anterior). O que cada frase afirma, o que a garante (a API só escreve os 5 primeiros dígitos do CEP no log) e o que ainda falta decidir (contato, controlador) está em [`privacidade.md`](privacidade.md). `node tests/test_privacidade.js` trava os endereços externos do site contra o aviso, e `python tests/navegador/test_site_privacidade.py` confere a tela.
+
 ## Preço por quilo (hortifrúti)
 
 A API manda `unidade: "kg"` na opção de compra quando **o preço é por quilo** (frutas, verduras e legumes vendidos a peso; veja [`hortifruti.md`](hortifruti.md)). Sem avisar, "Tomate Italiano 500g: R$ 18,99" seria lido como o preço da bandeja, e é o do quilo. Só a unidade exatamente `kg` conta; `un`, vazio, ausente (API antiga, item guardado antes, robô do Super ABC, que não a informa) ou qualquer outro valor é um produto comum, **exatamente como era**.

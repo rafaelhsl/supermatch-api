@@ -241,7 +241,14 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 .janela .cidades { margin: 14px 0 0; font-size: 14px; color: var(--tinta-2); }
 .janela .cidades summary { cursor: pointer; font-weight: 600; color: var(--tinta); padding: 6px 0; }
 .janela .cidades ul { margin: 6px 0 0; padding-left: 18px; columns: 2; column-gap: 18px; }
-.janela .acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+.janela .acoes { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 8px; }
+.janela h3 { font: 700 15px/1.3 var(--texto); margin: 18px 0 4px; color: var(--tinta); }
+.janela .dados { margin: 0 0 8px; padding-left: 18px; color: var(--tinta-2); }
+.janela .dados li { margin: 0 0 8px; }
+.janela .dados strong, .janela .destaque { color: var(--tinta); font-weight: 600; }
+.janela .privacidade-curta { font-size: 14px; margin: 10px 0 0; }
+.link { background: none; border: 0; padding: 4px 2px; font: inherit; color: var(--tinta); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.link:hover { text-decoration-thickness: 2px; }
 
 /* ---------- tablet e celular: uma coluna ---------- */
 @media (max-width: 960px) {
@@ -347,7 +354,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 
   <aside class="cupom-area" id="cupom" aria-label="Sua lista"></aside>
 
-  <p class="rodape-pagina">O Supermatch compara os preços publicados nos sites dos mercados, coletados uma vez por dia. Promoções e estoque mudam: confira no site do mercado antes de finalizar a compra.</p>
+  <p class="rodape-pagina">O Supermatch compara os preços publicados nos sites dos mercados, coletados uma vez por dia. Promoções e estoque mudam: confira no site do mercado antes de finalizar a compra. <button type="button" class="link" id="abrirPrivacidade">Privacidade e seus dados</button></p>
 </div>
 
 <div class="barra-movel" id="barraMovel"></div>
@@ -359,12 +366,33 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     <label class="so-leitor" for="campoCep">CEP</label>
     <input id="campoCep" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="postal-code">
     <p class="erro" id="erroCep" role="alert"></p>
+    <p class="privacidade-curta">Usamos o CEP só para achar a sua cidade e os mercados que entregam aí. <button type="button" class="link" id="abrirPrivacidadeCep">Como tratamos seus dados</button></p>
     <details class="cidades"><summary>Ver as cidades atendidas</summary><ul id="listaCidades"></ul></details>
     <div class="acoes">
       <button class="botao vazado" type="button" id="cancelarCep">Agora não</button>
       <button class="botao sol" type="submit">Salvar CEP</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="janelaPrivacidade" aria-labelledby="tituloPrivacidade">
+  <div class="janela">
+    <h2 id="tituloPrivacidade">Privacidade e seus dados</h2>
+    <p class="destaque">O Supermatch não tem cadastro, anúncios nem rastreadores, e não vende nem repassa os seus dados.</p>
+    <h3>O que fica no seu aparelho</h3>
+    <p>O seu CEP, a cidade, a lista de compras e o modo de busca ficam guardados só no navegador, para você não digitar de novo. O site não usa cookies.</p>
+    <h3>Para onde o seu CEP vai</h3>
+    <ul class="dados">
+      <li><strong>BrasilAPI e ViaCEP</strong>, serviços públicos de CEP, para descobrir a sua cidade.</li>
+      <li><strong>A nossa API</strong>, hospedada no Render, junto com o que você busca, para calcular os preços. Ela também pergunta ao ViaCEP o estado do CEP. Nos nossos registros ficam o que você buscou e só os 5 primeiros dígitos do CEP.</li>
+    </ul>
+    <h3>O que os serviços de hospedagem veem</h3>
+    <p>O Netlify, que entrega este site, e o Render, que roda a nossa API, guardam registros técnicos de acesso, como o endereço IP. O Google Fonts, de onde vêm as letras do site, também recebe o endereço IP do seu aparelho.</p>
+    <div class="acoes">
+      <button class="botao vazado" type="button" id="apagarMeusDados">Apagar meus dados deste aparelho</button>
+      <button class="botao sol" type="button" id="fecharPrivacidade">Fechar</button>
+    </div>
+  </div>
 </dialog>
 
 <script>
@@ -931,7 +959,8 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   }
 
   function esquecerTudo() {
-    ["cep", "cidade", "lista"].forEach((k) => localStorage.removeItem(PREFIXO + k));
+    // tudo o que o site guarda (as chaves "sm_..." e as da versão anterior, que ler() ainda aproveita e traria o CEP de volta)
+    try { Object.keys(localStorage).filter((k) => k.startsWith(PREFIXO)).concat(["user_cep", "user_cidade"]).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* modo privado */ }
     location.reload();
   }
 
@@ -1171,6 +1200,10 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   const abrirCep = () => { $("erroCep").textContent = ""; $("listaCidades").parentElement.open = false; $("campoCep").value = S.estado.cep ? U.formatarCep(S.estado.cep) : ""; janela.showModal(); $("campoCep").focus(); };
   $("botaoCep").addEventListener("click", abrirCep);
   $("cancelarCep").addEventListener("click", () => janela.close());
+  const privacidade = $("janelaPrivacidade");
+  ["abrirPrivacidade", "abrirPrivacidadeCep"].forEach((id) => $(id).addEventListener("click", () => privacidade.showModal()));
+  $("fecharPrivacidade").addEventListener("click", () => privacidade.close());
+  $("apagarMeusDados").addEventListener("click", () => S.esquecerTudo());
   $("formCep").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const r = await S.definirCep($("campoCep").value);
