@@ -17,7 +17,8 @@ confere(dialogo.length > 100, 'a janela "janelaPrivacidade" existe');
 // ---- com quem o navegador conversa: endereços no script (fetch, constante da API) e arquivos externos do <head> (fontes) ----
 const hosts = new Set();
 for (const m of script.matchAll(/["'`]https:\/\/([a-z0-9.-]+)/gi)) hosts.add(m[1]);
-for (const m of html.slice(0, html.indexOf("<style>")).matchAll(/<link[^>]+href="https:\/\/([a-z0-9.-]+)/gi)) hosts.add(m[1]);
+// (o <link rel="canonical"> e as tags og:* só dizem o endereço do próprio site para quem monta a prévia do link: o navegador não pede nada a eles)
+for (const m of html.slice(0, html.indexOf("<style>")).matchAll(/<link(?![^>]*rel="canonical")[^>]+href="https:\/\/([a-z0-9.-]+)/gi)) hosts.add(m[1]);
 igual([...hosts].sort(), ["brasilapi.com.br", "fonts.googleapis.com", "fonts.gstatic.com", "supermatch-api.onrender.com", "viacep.com.br"],
   "os únicos endereços externos do site (se mudar, atualize o aviso de privacidade e docs/privacidade.md)");
 
