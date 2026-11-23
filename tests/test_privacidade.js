@@ -19,13 +19,15 @@ const hosts = new Set();
 for (const m of script.matchAll(/["'`]https:\/\/([a-z0-9.-]+)/gi)) hosts.add(m[1]);
 // (o <link rel="canonical"> e as tags og:* só dizem o endereço do próprio site para quem monta a prévia do link: o navegador não pede nada a eles)
 for (const m of html.slice(0, html.indexOf("<style>")).matchAll(/<link(?![^>]*rel="canonical")[^>]+href="https:\/\/([a-z0-9.-]+)/gi)) hosts.add(m[1]);
-igual([...hosts].sort(), ["brasilapi.com.br", "fonts.googleapis.com", "fonts.gstatic.com", "supermatch-api.onrender.com", "viacep.com.br"],
-  "os únicos endereços externos do site (se mudar, atualize o aviso de privacidade e docs/privacidade.md)");
+igual([...hosts].sort(), ["brasilapi.com.br", "supermatch-api.onrender.com", "viacep.com.br"],
+  "os únicos endereços externos do site (se mudar, atualize o aviso de privacidade e docs/privacidade.md); as letras vêm de site/fonts/, não do Google");
+confere(!/googleapis|gstatic|fonts\.google/.test(html), "nada do Google no site: as fontes são hospedadas aqui (tests/test_fontes.py confere os arquivos)");
 
 // ---- e o aviso cita cada um, com o nome que a pessoa reconhece ----
-for (const [nome, fala] of [["BrasilAPI", "BrasilAPI"], ["ViaCEP", "ViaCEP"], ["Render", "Render"], ["Netlify", "Netlify"], ["Google Fonts", "Google Fonts"]]) {
+for (const [nome, fala] of [["BrasilAPI", "BrasilAPI"], ["ViaCEP", "ViaCEP"], ["Render", "Render"], ["Netlify", "Netlify"]]) {
   confere(texto.includes(nome), `o aviso cita ${fala}`);
 }
+confere(!/Google/.test(texto), "o aviso não cita o Google (o site não pede nada a ele: as letras são daqui)");
 confere(/5 primeiros dígitos do CEP/.test(texto), 'o aviso diz que nos registros ficam só "5 primeiros dígitos do CEP" (tests/test_privacidade.py torna isso verdade)');
 confere(/não usa cookies/.test(texto), "o aviso diz que o site não usa cookies");
 confere(!/document\.cookie/.test(html), "o site de fato não escreve cookies");

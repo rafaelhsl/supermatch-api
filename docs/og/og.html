@@ -6,10 +6,11 @@
 <!-- Fonte da imagem site/og.png (a que aparece quando o link é compartilhado). Para refazer: python docs/og/gerar_og.py
      Usa as cores e as letras do site (site/index.html): o toldo das quatro barracas e a placa amarela de "mais barato".
      Sem preços: a imagem não pode prometer um valor que o site não confirma. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;700&family=Unbounded:wght@800&display=swap" rel="stylesheet">
 <style>
+/* as mesmas fontes do site (site/fonts/), lidas daqui: refazer a imagem não precisa de internet */
+@font-face { font-family: "Hanken Grotesk"; font-weight: 500; src: url(../../site/fonts/hanken-grotesk-latin-v1.woff2) format("woff2"); }
+@font-face { font-family: "Hanken Grotesk"; font-weight: 700; src: url(../../site/fonts/hanken-grotesk-latin-v1.woff2) format("woff2"); }
+@font-face { font-family: "Unbounded"; font-weight: 800; src: url(../../site/fonts/unbounded-latin-v1.woff2) format("woff2"); }
 :root { --calcada: #edf1f6; --tinta: #182848; --sol: #ffd23f; }
 * { box-sizing: border-box; }
 html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }

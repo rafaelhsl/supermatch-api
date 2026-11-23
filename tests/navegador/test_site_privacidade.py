@@ -16,7 +16,7 @@ from playwright.async_api import async_playwright
 from _comum import SAIDA, URL  # noqa: E402  (tests/navegador/_comum.py)
 
 falhas, ok = [], 0
-PERMITIDOS = {"fonts.googleapis.com", "fonts.gstatic.com", "supermatch-api.onrender.com", "brasilapi.com.br", "viacep.com.br"}
+PERMITIDOS = {"127.0.0.1", "supermatch-api.onrender.com", "brasilapi.com.br", "viacep.com.br"}      # 127.0.0.1 é o próprio site, servido pelo teste (_comum.py); o Google não está na lista
 
 
 def confere(cond, texto):
@@ -73,7 +73,7 @@ async def rodar():
             titulo = limpo(await pg.locator("#janelaPrivacidade h2").inner_text())
             confere(titulo == "Privacidade e seus dados", f"título do aviso: «{titulo}»")
             texto = limpo(await pg.locator("#janelaPrivacidade").inner_text())
-            for trecho in ("não tem cadastro, anúncios nem rastreadores", "não usa cookies", "BrasilAPI e ViaCEP", "5 primeiros dígitos do CEP", "Netlify", "Render", "Google Fonts"):
+            for trecho in ("não tem cadastro, anúncios nem rastreadores", "não usa cookies", "BrasilAPI e ViaCEP", "5 primeiros dígitos do CEP", "Netlify", "Render"):
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")
             for trecho in ("Quem responde por isto", "O Supermatch é mantido por Rafael Lima"):
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")

@@ -10,7 +10,7 @@ O site mostra um aviso de privacidade (rodapé "Privacidade e seus dados" e link
 | BrasilAPI e ViaCEP (do navegador) | o CEP | descobrir a cidade (e saber se atendemos) |
 | API do Supermatch, no Render (do navegador) | o CEP e o termo buscado, a cada busca e a cada atualização da lista | calcular os preços |
 | ViaCEP (da API) | os 8 dígitos do CEP | saber o estado (UF) |
-| Google Fonts (do navegador) | o endereço IP do aparelho | as letras do site |
+| Netlify (as letras, em `fonts/`, junto com o site) | o IP, como em qualquer pedido ao site | as letras do site. **Desde 23/11/2026 não vêm mais do Google Fonts** |
 | Netlify e Render | registros técnicos de acesso (IP e o que o provedor guarda) | são os provedores de hospedagem |
 
 O banco (Supabase) **não recebe CEP**: só guarda produtos e preços.
@@ -35,7 +35,7 @@ Apaga todas as chaves `sm_...` do navegador e as da versão anterior do site (`u
 |---|---|
 | "não tem cadastro, anúncios nem rastreadores" | `tests/test_privacidade.js`: nenhum analytics/rastreador no HTML |
 | "não usa cookies" | o mesmo teste: nenhum `document.cookie` |
-| o CEP só vai para BrasilAPI, ViaCEP e a nossa API; o IP vai ao Google Fonts | o mesmo teste: a lista dos endereços externos do site **tem de ser exatamente esta**; se o site falar com um endereço novo, o teste falha e lembra de atualizar o aviso e esta página |
+| o CEP só vai para BrasilAPI, ViaCEP e a nossa API; o Google não recebe nada | o mesmo teste (e `tests/test_fontes.py`, `tests/navegador/test_site_fontes.py`): a lista dos endereços externos do site **tem de ser exatamente esta**; se o site falar com um endereço novo, o teste falha e lembra de atualizar o aviso e esta página |
 | "nos nossos registros ficam o que você buscou e só os 5 primeiros dígitos do CEP" | `tests/test_privacidade.py` (a máscara, o filtro do uvicorn, o print, e uma varredura que falha se um `print`/log novo escrever o CEP cru) |
 | "Apagar meus dados" apaga tudo | `tests/navegador/test_site_privacidade.py`: com `sm_*`, `user_*` e uma chave de outro site guardadas, sobra só a de fora |
 | o aviso abre do rodapé e da janela do CEP, cabe em 320 px, Esc fecha e o foco volta | o mesmo teste de navegador |
@@ -47,5 +47,4 @@ A janela diz **quem mantém o projeto (Rafael Lima, a pessoa responsável pelos 
 
 ## O que falta decidir (é do dono)
 
-- **Fontes do Google.** Hospedar as três famílias (Unbounded, Hanken Grotesk, Martian Mono) no próprio site tiraria o IP do Google Fonts do aviso, e o site passaria a falar só com quem o aviso já cita. É um passo à parte: os arquivos de fonte vão para `site/`.
 - **Retenção.** O prazo dos registros do Render e do Netlify depende do plano de cada um; vale conferir nos painéis.

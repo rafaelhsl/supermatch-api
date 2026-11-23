@@ -1,6 +1,6 @@
 # Site
 
-O site é **um arquivo só**, `site/index.html`, com HTML, CSS e JavaScript juntos. Não tem etapa de montagem nem biblioteca; só carrega as fontes do Google Fonts. Para publicar, suba esse arquivo no Netlify (o repositório não está ligado a ele, então é manual).
+O site é **um arquivo só**, `site/index.html`, com HTML, CSS e JavaScript juntos (mais a pasta `site/fonts/`, com as letras, e a imagem `site/og.png`). Não tem etapa de montagem nem biblioteca, e não pede nada ao Google: as fontes são daqui. Para publicar, suba esse arquivo no Netlify (o repositório não está ligado a ele, então é manual).
 
 ## O que a pessoa faz
 
@@ -97,6 +97,18 @@ O site **não confia cegamente na marca**: `quedaDaOpcao` (bloco `@queda-inicio`
 Os preços vêm da carga diária (07:30 de Brasília; a de reserva do GitHub às vezes atrasa umas horas). Um preço com **até 36 horas** de idade é normal. Passou disso, a coleta de um dia não veio e o site avisa, na busca ("Atenção: Estes preços são de 16/11 (há 3 dias): a atualização mais recente ainda não chegou. Confira no site do mercado antes de comprar.") e no cupom, com a data de Brasília. Vale o preço **mais antigo da tela**: um mercado em dia e outro atrasado avisam, com a data do atrasado. Data ilegível ou no futuro (relógio errado) não avisa.
 
 O limite (`PRECO_VELHO_HORAS = 36`) e a regra (`avisoDePrecoVelho`) estão no bloco `@preco-velho-inicio` / `@preco-velho-fim`. `node tests/test_preco_velho.js` confere a regra e `python tests/navegador/test_site_preco_velho.py` confere a tela (datas calculadas a partir de agora: 3, 24 e 35 h não avisam; 37 h e 3 dias avisam). Para o dono, a falha de uma carga continua chegando por e-mail do GitHub; este aviso é o que a **pessoa que usa o site** vê. Os preços de uma lista guardada também passam por aqui: o cupom usa a data mais antiga da lista.
+
+## Fontes
+
+As três fontes (**Unbounded** nos títulos, **Hanken Grotesk** no texto e **Martian Mono** no cupom) ficam em `site/fonts/` e são declaradas por `@font-face` no começo do CSS de `site/index.html`. Até 23/11/2026 vinham do Google Fonts, que recebia o endereço IP de cada visitante; hoje o site não pede nada ao Google.
+
+- **Os arquivos** (`hanken-grotesk-latin-v1.woff2`, `martian-mono-latin-v1.woff2`, `unbounded-latin-v1.woff2`, 109 KB no total, o mesmo peso de antes) são **exatamente os que o Google entregava a um navegador**: fontes variáveis, só o subconjunto "latin" (o português inteiro cabe nele: todo caractere do site está lá). Antes de trocar, comparei o site com as fontes do Google e com estas, pixel a pixel, em 3 larguras de tela e 4 estados (primeira visita, aviso de privacidade, resultados, cupom): **0 pixels de diferença**. As declarações são as mesmas que o Google mandava: um bloco por peso e o mesmo intervalo de caracteres.
+- **Licença:** as três são **OFL 1.1** (podem ser redistribuídas desde que a licença vá junto): o texto de cada uma está ao lado, em `site/fonts/OFL-*.txt`.
+- **As duas da primeira tela** (Unbounded e Hanken Grotesk) são pré-carregadas (`<link rel="preload">`); a Martian Mono, só do cupom, carrega quando precisa. `font-display: swap`: o texto aparece na hora com a fonte do sistema e troca quando a fonte chega.
+- **Cache de um ano** (`netlify.toml`, cabeçalho para `/fonts/*`): por isso **o nome do arquivo leva a versão** (`-v1`). **Para trocar uma fonte, grave o arquivo novo com `-v2` no nome e mude o `@font-face` e o `preload`**; com o mesmo nome, quem já visitou continuaria vendo a antiga por um ano. `tests/test_fontes.py` confere o padrão do nome.
+- **Atenção ao baixar fonte do Google no futuro:** o mesmo endereço entrega arquivos diferentes conforme quem pede (uma versão com os pesos cortados, mais leve e com serrilhado um pouco diferente, e a versão inteira que o navegador recebe). As que estão aqui são as do navegador, por serem as que dão 0 pixels de diferença.
+- **A imagem de divulgação** (`docs/og/og.html`) usa os mesmos arquivos, então refazê-la não precisa de internet.
+- `python tests/test_fontes.py` confere os arquivos, as licenças, que cada peso pedido pelo CSS existe, o preload e o cache; `python tests/navegador/test_site_fontes.py` abre o site **com o Google bloqueado** e confere que as três famílias carregam, cada arquivo uma vez só, sem nenhum pedido ao Google.
 
 ## Pré-visualização do link (tags OG)
 

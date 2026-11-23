@@ -4,9 +4,9 @@ Os testes ficam em [`tests/`](../tests). Todos são locais: usam bancos e APIs d
 
 | Arquivos | O que conferem | Precisa de |
 |---|---|---|
-| `tests/test_*.py` | a API, a busca, o agrupamento, a equivalência (`equivalencia.py`), a carga, o histórico, o selo de queda de preço (`quedas.py`), os scripts SQL de `docs/sql/` (só aditivos e que podem repetir), o coletor, o disjuntor e a segunda rodada da carga, os lembretes por data (`test_lembretes.py`), o que a API escreve no log sobre o CEP (`test_privacidade.py`), as tags de pré-visualização do link e a imagem (`test_og.py`), o Super ABC, a entrega por cidade e os arquivos de bibliotecas | Python e as bibliotecas do `requirements.txt` |
+| `tests/test_*.py` | a API, a busca, o agrupamento, a equivalência (`equivalencia.py`), a carga, o histórico, o selo de queda de preço (`quedas.py`), os scripts SQL de `docs/sql/` (só aditivos e que podem repetir), o coletor, o disjuntor e a segunda rodada da carga, os lembretes por data (`test_lembretes.py`), o que a API escreve no log sobre o CEP (`test_privacidade.py`), as tags de pré-visualização do link e a imagem (`test_og.py`), as fontes hospedadas no site (`test_fontes.py`), o Super ABC, a entrega por cidade e os arquivos de bibliotecas | Python e as bibliotecas do `requirements.txt` |
 | `tests/test_*.js` | trechos de `site/index.html`: agrupamento por equivalência, lista de compras, identificador dos itens, aviso dos ocultados, selo de queda de preço, preço por quilo, aviso de preço velho, entrega por cidade e os endereços externos do site contra o aviso de privacidade | Node |
-| `tests/navegador/test_site_*.py` | o site inteiro numa tela de verdade (celular e computador): entrega por cidade, equivalência, identificador dos itens, lista com preços do dia, aviso dos ocultados, selo de queda de preço preço por quilo (hortifrúti), aviso de privacidade e aviso de preço velho | Python, Playwright e o Chromium (veja abaixo) |
+| `tests/navegador/test_site_*.py` | o site inteiro numa tela de verdade (celular e computador): entrega por cidade, equivalência, identificador dos itens, lista com preços do dia, aviso dos ocultados, selo de queda de preço preço por quilo (hortifrúti), aviso de privacidade, aviso de preço velho e as fontes hospedadas aqui | Python, Playwright e o Chromium (veja abaixo) |
 
 ## Rodar na sua máquina
 
@@ -28,7 +28,7 @@ Cada arquivo termina com `ok: N …` ou `N verificações passaram` quando tudo 
 
 ### Testes de navegador
 
-Eles abrem o `site/index.html` direto do disco num Chromium sem janela, simulam o que a pessoa faz (digitar o CEP, buscar, adicionar à lista, abrir o cupom) no celular e no computador, e conferem o que aparece. A API do Supermatch e a de CEP são de mentira: o próprio teste responde no lugar delas, então nada sai para a rede e o resultado é sempre o mesmo.
+Eles servem a pasta `site/` num endereço local (`http://127.0.0.1:porta`, como o Netlify a serve; `_comum.py`) e a abrem num Chromium sem janela, simulam o que a pessoa faz (digitar o CEP, buscar, adicionar à lista, abrir o cupom) no celular e no computador, e conferem o que aparece. A API do Supermatch e a de CEP são de mentira: o próprio teste responde no lugar delas, então nada sai para a rede e o resultado é sempre o mesmo.
 
 Na primeira vez, instale o Chromium do Playwright (o `pip install -r requirements.txt` já traz o Playwright):
 
