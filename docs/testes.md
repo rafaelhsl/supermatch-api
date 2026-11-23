@@ -59,10 +59,10 @@ Uma rodada vermelha mostra, na aba do PR, qual arquivo falhou (o log de cada um 
 
 ## Regras da `main`
 
-Desde 12/11/2026 a `main` tem uma regra de proteção (Settings → Branches), e ela vale **também para o dono do repositório**:
+Desde 12/11/2026 a `main` tem uma regra de proteção (Settings → Branches), e ela vale **também para o dono do repositório** (em 23/11/2026 ela ganhou a quarta verificação, a do navegador):
 
 - **Só entra por PR.** Não dá para fazer `git push` direto na `main` (nem editar um arquivo e gravar direto nela pelo site do GitHub), nem forçar o histórico, nem apagá-la.
-- **Os três "Testes" precisam estar verdes** (`Python (3.11, a da carga diária)`, `Python (a do Render, lida do .python-version)` e `Node (24)`). Enquanto algum estiver vermelho ou ainda rodando, o botão de merge fica bloqueado.
+- **Os quatro "Testes" precisam estar verdes** (`Python (3.11, a da carga diária)`, `Python (a do Render, lida do .python-version)`, `Node (24)` e, desde 23/11/2026, `Navegador (Chromium)`). Enquanto algum estiver vermelho ou ainda rodando, o botão de merge fica bloqueado. O de navegador entrou depois dos outros porque primeiro foi preciso vê-lo estável: passou em todas as rodadas dos PRs de 16 a 23/11/2026, e é ele que confere o site de verdade (celular e computador), então um defeito de tela que passaria pelos testes de Node não chega mais à `main`.
 - **Não exige aprovação de outra pessoa** (o repositório tem um só dono) **nem que o PR esteja atualizado com a `main`**. Isso último é de propósito: com vários PRs abertos ao mesmo tempo, exigir a atualização obrigaria a refazer a rodada a cada merge. Para pegar o problema de juntar tudo, o workflow também roda a cada merge na própria `main`.
 - As verificações do Netlify e do Supabase Preview **não** são exigidas: não testam o código.
 
