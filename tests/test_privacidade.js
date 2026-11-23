@@ -32,6 +32,12 @@ confere(!/document\.cookie/.test(html), "o site de fato não escreve cookies");
 confere(!/google-analytics|googletagmanager|gtag\(|fbq\(|hotjar|clarity\.ms|plausible|matomo|segment\.com/i.test(html), "o site não carrega analytics nem rastreadores (o aviso diz que não há)");
 confere(/Apagar meus dados deste aparelho/.test(texto), 'o aviso tem o botão "Apagar meus dados deste aparelho"');
 
+// ---- quem responde: o nome e o contato do responsável (LGPD), com o e-mail montado no script e não escrito no HTML ----
+confere(/Quem responde por isto/.test(texto) && /mantido por Rafael Lima/.test(texto), 'o aviso diz quem responde: "mantido por Rafael Lima"');
+confere(/id="contatoEmail"/.test(dialogo), "o aviso tem o link do e-mail do responsável");
+confere(!/rafaelhsts@gmail\.com|rafaelhsts%40|mailto:[^"'+]*@/.test(html), "o e-mail NÃO está escrito inteiro no HTML (é montado pelo script, contra quem varre páginas atrás de endereços)");
+confere(/CONTATO = \{ usuario: "rafaelhsts", dominio: "gmail\.com" \}/.test(script) && /"mailto:" \+ email/.test(script), "o script monta o mailto com o contato do responsável");
+
 // ---- o que fica no aparelho: só as chaves "sm_", e o botão apaga todas ----
 const chaves = new Set();
 for (const m of script.matchAll(/\b(?:guardar|ler)\(\s*"([a-z_]+)"/g)) chaves.add(m[1]);

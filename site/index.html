@@ -265,6 +265,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 .janela .dados li { margin: 0 0 8px; }
 .janela .dados strong, .janela .destaque { color: var(--tinta); font-weight: 600; }
 .janela .privacidade-curta { font-size: 14px; margin: 10px 0 0; }
+.janela .link-contato { color: var(--tinta); font-weight: 600; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .link { background: none; border: 0; padding: 4px 2px; font: inherit; color: var(--tinta); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .link:hover { text-decoration-thickness: 2px; }
 
@@ -406,6 +407,8 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     </ul>
     <h3>O que os serviços de hospedagem veem</h3>
     <p>O Netlify, que entrega este site, e o Render, que roda a nossa API, guardam registros técnicos de acesso, como o endereço IP. O Google Fonts, de onde vêm as letras do site, também recebe o endereço IP do seu aparelho.</p>
+    <h3>Quem responde por isto</h3>
+    <p>O Supermatch é mantido por <strong>Rafael Lima</strong>. Para tirar dúvidas sobre os seus dados, escreva para <a id="contatoEmail" href="#" class="link-contato">o e-mail do responsável</a>.</p>
     <div class="acoes">
       <button class="botao vazado" type="button" id="apagarMeusDados">Apagar meus dados deste aparelho</button>
       <button class="botao sol" type="button" id="fecharPrivacidade">Fechar</button>
@@ -1237,6 +1240,11 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   $("botaoCep").addEventListener("click", abrirCep);
   $("cancelarCep").addEventListener("click", () => janela.close());
   const privacidade = $("janelaPrivacidade");
+  // O e-mail do responsável é montado aqui, não escrito no HTML: quem varre páginas atrás de endereços para spam não roda o script.
+  const CONTATO = { usuario: "rafaelhsts", dominio: "gmail.com" };
+  const email = CONTATO.usuario + "@" + CONTATO.dominio;
+  $("contatoEmail").href = "mailto:" + email + "?subject=" + encodeURIComponent("Supermatch: privacidade");
+  $("contatoEmail").textContent = email;
   ["abrirPrivacidade", "abrirPrivacidadeCep"].forEach((id) => $(id).addEventListener("click", () => privacidade.showModal()));
   $("fecharPrivacidade").addEventListener("click", () => privacidade.close());
   $("apagarMeusDados").addEventListener("click", () => S.esquecerTudo());

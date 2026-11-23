@@ -39,10 +39,13 @@ Apaga todas as chaves `sm_...` do navegador e as da versão anterior do site (`u
 | "nos nossos registros ficam o que você buscou e só os 5 primeiros dígitos do CEP" | `tests/test_privacidade.py` (a máscara, o filtro do uvicorn, o print, e uma varredura que falha se um `print`/log novo escrever o CEP cru) |
 | "Apagar meus dados" apaga tudo | `tests/navegador/test_site_privacidade.py`: com `sm_*`, `user_*` e uma chave de outro site guardadas, sobra só a de fora |
 | o aviso abre do rodapé e da janela do CEP, cabe em 320 px, Esc fecha e o foco volta | o mesmo teste de navegador |
+| "O Supermatch é mantido por Rafael Lima" e o e-mail para dúvidas | `tests/test_privacidade.js` (o texto, o link e o `mailto`) e o teste de navegador (o e-mail aparece escrito, o link abre o e-mail com assunto e cabe em 320 px) |
+
+## Quem responde
+
+A janela diz **quem mantém o projeto (Rafael Lima, a pessoa responsável pelos dados para a LGPD)** e traz o **e-mail para dúvidas sobre os dados**. O e-mail é montado pelo script (`CONTATO` em `site/index.html`) e **não aparece escrito no HTML**: quem varre páginas atrás de endereços para spam não roda o script, e `tests/test_privacidade.js` falha se ele for escrito inteiro no HTML. Para trocar o contato, mude `CONTATO` (usuário e domínio) e o nome na mesma janela; os testes vão reclamar, de propósito, até acompanharem. Autorizado pelo próprio dono em 23/11/2026.
 
 ## O que falta decidir (é do dono)
 
-- **Contato.** Um aviso de privacidade costuma trazer um e-mail para dúvidas e pedidos de exclusão. O aviso **não tem** porque não há um contato definido para o projeto; quando houver, entra no fim da janela (e aqui).
-- **Quem é o controlador dos dados** (nome ou apelido do projeto, para a LGPD). Idem.
 - **Fontes do Google.** Hospedar as três famílias (Unbounded, Hanken Grotesk, Martian Mono) no próprio site tiraria o IP do Google Fonts do aviso, e o site passaria a falar só com quem o aviso já cita. É um passo à parte: os arquivos de fonte vão para `site/`.
 - **Retenção.** O prazo dos registros do Render e do Netlify depende do plano de cada um; vale conferir nos painéis.

@@ -109,7 +109,7 @@ Quando o link é compartilhado (WhatsApp, Instagram, Facebook, X, Telegram), que
 
 ## Privacidade do CEP
 
-O rodapé tem o link "Privacidade e seus dados", e a janela do CEP diz para que ele serve e leva ao mesmo aviso ("Como tratamos seus dados"). A janela diz o que fica no aparelho, para onde o CEP vai (BrasilAPI, ViaCEP e a nossa API) e o que os serviços de hospedagem veem, e tem o botão "Apagar meus dados deste aparelho" (`esquecerTudo`: apaga as chaves `sm_...` e as da versão anterior). O que cada frase afirma, o que a garante (a API só escreve os 5 primeiros dígitos do CEP no log) e o que ainda falta decidir (contato, controlador) está em [`privacidade.md`](privacidade.md). `node tests/test_privacidade.js` trava os endereços externos do site contra o aviso, e `python tests/navegador/test_site_privacidade.py` confere a tela.
+O rodapé tem o link "Privacidade e seus dados", e a janela do CEP diz para que ele serve e leva ao mesmo aviso ("Como tratamos seus dados"). A janela diz o que fica no aparelho, para onde o CEP vai (BrasilAPI, ViaCEP e a nossa API) e o que os serviços de hospedagem veem, e tem o botão "Apagar meus dados deste aparelho" (`esquecerTudo`: apaga as chaves `sm_...` e as da versão anterior). O que cada frase afirma, o que a garante (a API só escreve os 5 primeiros dígitos do CEP no log), quem responde (nome e e-mail para dúvidas) e o que ainda falta decidir (fontes do Google, retenção) estão em [`privacidade.md`](privacidade.md). `node tests/test_privacidade.js` trava os endereços externos do site contra o aviso, e `python tests/navegador/test_site_privacidade.py` confere a tela.
 
 ## Preço por quilo (hortifrúti)
 
