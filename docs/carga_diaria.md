@@ -122,7 +122,7 @@ Não depende de lembrar de olhar a agenda: o workflow [`lembretes.yml`](../.gith
 - **Depois de renovar o token, acrescente os próximos lembretes** em `dados/lembretes.json` (o vencimento novo menos 30 dias e menos 7 dias): sem isso o ciclo para depois de 2028. A issue de renovação repete este pedido.
 - Se o workflow falhar (o GitHub não conseguiu listar ou abrir issues), a execução fica vermelha e o GitHub avisa por e-mail: ele **nunca** abre issue sem conferir antes o que já existe.
 - O workflow só tem a permissão de abrir issue (`issues: write`) e ler o código; não usa nenhum segredo.
-- **Ver o que cada lembrete faria** (não abre nada): `python lembretes.py` (precisa do `gh` logado) ou, no GitHub, Actions → "Lembretes por data" → Run workflow (com `criar = nao`). Para **testar de verdade**, rode com `criar = sim` e `hoje = 2027-10-14`: abre a issue do token; feche-a em seguida.
+- **Ver o que cada lembrete faria** (não abre nada): `python lembretes.py` (precisa do `gh` logado) ou, no GitHub, Actions → "Lembretes por data" → Run workflow (com `criar = nao`). Para **testar de verdade**, rode com `criar = sim` e `hoje = 2027-10-14`: com `hoje` preenchido o workflow entende que é um teste e abre a issue do token com o título **"TESTE: Lembrete: ..."** e um aviso no começo; as issues que já existem não contam, então o teste pode ser repetido e, mesmo depois de fechado, **não impede o lembrete de verdade** de abrir em 13/10/2027. Feche a issue de teste em seguida.
 - `python tests/test_lembretes.py` confere a regra (quando abre, não repete, o arquivo mal formado é recusado), que as datas batem com esta página e que o workflow só pode abrir issue.
 
 ## Mudar o horário

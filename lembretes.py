@@ -7,6 +7,8 @@ Rodar (sem criar nada, só mostra o que cada lembrete faria):  python lembretes.
 Criar de verdade (é o que o workflow lembretes.yml faz todo dia): python lembretes.py --criar   (precisa do `gh` e do GH_TOKEN)
 Testar com outra data:                                             python lembretes.py --hoje 2027-10-14
 Um lembrete só abre uma issue: se já existe uma com o mesmo título (aberta ou fechada), não abre outra.
+Com --hoje (teste), a issue sai com o título "TESTE: Lembrete: ...", e o teste ignora as issues que já existem: assim a issue de teste, mesmo
+fechada, NÃO impede o lembrete de verdade de abrir no dia certo (o título dele é outro), e dá para testar mais de uma vez.
 """
 import argparse
 import json
@@ -20,6 +22,7 @@ RAIZ = Path(__file__).resolve().parent
 ARQUIVO = RAIZ / "dados" / "lembretes.json"
 BRASILIA = timezone(timedelta(hours=-3))       # o dia do dono: sem horário de verão desde 2019
 PREFIXO = "Lembrete: "
+PREFIXO_DE_TESTE = "TESTE: "                    # o título da issue aberta com --hoje (data fingida)
 CAMPOS = ("quando", "vence", "titulo", "texto")
 
 
@@ -45,18 +48,19 @@ def carregar(caminho=ARQUIVO):
     return lembretes
 
 
-def titulo_da_issue(lembrete):
-    return PREFIXO + lembrete["titulo"]
+def titulo_da_issue(lembrete, teste=False):
+    return (PREFIXO_DE_TESTE if teste else "") + PREFIXO + lembrete["titulo"]
 
 
-def corpo_da_issue(lembrete, hoje):
-    return (f"{lembrete['texto']}\n\n---\n_Aberta sozinha por `lembretes.py` (dados/lembretes.json) em {hoje.strftime('%d/%m/%Y')}; "
+def corpo_da_issue(lembrete, hoje, teste=False):
+    aviso = "**ISSUE DE TESTE** (data fingida): é só conferir que chegou e fechar; o lembrete de verdade vem no dia certo.\n\n" if teste else ""
+    return (f"{aviso}{lembrete['texto']}\n\n---\n_Aberta sozinha por `lembretes.py` (dados/lembretes.json) em {hoje.strftime('%d/%m/%Y')}; "
             f"o lembrete era para {lembrete['quando'].strftime('%d/%m/%Y')} e o prazo é {lembrete['vence'].strftime('%d/%m/%Y')}._")
 
 
-def a_criar(lembretes, hoje, titulos_existentes):
-    """Os lembretes que já chegaram (ou passaram: melhor tarde que nunca) e ainda não têm issue."""
-    return [l for l in lembretes if l["quando"] <= hoje and titulo_da_issue(l) not in titulos_existentes]
+def a_criar(lembretes, hoje, titulos_existentes, teste=False):
+    """Os lembretes que já chegaram (ou passaram: melhor tarde que nunca) e ainda não têm issue. No teste, as issues que já existem não contam."""
+    return [l for l in lembretes if l["quando"] <= hoje and (teste or titulo_da_issue(l) not in titulos_existentes)]
 
 
 def executar_gh(argumentos):
@@ -68,21 +72,21 @@ def issues_existentes(executar):
     return {i["title"] for i in json.loads(executar(["issue", "list", "--state", "all", "--limit", "1000", "--json", "title"]) or "[]")}
 
 
-def criar(lembrete, hoje, executar, dono=""):
-    argumentos = ["issue", "create", "--title", titulo_da_issue(lembrete), "--body", corpo_da_issue(lembrete, hoje)]
+def criar(lembrete, hoje, executar, dono="", teste=False):
+    argumentos = ["issue", "create", "--title", titulo_da_issue(lembrete, teste), "--body", corpo_da_issue(lembrete, hoje, teste)]
     if dono:
         argumentos += ["--assignee", dono]
     return executar(argumentos).strip()
 
 
-def principal(argv=None, executar=executar_gh, escrever=print):
+def principal(argv=None, executar=executar_gh, escrever=print, relogio=hoje_em_brasilia):
     parser = argparse.ArgumentParser(description="Abre uma issue por lembrete de dados/lembretes.json quando chega o dia.")
     parser.add_argument("--criar", action="store_true", help="abre as issues de verdade (sem isso, só mostra o que faria)")
     parser.add_argument("--hoje", help="AAAA-MM-DD: finge que hoje é esse dia (para testar)")
     parser.add_argument("--arquivo", default=str(ARQUIVO))
     args = parser.parse_args(argv)
 
-    hoje = date.fromisoformat(args.hoje) if args.hoje else hoje_em_brasilia()
+    hoje = date.fromisoformat(args.hoje) if args.hoje else relogio()
     lembretes = carregar(args.arquivo)
     try:
         existentes = issues_existentes(executar)
@@ -92,12 +96,15 @@ def principal(argv=None, executar=executar_gh, escrever=print):
         existentes = set()
         escrever(f"(não consegui consultar as issues: {str(erro)[:120]}; mostro como se não houvesse nenhuma)")
 
-    pendentes = a_criar(lembretes, hoje, existentes)
+    teste = bool(args.hoje)                                     # data fingida: é um teste, e o teste não mexe no que é de verdade
+    pendentes = a_criar(lembretes, hoje, existentes, teste)
+    if teste:
+        escrever("(TESTE: data fingida; as issues saem com o título \"TESTE: Lembrete: ...\" e não atrapalham as de verdade)")
     escrever(f"Hoje é {hoje.strftime('%d/%m/%Y')}: {len(lembretes)} lembrete(s), {len(pendentes)} para abrir agora.")
     for l in lembretes:
         if l in pendentes:
             estado = "PARA ABRIR AGORA" if args.criar else "para abrir (rode com --criar)"
-        elif titulo_da_issue(l) in existentes:
+        elif titulo_da_issue(l) in existentes and not teste:
             estado = "já tem issue"
         else:
             estado = f"daqui a {(l['quando'] - hoje).days} dia(s), em {l['quando'].strftime('%d/%m/%Y')}"
@@ -105,7 +112,7 @@ def principal(argv=None, executar=executar_gh, escrever=print):
     if args.criar:
         dono = os.environ.get("GITHUB_REPOSITORY_OWNER", "")
         for l in pendentes:
-            escrever(f"Aberta: {criar(l, hoje, executar, dono)}")
+            escrever(f"Aberta: {criar(l, hoje, executar, dono, teste)}")
     return 0
 
 
