@@ -1,0 +1,23 @@
+{
+  "observacao": "Lembretes por data. Um workflow diário (.github/workflows/lembretes.yml) abre uma issue no GitHub (o dono recebe o e-mail) quando a data de `quando` chega, uma vez só: se já existe uma issue com o mesmo título (aberta ou fechada), não abre outra. Depois de renovar o que o lembrete pede, ACRESCENTE aqui os próximos (com as datas novas). Veja docs/carga_diaria.md, 'Renovar o token'.",
+  "lembretes": [
+    {
+      "quando": "2027-10-13",
+      "vence": "2027-11-13",
+      "titulo": "Renovar o token do cron-job.org (vence em 13/11/2027)",
+      "texto": "O token do GitHub que o cron-job.org usa para disparar a carga diária vence em **13/11/2027**. Sem ele, a carga das 07:30 deixa de rodar (a reserva do GitHub ainda carrega, só que no fim do dia).\n\n**Renovar:**\n1. GitHub → foto → Settings → Developer settings → Personal access tokens → Fine-grained tokens → abra o token \"cron-job.org: carga Supermatch\" → **Regenerate token** (mesmas permissões: só este repositório, Actions: Read and write). Copie o valor novo; ele só aparece uma vez. **Não cole o token em conversa nenhuma.**\n2. cron-job.org → a tarefa \"Supermatch: carga diária\" → Advanced → troque o valor do header `Authorization` (`Bearer ` e o token novo).\n3. **Aproveite para trocar o header `X-GitHub-Api-Version` por uma versão mais nova**: o GitHub avisa que a `2022-11-28` deixa de funcionar em **10/03/2028**.\n4. Teste com o corpo `{\"ref\":\"main\",\"inputs\":{\"mercados\":\"Supernosso\",\"gravar\":\"nao\"}}` (resposta 204) e volte ao corpo `{\"ref\":\"main\"}`.\n5. **Acrescente os próximos lembretes** em `dados/lembretes.json` (a nova data de vencimento menos 30 dias e menos 7 dias) e feche esta issue.\n\nO passo a passo completo está em `docs/carga_diaria.md` (\"Renovar o token\")."
+    },
+    {
+      "quando": "2027-11-06",
+      "vence": "2027-11-13",
+      "titulo": "Última chamada: o token do cron-job.org vence em 7 dias (13/11/2027)",
+      "texto": "Faltam **7 dias** para o token do cron-job.org vencer (13/11/2027). Se a issue \"Renovar o token do cron-job.org\" ainda está aberta, renove hoje: `docs/carga_diaria.md`, \"Renovar o token\". Se já renovou, **acrescente os próximos lembretes** em `dados/lembretes.json` e feche as duas issues."
+    },
+    {
+      "quando": "2028-02-10",
+      "vence": "2028-03-10",
+      "titulo": "Trocar a versão da API do GitHub no cron-job.org (a 2022-11-28 deixa de funcionar em 10/03/2028)",
+      "texto": "O cabeçalho `X-GitHub-Api-Version: 2022-11-28` que o cron-job.org manda ao GitHub **deixa de funcionar em 10/03/2028** (aviso do próprio GitHub, no cabeçalho `Sunset` das respostas). Troque por uma versão mais nova (a lista está em https://docs.github.com/rest/about-the-rest-api/api-versions), teste com o corpo de teste e volte ao corpo definitivo (`docs/carga_diaria.md`). Se já trocou na renovação do token, feche esta issue."
+    }
+  ]
+}
