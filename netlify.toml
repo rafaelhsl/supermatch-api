@@ -9,3 +9,10 @@
   # documentação, e nada disso altera o site. Se o Netlify avisar "build canceled", é esta regra.
   # (exit 0 = nada mudou, cancela; exit diferente de 0 = mudou, publica.)
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF site/"
+
+# As letras do site (site/fonts/) têm o número da versão no nome (…-latin-v1.woff2) e nunca mudam com o mesmo nome: o navegador pode guardá-las por um
+# ano e não pedir de novo. Para trocar um arquivo, mude o número no nome E no @font-face de site/index.html (veja docs/site.md, "Fontes").
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
