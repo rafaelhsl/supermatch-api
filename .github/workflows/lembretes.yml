@@ -17,7 +17,7 @@ on:
           - sim
         default: nao
       hoje:
-        description: 'Para testar: finge que hoje é este dia (AAAA-MM-DD). Vazio = hoje de verdade'
+        description: 'Para testar: finge que hoje é este dia (AAAA-MM-DD); as issues saem com o título "TESTE: ...". Vazio = hoje de verdade'
         required: false
         default: ''
 

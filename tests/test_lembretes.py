@@ -68,57 +68,108 @@ def teste_nao_abre_duas_vezes_a_mesma_issue_nem_se_ela_foi_fechada():
 
 # ---------------------------------------------------------------- o que acontece de verdade
 
+def rodar(caminho, hoje, gh, saida=None, criar=True, fingindo=False):
+    """principal() num dia `hoje` (AAAA-MM-DD): pelo relógio de verdade (injetado) ou, com fingindo=True, pelo --hoje (o modo de teste)."""
+    argumentos = (["--criar"] if criar else []) + ["--arquivo", str(caminho)] + (["--hoje", hoje] if fingindo else [])
+    escritas = saida if saida is not None else []
+    return lem.principal(argumentos, gh, escritas.append, relogio=lambda: date.fromisoformat(hoje))
+
+
+DOIS = [{"quando": "2027-10-13", "vence": "2027-11-13", "titulo": "A", "texto": "texto A"},
+        {"quando": "2027-11-06", "vence": "2027-11-13", "titulo": "B", "texto": "texto B"}]
+
+
 def teste_principal_abre_so_o_que_chegou_e_so_uma_vez():
-    caminho = arquivo_temporario([{"quando": "2027-10-13", "vence": "2027-11-13", "titulo": "A", "texto": "texto A"},
-                                  {"quando": "2027-11-06", "vence": "2027-11-13", "titulo": "B", "texto": "texto B"}])
-    gh, saida = GhFalso(), []
-    assert lem.principal(["--criar", "--hoje", "2027-10-14", "--arquivo", str(caminho)], gh, saida.append) == 0
+    caminho = arquivo_temporario(DOIS)
+    gh = GhFalso()
+    assert rodar(caminho, "2027-10-14", gh) == 0
     assert [c["titulo"] for c in gh.criadas] == ["Lembrete: A"] and "texto A" in gh.criadas[0]["corpo"] and "13/10/2027" in gh.criadas[0]["corpo"]
-    assert "prazo é 13/11/2027" in gh.criadas[0]["corpo"] and "14/10/2027" in gh.criadas[0]["corpo"]
+    assert "prazo é 13/11/2027" in gh.criadas[0]["corpo"] and "14/10/2027" in gh.criadas[0]["corpo"] and "TESTE" not in gh.criadas[0]["corpo"]
     listagens = [c for c in gh.chamadas if c[:2] == ["issue", "list"]]
     assert listagens and all(c[c.index("--state") + 1] == "all" for c in listagens), "tem de olhar as issues fechadas também"
-    lem.principal(["--criar", "--hoje", "2027-10-15", "--arquivo", str(caminho)], gh, saida.append)      # no dia seguinte: nada de novo
+    rodar(caminho, "2027-10-15", gh)                                            # no dia seguinte: nada de novo
     assert len(gh.criadas) == 1
-    lem.principal(["--criar", "--hoje", "2027-11-06", "--arquivo", str(caminho)], gh, saida.append)      # no dia do segundo: só o segundo
+    rodar(caminho, "2027-11-06", gh)                                            # no dia do segundo: só o segundo
     assert [c["titulo"] for c in gh.criadas] == ["Lembrete: A", "Lembrete: B"]
 
 
 def teste_a_issue_vai_para_o_dono():
-    caminho = arquivo_temporario([{"quando": "2027-10-13", "vence": "2027-11-13", "titulo": "A", "texto": "x"}])
+    caminho = arquivo_temporario(DOIS[:1])
     import os
     gh = GhFalso()
     anterior = os.environ.get("GITHUB_REPOSITORY_OWNER")
     os.environ["GITHUB_REPOSITORY_OWNER"] = "rafaelhsl"
     try:
-        lem.principal(["--criar", "--hoje", "2027-10-13", "--arquivo", str(caminho)], gh, lambda *_: None)
+        rodar(caminho, "2027-10-13", gh)
     finally:
         os.environ.pop("GITHUB_REPOSITORY_OWNER") if anterior is None else os.environ.__setitem__("GITHUB_REPOSITORY_OWNER", anterior)
     assert gh.criadas[0]["dono"] == "rafaelhsl"
 
 
 def teste_sem_criar_nao_abre_nada():
-    caminho = arquivo_temporario([{"quando": "2027-10-13", "vence": "2027-11-13", "titulo": "A", "texto": "x"}])
+    caminho = arquivo_temporario(DOIS[:1])
     gh, saida = GhFalso(), []
-    lem.principal(["--hoje", "2027-12-01", "--arquivo", str(caminho)], gh, saida.append)
+    rodar(caminho, "2027-12-01", gh, saida, criar=False)
     assert gh.criadas == [] and any("para abrir (rode com --criar)" in s for s in saida)
     antes = []
-    lem.principal(["--hoje", "2027-10-01", "--arquivo", str(caminho)], GhFalso(), antes.append)
+    rodar(caminho, "2027-10-01", GhFalso(), antes, criar=False)
     assert any("daqui a 12 dia(s)" in s for s in antes)                              # antes do dia: diz quantos dias faltam
 
 
 def teste_se_nao_da_para_saber_o_que_ja_existe_nao_cria_issue_repetida():
-    caminho = arquivo_temporario([{"quando": "2027-10-13", "vence": "2027-11-13", "titulo": "A", "texto": "x"}])
+    caminho = arquivo_temporario(DOIS[:1])
     gh = GhFalso(falha_na_lista=True)
     try:
-        lem.principal(["--criar", "--hoje", "2027-12-01", "--arquivo", str(caminho)], gh, lambda *_: None)
+        rodar(caminho, "2027-12-01", gh)
     except RuntimeError:
         pass
     else:
         raise AssertionError("sem poder listar as issues, criar de verdade tem de falhar (o workflow fica vermelho e o dono é avisado)")
     assert gh.criadas == []
     saida = []
-    lem.principal(["--hoje", "2027-12-01", "--arquivo", str(caminho)], gh, saida.append)                # só olhando, segue e avisa
+    rodar(caminho, "2027-12-01", gh, saida, criar=False)                           # só olhando, segue e avisa
     assert any("não consegui consultar" in s for s in saida) and gh.criadas == []
+
+
+# ---------------------------------------------------------------- o teste (--hoje) não atrapalha o de verdade
+
+def teste_com_data_fingida_a_issue_sai_com_titulo_de_teste():
+    caminho = arquivo_temporario(DOIS[:1])
+    gh = GhFalso()
+    rodar(caminho, "2027-10-14", gh, fingindo=True)
+    assert [c["titulo"] for c in gh.criadas] == ["TESTE: Lembrete: A"]
+    assert gh.criadas[0]["corpo"].startswith("**ISSUE DE TESTE**") and "texto A" in gh.criadas[0]["corpo"]
+
+
+def teste_a_issue_de_teste_nao_impede_o_lembrete_de_verdade():
+    """O erro que isto evita: a issue de teste (mesmo título, fechada) faria a regra "uma issue por título" calar o lembrete do dia 13/10/2027."""
+    caminho = arquivo_temporario(DOIS[:1])
+    gh = GhFalso()
+    rodar(caminho, "2027-10-14", gh, fingindo=True)                                # o teste, depois fechado: a issue continua na lista (estado "all")
+    assert gh.existentes == ["TESTE: Lembrete: A"]
+    rodar(caminho, "2027-10-13", gh)                                               # o dia de verdade
+    assert [c["titulo"] for c in gh.criadas] == ["TESTE: Lembrete: A", "Lembrete: A"], "o lembrete de verdade tem de abrir mesmo depois de um teste"
+    rodar(caminho, "2027-10-14", gh)                                               # e agora o de verdade não repete
+    assert len(gh.criadas) == 2
+
+
+def teste_o_teste_pode_ser_repetido_e_nao_depende_do_que_ja_existe():
+    caminho = arquivo_temporario(DOIS[:1])
+    gh = GhFalso(existentes=["Lembrete: A"])                                       # a de verdade já existe
+    rodar(caminho, "2027-10-14", gh, fingindo=True)
+    rodar(caminho, "2027-10-14", gh, fingindo=True)
+    assert [c["titulo"] for c in gh.criadas] == ["TESTE: Lembrete: A", "TESTE: Lembrete: A"]
+    assert lem.a_criar([um("2027-10-13", "A")], date(2027, 10, 14), {"Lembrete: A"}, teste=False) == []        # (sem teste, a existente vale)
+
+
+def teste_a_saida_avisa_quando_e_teste():
+    caminho = arquivo_temporario(DOIS[:1])
+    saida = []
+    rodar(caminho, "2027-10-14", GhFalso(), saida, criar=False, fingindo=True)
+    assert any("TESTE" in s and "data fingida" in s for s in saida)
+    sem = []
+    rodar(caminho, "2027-10-14", GhFalso(), sem, criar=False)
+    assert not any("TESTE" in s for s in sem)
 
 
 # ---------------------------------------------------------------- o arquivo de lembretes
