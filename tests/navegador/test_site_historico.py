@@ -338,7 +338,12 @@ async def rodar():
 
             # --- 9. fechar: o botão, o Esc e o foco volta para o botão que abriu
             await fechar(pg)
-            confere(await pg.evaluate("() => document.activeElement && document.activeElement.dataset.historico !== undefined"), "o foco volta para o botão que abriu o gráfico")
+            try:                                               # o foco volta no evento "close", um instante depois de a janela fechar (e depois de redimensionar a tela, o botão é outro elemento)
+                await pg.wait_for_function("() => document.activeElement && document.activeElement.dataset.historico !== undefined", timeout=2000)
+                foco_voltou = True
+            except Exception:
+                foco_voltou = False
+            confere(foco_voltou, "o foco volta para o botão que abriu o gráfico")
             await abrir_grafico(pg, "Camil")
             await esperar_grafico(pg)
             await pg.keyboard.press("Escape")
