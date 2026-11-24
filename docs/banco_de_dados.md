@@ -6,10 +6,12 @@
 
 - Projeto Supabase: `gtdvgdfalpsrnefzyfgu` (`https://gtdvgdfalpsrnefzyfgu.supabase.co`)
 - Tabelas no schema `public`: apenas **`produtos`** (confirmado em 22/10/2026). O [histórico de preços](historico_de_precos.md)
-  acrescenta `catalogo`, `precos` e `coletas` (script em [`sql/historico_precos.sql`](sql/historico_precos.sql));
+  acrescenta `catalogo`, `precos` e `coletas` (script em [`sql/historico_precos.sql`](sql/historico_precos.sql)) e a
+  [medição de uso](uso_do_site.md), `uso_diario` (script em [`sql/uso_do_site.sql`](sql/uso_do_site.sql); veja "Tabela `uso_diario`" abaixo).
   `produtos` continua sendo a foto do dia que a API e o site leem.
 - Quem acessa: o robô de carga ([`alimentar_banco.py`](../alimentar_banco.py)) escreve; a API
-  ([`api_supabase.py`](../api_supabase.py)) lê. Ambos usam a variável de ambiente `SUPABASE_KEY`.
+  ([`api_supabase.py`](../api_supabase.py)) lê e só escreve uma coisa: a soma anônima por dia da medição de uso, pela função
+  `registrar_uso` (sem CEP, termo nem IP). Ambos usam a variável de ambiente `SUPABASE_KEY`.
 
 ## Tabela `produtos`
 
@@ -63,8 +65,11 @@ O RLS está **ligado** em `produtos` e **não há nenhuma política** (confirmad
 - A API e o robô funcionam, então o `SUPABASE_KEY` do Render e do GitHub Actions é uma chave desse
   tipo (deduzido do comportamento; não foi verificado nos painéis).
 - Para o estado atual isso é seguro: o site fala só com a API, nunca direto com o Supabase.
-- Pontos de atenção para o redesenho: a API só precisa **ler**, mas roda com poder total de
-  escrita; e, se o site um dia falar direto com o Supabase, será preciso criar políticas.
+- Pontos de atenção para o redesenho: a API só precisa **ler** as tabelas de dados, mas roda com poder total de
+  escrita; se a chave dela for trocada por uma de menor privilégio, o papel novo precisa de `execute` em `registrar_uso` e de
+  `select, insert, update` em `uso_diario` (hoje só o `service_role`, em [`sql/uso_do_site.sql`](sql/uso_do_site.sql)); sem isso a
+  contagem para em silêncio (a busca segue normal e o log mostra só um aviso a cada 10 minutos); e, se o site um dia falar direto
+  com o Supabase, será preciso criar políticas.
 
 ## Estado da coleta em 21/10/2026
 
@@ -279,12 +284,24 @@ caiu entre 5% e 70% em relação ao de 7 dias antes; sem queda, o campo não vem
 `produtos`. Veja [`historico_de_precos.md`](historico_de_precos.md#o-selo-caiu-x-em-7-dias).
 
 O parâmetro opcional `todos=1` (`/comparar?cep=...&item=...&todos=1`) devolve também os que só citam a palavra. Cada opção
-desses vem marcada com `"so_cita": true`. É o que o botão "Mostrar também" do site pede.
+desses vem marcada com `"so_cita": true`. É o que o botão "Mostrar também" do site pede. O parâmetro opcional `origem=lista` é o
+site renovando sozinho os preços da lista de compras: não muda a resposta, só faz a medição de uso contar uma
+`atualizacao_da_lista` em vez de uma `busca` ([`uso_do_site.md`](uso_do_site.md)).
 
 O endpoint `/saude` (GET ou HEAD) responde `{"status": "ok"}` sem esperar o banco (só dispara o carregamento do
-catálogo em segundo plano quando o servidor não tem nenhum). O site o chama ao abrir a página para acordar o servidor,
-que no plano gratuito do Render dorme após 15 minutos sem uso; o acordar do servidor (cerca de 30 a 60 s) é o maior
-tempo de espera da primeira busca do dia, a menos que alguém o mantenha acordado (próxima seção).
+catálogo em segundo plano quando o servidor não tem nenhum). O site o chama ao abrir a página, com `?origem=site`, para
+acordar o servidor, que no plano gratuito do Render dorme após 15 minutos sem uso; o acordar do servidor (cerca de 30 a 60 s)
+é o maior tempo de espera da primeira busca do dia, a menos que alguém o mantenha acordado (seção "Manter o servidor acordado", logo abaixo). Só a chamada
+com `origem=site` conta como "abertura" na medição de uso ([`uso_do_site.md`](uso_do_site.md)); a do monitor, sem o
+parâmetro, não conta.
+
+### Tabela `uso_diario` (medição de uso)
+
+Criada por [`sql/uso_do_site.sql`](sql/uso_do_site.sql): `dia`, `evento` e `total`, uma linha por dia e tipo de ocorrência.
+Segue a regra das outras tabelas: RLS ligado e nenhuma política, então só a chave secreta (a da API) lê e grava (com `grant`
+explícito a ela, porque o Supabase está deixando de dar permissão automática em tabela nova). A API não faz `insert`: chama a
+função `registrar_uso(p_evento, p_qtd)`, que soma a quantidade de forma atômica. Sem CEP, estado, termo, IP nem horário:
+o que ela guarda e o que não guarda está em [`uso_do_site.md`](uso_do_site.md).
 
 ### Manter o servidor acordado
 

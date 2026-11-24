@@ -17,6 +17,8 @@ from busca import buscar_detalhado, indexar, sem_acento
 from Comparador_inteligente import cruzar_multiplos_produtos
 from equivalencia import com_equivalencia, familias_equivalentes
 from historico import chave_do_produto, hoje_em_brasilia
+from medidor_de_uso import (MedidorDeUso, EVENTO_ABERTURA, EVENTO_ATUALIZACAO_DA_LISTA, EVENTO_BUSCA, EVENTO_BUSCA_SEM_RESULTADO, EVENTO_HISTORICO,
+                            ORIGEM_DA_LISTA, ORIGEM_DO_SITE)
 from quedas import QuedasDoHistorico
 from serie_de_precos import CacheDeSeries, PedidoInvalido, interpretar
 
@@ -31,7 +33,11 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 @asynccontextmanager
 async def ciclo_de_vida(_app):
     aquecer_catalogo(UF_DA_REGIAO, contexto="servidor iniciando")     # o servidor acabou de acordar: já começa a carregar o catálogo
-    yield
+    _medidor.ligar(_gravar_uso)         # a medição de uso só liga com o servidor de verdade: os testes, que chamam as funções direto, nunca falam com o banco por causa dela
+    try:
+        yield
+    finally:
+        _medidor.desligar(esperar=2.0)  # o servidor vai desligar: dá um instante para as somas que ainda estão na fila saírem
 
 
 app = FastAPI(title="Motor de Comparação de Supermercados API", lifespan=ciclo_de_vida)
@@ -112,6 +118,15 @@ _quedas = QuedasDoHistorico()   # preços de 7 dias antes, para o selo de queda
 _series = CacheDeSeries()       # séries de preço de produtos, para o gráfico "histórico de preços" (/historico)
 _travas = {}      # uf -> trava: uma atualização por vez
 _travas_das_travas = threading.Lock()
+
+
+def _gravar_uso(evento: str, quantidade: int):
+    """Soma `quantidade` no contador do dia (função `registrar_uso` do banco, docs/sql/uso_do_site.sql). SÓ o nome do evento (de uma lista
+    fechada) e esse número saem daqui: nada de CEP, estado, termo buscado, IP ou horário."""
+    supabase.rpc("registrar_uso", {"p_evento": evento, "p_qtd": quantidade}).execute()
+
+
+_medidor = MedidorDeUso()   # medição de uso SEM rastrear ninguém: só somas por dia (medidor_de_uso.py, docs/uso_do_site.md). Nasce DESLIGADO: `ciclo_de_vida` o liga
 
 
 def _trava_da_uf(uf: str):
@@ -222,7 +237,7 @@ def aquecer_catalogo(uf: str, tambem_se_vencido: bool = True, contexto: str = "a
 
 
 @app.api_route("/saude", methods=["GET", "HEAD"])
-def saude():
+def saude(origem: str = ""):
     # Resposta leve, sem esperar o banco. Serve para acordar o servidor: o plano gratuito do Render "dorme" após
     # 15 minutos sem uso e a primeira chamada depois disso leva cerca de 1 minuto. Se o servidor acabou de acordar e
     # não tem catálogo, já o deixa carregando, assim a primeira busca depois de abrir o site não paga o download.
@@ -230,6 +245,10 @@ def saude():
     # baixaria o catálogo do Supabase sem ninguém buscar nada. Quem recarrega o vencido é a próxima busca de verdade.
     # Aceita HEAD porque é o que vários monitores gratuitos enviam.
     aquecer_catalogo(UF_DA_REGIAO, tambem_se_vencido=False, contexto="chamada a /saude")
+    # O site chama /saude ao abrir (para acordar o servidor) e acrescenta origem=site: só essas chamadas contam como "abertura".
+    # Os monitores (que chamam /saude de 5 em 5 minutos) não mandam isso e não entram na conta.
+    if origem == ORIGEM_DO_SITE:
+        _medidor.contar(EVENTO_ABERTURA)
     return {"status": "ok"}
 
 @app.get("/historico")
@@ -248,11 +267,12 @@ def historico_de_precos(chaves: str):
     except Exception as erro:
         print(f"⚠️ Histórico de preços indisponível: {erro!r}")
         raise HTTPException(status_code=503, detail="O histórico de preços está indisponível agora.")
+    _medidor.contar(EVENTO_HISTORICO)
     return {"hoje": hoje_em_brasilia().isoformat(), "produtos": [{"mercado": m, "chave": k, "intervalos": series[(m, k)]} for m, k in pares]}
 
 
 @app.get("/comparar")
-def buscar_e_comparar(cep: str, item: str, todos: bool = False):
+def buscar_e_comparar(cep: str, item: str, todos: bool = False, origem: str = ""):
     print(f"\n📡 API Recebeu pedido ULTRA-RÁPIDO! Item: '{item}' | CEP: '{cep_para_o_log(cep)}'")
 
     uf_cliente = obter_uf_pelo_cep(cep)
@@ -263,6 +283,14 @@ def buscar_e_comparar(cep: str, item: str, todos: bool = False):
     produtos_encontrados = busca.produtos
     ocultos = busca.ocultos_so_citam + busca.ocultos_pelo_limite
     print(f"🔍 '{item}': {len(produtos_encontrados)} produtos encontrados ({ocultos} ficaram de fora)")
+    # Medição de uso (nada do pedido vai junto, só o nome do que aconteceu). `origem=lista` é o site renovando sozinho os preços da lista de
+    # compras: não é uma busca de alguém, então não entra na conta de buscas.
+    if origem == ORIGEM_DA_LISTA:
+        _medidor.contar(EVENTO_ATUALIZACAO_DA_LISTA)
+    else:
+        _medidor.contar(EVENTO_BUSCA)
+        if not produtos_encontrados and not ocultos:
+            _medidor.contar(EVENTO_BUSCA_SEM_RESULTADO)
 
     relatorio_final = cruzar_multiplos_produtos([produtos_encontrados])
     # Grupos vendidos em mais mercados primeiro (são os que permitem comparar), depois ordem alfabética

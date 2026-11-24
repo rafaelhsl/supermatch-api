@@ -13,7 +13,7 @@ A pessoa informa o CEP, busca os produtos, monta a lista e vê **o total em cada
 - **Hortifrúti por quilo:** frutas, verduras e legumes com o preço do quilo ("R$ 3,79/kg") e a lista em quilos.
 - **Selo "caiu X% em 7 dias"** a partir do histórico de preços, e **aviso de preço velho** quando uma coleta não veio.
 - **Só os mercados que entregam na cidade** da pessoa; avisa quando entregam só em parte dela.
-- **Privacidade:** sem cadastro, anúncios nem rastreadores; as fontes são hospedadas no próprio site. Veja [`docs/privacidade.md`](docs/privacidade.md).
+- **Privacidade:** sem cadastro, anúncios nem rastreadores; as fontes são hospedadas no próprio site. O uso é medido só em somas por dia, sem identificar ninguém ([`docs/uso_do_site.md`](docs/uso_do_site.md)). Veja [`docs/privacidade.md`](docs/privacidade.md).
 
 ## Como funciona
 
@@ -25,9 +25,9 @@ Super ABC (sem API: robô com navegador, Playwright)    ─┘   (GitHub Actions
 ```
 
 - **Coleta** ([`coletor_vtex.py`](coletor_vtex.py), [`Scraper_SuperABC.py`](Scraper_SuperABC.py)): 128 termos (100 de prateleira e 28 de hortifrúti), até 100 produtos por termo e mercado, cerca de 8 mil produtos por dia. Falha de um mercado não apaga os dados dele: ficam os do dia anterior ([`docs/carga_diaria.md`](docs/carga_diaria.md), [`docs/robos.md`](docs/robos.md)).
-- **Banco** (Supabase): a foto do dia (`produtos`) e o histórico de preços desde 04/11/2026 ([`docs/banco_de_dados.md`](docs/banco_de_dados.md), [`docs/historico_de_precos.md`](docs/historico_de_precos.md)).
-- **API** ([`api_supabase.py`](api_supabase.py)): busca no catálogo em memória, agrupa o mesmo produto de mercados diferentes ([`Comparador_inteligente.py`](Comparador_inteligente.py)) e calcula as famílias de equivalência ([`equivalencia.py`](equivalencia.py)). `GET /comparar?cep=&item=` e `GET /saude`.
-- **Site** ([`site/index.html`](site/index.html)): um arquivo só, sem biblioteca e sem etapa de montagem. As regras do navegador estão em blocos puros, testados em Node ([`docs/site.md`](docs/site.md)).
+- **Banco** (Supabase): a foto do dia (`produtos`), o histórico de preços desde 04/11/2026 e as somas diárias da medição de uso (`uso_diario`) ([`docs/banco_de_dados.md`](docs/banco_de_dados.md), [`docs/historico_de_precos.md`](docs/historico_de_precos.md), [`docs/uso_do_site.md`](docs/uso_do_site.md)).
+- **API** ([`api_supabase.py`](api_supabase.py)): busca no catálogo em memória, agrupa o mesmo produto de mercados diferentes ([`Comparador_inteligente.py`](Comparador_inteligente.py)) e calcula as famílias de equivalência ([`equivalencia.py`](equivalencia.py)). `GET /comparar?cep=&item=`, `GET /historico?chaves=` e `GET /saude`.
+- **Site** ([`site/index.html`](site/index.html)): um arquivo só, sem biblioteca e sem etapa de montagem. As regras do navegador estão em blocos puros, testados em Node ([`docs/site.md`](docs/site.md)). A publicação no Netlify gasta créditos a cada mudança no site: [`docs/netlify.md`](docs/netlify.md). Licença do código e domínio próprio (decisões abertas do dono): [`docs/licenca_e_dominio.md`](docs/licenca_e_dominio.md).
 
 ## Rodando os testes
 
@@ -50,7 +50,7 @@ Todos de uma vez, o que o CI faz em cada PR, e como escrever um teste novo: [`do
 | `site/` | o site publicado (`index.html`, `fonts/`, `og.png`) |
 | `dados/` | as listas de produtos da carga, a tabela de entrega por cidade e os lembretes |
 | `docs/` | a documentação de cada parte (comece por [`docs/site.md`](docs/site.md) e [`docs/carga_diaria.md`](docs/carga_diaria.md)) |
-| `docs/sql/` | os scripts SQL do Supabase (só aditivos e que podem repetir) |
+| `docs/sql/` | os scripts SQL do Supabase (só aditivos e que podem repetir; tabela nova com RLS e função nova fechada à chave pública) |
 | `tests/` | os testes: Python, Node e `navegador/` (Playwright) |
 | `.github/workflows/` | a carga diária, os testes e os lembretes por data |
 

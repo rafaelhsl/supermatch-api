@@ -464,8 +464,17 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     <h3>Para onde o seu CEP vai</h3>
     <ul class="dados">
       <li><strong>BrasilAPI e ViaCEP</strong>, serviços públicos de CEP, para descobrir a sua cidade.</li>
-      <li><strong>A nossa API</strong>, hospedada no Render, junto com o que você busca, para calcular os preços. Ela também pergunta ao ViaCEP o estado do CEP. Quando você abre o histórico de preços de um produto, a API recebe só qual é o produto, sem CEP. Os registros da API ficam guardados por 7 dias e trazem o que você buscou, os produtos de que abriu o histórico e só os 5 primeiros dígitos do CEP.</li>
+      <li><strong>A nossa API</strong>, hospedada no Render, junto com o que você busca e com os itens da sua lista de compras (o site renova os preços dela sozinho), para calcular os preços. Ela também pergunta ao ViaCEP o estado do CEP. Quando você abre o histórico de preços de um produto, a API recebe só qual é o produto, sem CEP. Os registros da API ficam guardados por 7 dias e trazem o que você buscou, os itens da lista que o site renovou, os produtos de que abriu o histórico e só os 5 primeiros dígitos do CEP.</li>
     </ul>
+    <h3>O que medimos</h3>
+    <p>Para saber se o site está sendo usado, a nossa API soma, a cada dia, quantas vezes aconteceu cada uma destas coisas:</p>
+    <ul class="dados">
+      <li>o site foi aberto;</li>
+      <li>uma busca foi feita, e quantas delas não acharam nenhum produto;</li>
+      <li>o site renovou sozinho os preços da sua lista de compras (um pedido por item desatualizado, com o CEP e o nome do item, como numa busca);</li>
+      <li>o histórico de preços de um produto foi consultado.</li>
+    </ul>
+    <p>Essas somas ficam guardadas sem prazo, mas são só números: sozinhas, não dizem quem usou o site, o que buscou nem qual era o CEP. Os registros de 7 dias da API, descritos acima, são outra coisa.</p>
     <h3>O que os serviços de hospedagem veem</h3>
     <p>O Netlify, que entrega este site, e o Render, que roda a nossa API, guardam registros técnicos de acesso, como o endereço IP.</p>
     <h3>Quem responde por isto</h3>
@@ -1151,7 +1160,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
           let dados = null;
           if (termo) {
             try {
-              const r = await fetch(`${API}/comparar?cep=${encodeURIComponent(estado.cep)}&item=${encodeURIComponent(termo)}`);
+              const r = await fetch(`${API}/comparar?cep=${encodeURIComponent(estado.cep)}&item=${encodeURIComponent(termo)}&origem=lista`);   // origem=lista: a API não conta como busca de alguém
               if (!r.ok) throw new Error("api " + r.status);
               dados = await r.json();
             } catch (e) { falharam++; }
@@ -1220,7 +1229,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     estado.modo = ler("modo", "exato") === "equivalente" ? "equivalente" : "exato";
     const salva = ler("lista", null);
     if (Array.isArray(salva)) estado.lista = salva.filter((i) => i && i.grupo && Array.isArray(i.grupo.opcoes_de_compra) && i.qtd > 0);
-    fetch(API + "/saude").catch(() => {}); // acorda o servidor enquanto a pessoa digita
+    fetch(API + "/saude?origem=site").catch(() => {}); // acorda o servidor enquanto a pessoa digita (e a API soma 1 "abertura" no dia: sem CEP, sem nada pessoal)
     emitir();
     atualizarPrecosDaLista();
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") atualizarPrecosDaLista(); });
