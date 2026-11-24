@@ -173,6 +173,8 @@ async def abrir_grafico(pg, nome):
 
 async def esperar_grafico(pg):
     await pg.wait_for_selector("#histPlot .g-svg", timeout=8000)
+    await pg.evaluate("() => document.fonts.ready.then(() => 0)")      # a fonte termina de carregar e pode mexer no layout
+    await pg.wait_for_timeout(200)                                      # (e o desenho refeito por causa da barra de rolagem)
 
 
 async def fechar(pg):
@@ -231,12 +233,17 @@ async def rodar():
             rotulos = pg.locator("#histPlot text.g-rotulo")
             textos = sorted([limpo(await rotulos.nth(i).text_content()) for i in range(await rotulos.count())])
             confere(textos == ["21,99", "22,50", "22,50", "24,99"], f"o preço de hoje ao lado de cada ponta: {textos}")
-            caixas = [await rotulos.nth(i).bounding_box() for i in range(await rotulos.count())]
-            centros = sorted(c["y"] + c["height"] / 2 for c in caixas)                    # (a caixa do texto tem folga em cima e embaixo: o que vale é a distância entre os centros)
+            # (tudo numa chamada só: várias chamadas medem o layout em instantes diferentes)
+            medidas = await pg.evaluate("""() => {
+              const p = document.querySelector("#histPlot").getBoundingClientRect();
+              const r = [...document.querySelectorAll("#histPlot text.g-rotulo")].map((e) => e.getBoundingClientRect());
+              return { centros: r.map((b) => b.top + b.height / 2).sort((a, b) => a - b), dentro: r.every((b) => b.left >= p.left - 1 && b.right <= p.right + 1), plot: { x: p.x, width: p.width } };
+            }""")
+            centros = medidas["centros"]                                                     # (a caixa do texto tem folga em cima e embaixo: o que vale é a distância entre os centros)
             menor_folga = min(b - a for a, b in zip(centros, centros[1:]))
             confere(menor_folga >= 14, f"os rótulos das pontas não se sobrepõem (dois dos quatro têm o mesmo preço): menor distância entre eles {menor_folga:.1f} px")
-            plot = await pg.locator("#histPlot").bounding_box()
-            confere(all(c["x"] >= plot["x"] - 1 and c["x"] + c["width"] <= plot["x"] + plot["width"] + 1 for c in caixas), "os rótulos cabem dentro do gráfico (não são cortados)")
+            plot = medidas["plot"]
+            confere(medidas["dentro"], "os rótulos cabem dentro do gráfico (não são cortados)")
             eixo = pg.locator("#histPlot text.g-eixo")
             confere(await eixo.count() >= 4, f"eixos com rótulos: {await eixo.count()}")
             datas = [limpo(await eixo.nth(i).text_content()) for i in range(await eixo.count())]
