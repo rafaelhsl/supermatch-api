@@ -1,8 +1,10 @@
 # Licença e domínio próprio
 
-Duas decisões que são do dono do projeto e ainda estão **abertas** (dúvidas de 24/11/2026). Esta página explica cada uma em linguagem simples e diz o que se sabe; o que foi apurado vem da documentação do GitHub, do `choosealicense.com`, da lei e do Registro.br, lidos em 24/11/2026.
+Duas decisões que são do dono do projeto (dúvidas de 24/11/2026). A da **licença está tomada: sem licença**. A do **domínio segue aberta**, junto com a escolha de um **novo nome** para o site (veja abaixo). Esta página explica cada uma em linguagem simples e diz o que se sabe; o que foi apurado vem da documentação do GitHub, do `choosealicense.com`, da lei e do Registro.br, lidos em 24/11/2026.
 
 ## Licença do código
+
+**Decidido em 24/11/2026: o repositório fica SEM licença**, porque o dono pretende ganhar dinheiro com o site. Os direitos autorais ficam todos com ele, e ninguém pode copiar, reaproveitar ou vender o código sem autorização. Se um dia quiser abrir, o caminho está no fim desta seção; abrir depois é fácil, fechar não. O que protege o **nome** do site é outra coisa: o registro da marca no INPI (veja "Nome do site").
 
 **O que é.** Um arquivo (`LICENSE`), na raiz do repositório, que diz o que as outras pessoas podem fazer com o seu código.
 
@@ -52,9 +54,19 @@ Duas decisões que são do dono do projeto e ainda estão **abertas** (dúvidas 
 - Se um dia o DNS for entregue ao Netlify (em vez de mantido no Registro.br), é preciso **desligar o DNSSEC** do domínio antes: o Netlify DNS não o suporta.
 - Se o site não abrir pelo endereço novo nas primeiras horas, é normal: o DNS leva um tempo para valer em todo lugar. Espere antes de mexer nos registros.
 
+## Nome do site
+
+O nome atual, **Supermatch**, soa estrangeiro, e os dois domínios principais (`supermatch.com` e `supermatch.com.br`) **já são de outras pessoas** (conferido em 24/11/2026). O dono quer um nome brasileiro, fácil e ligado ao tema (comparar preços de supermercado). Antes de escolher:
+
+- **Domínio:** o nome precisa ter o `.com.br` livre (conferir no Registro.br; a disponibilidade muda de um dia para o outro: registrar logo ao decidir). Registrar também o `.com`, se estiver livre e barato, evita que outra pessoa fique com ele.
+- **Marca:** domínio livre **não** quer dizer marca livre. Como o dono pretende ganhar dinheiro com o site, vale pesquisar o nome no **INPI** (busca de marcas, no site do INPI) e, se estiver livre, **registrar a marca** (o pedido tem taxa: conferir no site do INPI). Também conferir o nome no Instagram, no Google e nas lojas de aplicativos.
+- **Teste de boca:** dizer em voz alta "abre o ___", "olha o ___ que achei" e escrever o nome de ouvido; se alguém errar a grafia, o nome é difícil.
+- O que muda no repositório com o nome novo (eu faço, num PR só, para gastar uma única publicação do Netlify): o título e os textos do site, o aviso de privacidade, as tags de prévia e a imagem `site/og.png`, o assunto do e-mail de privacidade, os documentos e os testes que citam o nome. O endereço da API (`supermatch-api.onrender.com`) e o nome do repositório são internos e podem continuar como estão.
+
 ## O que falta decidir
 
 | Decisão | Opções | Quem |
 |---|---|---|
-| Licença | sem licença por ora (recomendado) · MIT · outra | dono |
-| Domínio | registrar? qual nome (e em CPF ou CNPJ)? | dono; depois eu ligo no Netlify e troco as 3 tags |
+| Licença | **decidido: sem licença** (24/11/2026) | dono |
+| Nome do site | escolher o nome novo (o atual, "Supermatch", soa estrangeiro e `supermatch.com` e `supermatch.com.br` já têm dono) | dono; depois eu troco o nome no site, nos textos, nas tags de prévia e na documentação |
+| Domínio | registrar o `.com.br` do nome novo (em CPF ou CNPJ) | dono; depois eu ligo no Netlify e troco as 3 tags |
