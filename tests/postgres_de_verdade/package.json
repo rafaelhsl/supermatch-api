@@ -1,0 +1,9 @@
+{
+  "name": "supermatch-sql-em-postgres-de-verdade",
+  "private": true,
+  "description": "Confere os scripts de docs/sql/ num Postgres de verdade (PGlite, o Postgres em WebAssembly). Rodado à mão; o CI não roda (veja docs/testes.md).",
+  "type": "module",
+  "dependencies": {
+    "@electric-sql/pglite": "0.6.0"
+  }
+}

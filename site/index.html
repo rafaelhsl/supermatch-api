@@ -464,10 +464,17 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     <h3>Para onde o seu CEP vai</h3>
     <ul class="dados">
       <li><strong>BrasilAPI e ViaCEP</strong>, serviços públicos de CEP, para descobrir a sua cidade.</li>
-      <li><strong>A nossa API</strong>, hospedada no Render, junto com o que você busca, para calcular os preços. Ela também pergunta ao ViaCEP o estado do CEP. Quando você abre o histórico de preços de um produto, a API recebe só qual é o produto, sem CEP. Os registros da API ficam guardados por 7 dias e trazem o que você buscou, os produtos de que abriu o histórico e só os 5 primeiros dígitos do CEP.</li>
+      <li><strong>A nossa API</strong>, hospedada no Render, junto com o que você busca e com os itens da sua lista de compras (o site renova os preços dela sozinho), para calcular os preços. Ela também pergunta ao ViaCEP o estado do CEP. Quando você abre o histórico de preços de um produto, a API recebe só qual é o produto, sem CEP. Os registros da API ficam guardados por 7 dias e trazem o que você buscou, os itens da lista que o site renovou, os produtos de que abriu o histórico e só os 5 primeiros dígitos do CEP.</li>
     </ul>
     <h3>O que medimos</h3>
-    <p>Para saber se o site está sendo usado, a nossa API soma, a cada dia, quantas vezes o site foi aberto, quantas buscas e atualizações da lista de compras foram feitas e quantas vezes o histórico de um produto foi aberto. Essas somas ficam guardadas sem prazo, mas são só números: não dizem quem buscou, o que buscou nem qual era o CEP, e não há como ligar uma soma a uma pessoa.</p>
+    <p>Para saber se o site está sendo usado, a nossa API soma, a cada dia, quantas vezes aconteceu cada uma destas coisas:</p>
+    <ul class="dados">
+      <li>o site foi aberto;</li>
+      <li>uma busca foi feita, e quantas delas não acharam nenhum produto;</li>
+      <li>o site renovou sozinho os preços da sua lista de compras (um pedido por item desatualizado, com o CEP e o nome do item, como numa busca);</li>
+      <li>o histórico de preços de um produto foi consultado.</li>
+    </ul>
+    <p>Essas somas ficam guardadas sem prazo, mas são só números: sozinhas, não dizem quem usou o site, o que buscou nem qual era o CEP. Os registros de 7 dias da API, descritos acima, são outra coisa.</p>
     <h3>O que os serviços de hospedagem veem</h3>
     <p>O Netlify, que entrega este site, e o Render, que roda a nossa API, guardam registros técnicos de acesso, como o endereço IP.</p>
     <h3>Quem responde por isto</h3>

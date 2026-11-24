@@ -11,22 +11,27 @@ create table if not exists uso_diario (
 );
 
 -- 2) Só a chave secreta (a API) acessa, como nas outras tabelas: RLS ligado e nenhuma política (a chave pública não lê nem escreve).
+--    O `grant` à chave secreta é explícito de propósito: o Supabase está deixando de dar permissão automática em tabela nova, e sem ele
+--    a função abaixo (que roda com os direitos de quem chama) falharia com "permission denied". Os três comandos são o que a soma usa.
 alter table uso_diario enable row level security;
 revoke all on uso_diario from anon, authenticated;
+grant select, insert, update on uso_diario to service_role;
 
--- 3) A soma é uma conta só, feita no banco: dois pedidos ao mesmo tempo não perdem contagem. Quem grava (a API) manda apenas o tipo.
+-- 3) A soma é uma conta só, feita no banco: dois pedidos ao mesmo tempo não perdem contagem. Quem grava (a API) manda o tipo e quantas vezes
+--    aconteceu desde o último envio (a API junta o que chega ao mesmo tempo). Quantidade fora de 1 a 1.000.000 é ignorada.
 --    (`set search_path = public` fixa onde a função procura a tabela: é o que o painel de segurança do Supabase pede.)
-create or replace function registrar_uso(p_evento text)
+create or replace function registrar_uso(p_evento text, p_qtd bigint default 1)
 returns void
 language sql
 set search_path = public
 as $$
   insert into uso_diario (dia, evento, total)
-  values ((now() at time zone 'America/Sao_Paulo')::date, p_evento, 1)
-  on conflict (dia, evento) do update set total = uso_diario.total + 1;
+  select (now() at time zone 'America/Sao_Paulo')::date, p_evento, p_qtd
+  where p_qtd between 1 and 1000000
+  on conflict (dia, evento) do update set total = uso_diario.total + excluded.total;
 $$;
-revoke all on function registrar_uso(text) from public, anon, authenticated;
-grant execute on function registrar_uso(text) to service_role;
+revoke all on function registrar_uso(text, bigint) from public, anon, authenticated;
+grant execute on function registrar_uso(text, bigint) to service_role;
 
 notify pgrst, 'reload schema';
 
@@ -45,6 +50,10 @@ notify pgrst, 'reload schema';
 --   order by dia desc
 --   limit 30;
 --
--- Conferência de que a função está liberada só para a chave secreta (deve listar apenas service_role e postgres):
---   select grantee from information_schema.routine_privileges where routine_name = 'registrar_uso' order by 1;
+-- Conferências de que deu certo (cada uma deve responder "true"):
+--   select has_table_privilege('service_role', 'uso_diario', 'select')
+--      and has_table_privilege('service_role', 'uso_diario', 'insert')
+--      and has_table_privilege('service_role', 'uso_diario', 'update') as chave_secreta_pode_somar;
+--   select not has_function_privilege('anon', 'registrar_uso(text,bigint)', 'execute')
+--      and not has_table_privilege('anon', 'uso_diario', 'select') as chave_publica_nao_chega;
 -- ---------------------------------------------------------------------------------------------------

@@ -136,7 +136,7 @@ Quando o link é compartilhado (WhatsApp, Instagram, Facebook, X, Telegram), que
 
 ## Privacidade do CEP
 
-O rodapé tem o link "Privacidade e seus dados", e a janela do CEP diz para que ele serve e leva ao mesmo aviso ("Como tratamos seus dados"). A janela diz o que fica no aparelho, para onde o CEP vai (BrasilAPI, ViaCEP e a nossa API) e o que os serviços de hospedagem veem, e tem o botão "Apagar meus dados deste aparelho" (`esquecerTudo`: apaga as chaves `sm_...` e as da versão anterior). O que cada frase afirma, o que a garante (a API só escreve os 5 primeiros dígitos do CEP no log), quem responde (nome e e-mail para dúvidas) e o que ainda falta decidir (fontes do Google, retenção) estão em [`privacidade.md`](privacidade.md). `node tests/test_privacidade.js` trava os endereços externos do site contra o aviso, e `python tests/navegador/test_site_privacidade.py` confere a tela.
+O rodapé tem o link "Privacidade e seus dados", e a janela do CEP diz para que ele serve e leva ao mesmo aviso ("Como tratamos seus dados"). A janela diz o que fica no aparelho, para onde o CEP vai (BrasilAPI, ViaCEP e a nossa API), o que medimos (as somas por dia da API, sem CEP nem identificador: [`uso_do_site.md`](uso_do_site.md)) e o que os serviços de hospedagem veem, e tem o botão "Apagar meus dados deste aparelho" (`esquecerTudo`: apaga as chaves `sm_...` e as da versão anterior). O que cada frase afirma, o que a garante (a API só escreve os 5 primeiros dígitos do CEP no log), quem responde (nome e e-mail para dúvidas) e o que ainda falta decidir (retenção) estão em [`privacidade.md`](privacidade.md). `node tests/test_privacidade.js` trava os endereços externos do site contra o aviso, e `python tests/navegador/test_site_privacidade.py` confere a tela.
 
 ## Preço por quilo (hortifrúti)
 
@@ -161,7 +161,7 @@ O código fica no bloco `@unidade-inicio` / `@unidade-fim` (`porQuilo`, `grupoPo
 ## Como conversa com a API
 
 - `GET /saude?origem=site` ao abrir a página: acorda o servidor do Render, que dorme após 15 minutos, e a API soma 1 "abertura" no dia (sem CEP nem nada pessoal; [`uso_do_site.md`](uso_do_site.md)). A primeira busca depois disso pode levar cerca de 1 minuto; a tela avisa depois de 8 segundos.
-- `GET /comparar?cep=<8 dígitos>&item=<texto>`: devolve `carrinho_comparativo`, uma lista de `{ produto_base, opcoes_de_compra: [{ supermercado, nome, preco_varejo, preco_atacado, quantidade_atacado, atualizado_em, ... }] }`. A API usa o CEP só para descobrir a UF. A renovação automática dos preços da lista de compras (ao abrir a página e ao voltar à aba depois de 3 h) acrescenta `&origem=lista`: assim a API não a conta como busca de alguém ([`uso_do_site.md`](uso_do_site.md)).
+- `GET /comparar?cep=<8 dígitos>&item=<texto>`: devolve `carrinho_comparativo`, uma lista de `{ produto_base, opcoes_de_compra: [{ supermercado, nome, preco_varejo, preco_atacado, quantidade_atacado, atualizado_em, ... }] }`. A API usa o CEP só para descobrir a UF. A renovação automática dos preços da lista de compras (dos itens com preço de mais de 3 horas, ao abrir a página e ao voltar à aba) acrescenta `&origem=lista`: assim a API não a conta como busca de alguém ([`uso_do_site.md`](uso_do_site.md)).
 - `GET /historico?chaves=Mercado|chave,...` ao abrir o gráfico de um produto (veja "Histórico de preços (o gráfico)"): leva só o mercado e a chave de cada produto, sem CEP.
 - Uma busca antiga que responde depois de uma nova é descartada. Resposta de erro do servidor aparece como "Não deu para consultar", e não como "Nada encontrado".
 

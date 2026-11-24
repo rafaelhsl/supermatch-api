@@ -86,8 +86,10 @@ async def rodar():
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")
             for trecho in ("Quem responde por isto", "O Supermatch é mantido por Rafael Lima"):
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")
-            for trecho in ("O que medimos", "a nossa API soma, a cada dia, quantas vezes o site foi aberto, quantas buscas e atualizações da lista de compras foram feitas",
-                           "quantas vezes o histórico de um produto foi aberto", "são só números", "não dizem quem buscou, o que buscou nem qual era o CEP", "não há como ligar uma soma a uma pessoa"):
+            for trecho in ("O que medimos", "a nossa API soma, a cada dia, quantas vezes aconteceu cada uma destas coisas", "o site foi aberto", "quantas delas não acharam nenhum produto",
+                           "o site renovou sozinho os preços da sua lista de compras", "o histórico de preços de um produto foi consultado", "são só números",
+                           "sozinhas, não dizem quem usou o site, o que buscou nem qual era o CEP", "Os registros de 7 dias da API, descritos acima, são outra coisa",
+                           "junto com o que você busca e com os itens da sua lista de compras"):
                 confere(trecho in texto, f"o aviso diz sobre a medição: «{trecho}»")
             email = pg.locator("#contatoEmail")
             confere(limpo(await email.inner_text()) == "rafaelhsts@gmail.com", f"o e-mail do responsável aparece escrito: «{limpo(await email.inner_text())}»")

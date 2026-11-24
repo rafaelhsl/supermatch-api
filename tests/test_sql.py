@@ -2,15 +2,18 @@
 
 Rodar com:  python tests/test_sql.py
 
-Esses arquivos mexem no banco de produção por mão humana, então valem duas regras:
-1. Nada que apague ou reescreva dado (drop, delete, truncate, update): os scripts só acrescentam.
+Esses arquivos mexem no banco de produção por mão humana, então valem estas regras:
+1. Nada que apague ou reescreva dado (drop, delete, truncate, update): os scripts só acrescentam. Também não entram comandos soltos de execução
+   (do, select, perform, call, copy) nem "disable row level security". O corpo de uma função (entre $$ e $$) só roda quando ela é chamada, não quando o
+   script é rodado, mas também só pode acrescentar ("insert ... on conflict do update"), nunca apagar.
 2. Pode rodar de novo sem erro (if not exists em tudo que cria ou acrescenta; "create or replace" nas funções).
 3. Tabela nova nasce com RLS ligado (a chave pública não lê nem escreve) e função nova nasce fechada: só a chave secreta (service_role) pode chamá-la.
-   (O que está dentro do corpo de uma função, entre $$ e $$, só roda quando a função é chamada, não quando o script é rodado: por isso fica fora da regra 1.)
 """
 import re
 import sys
 from pathlib import Path
+
+from sql_util import comandos, cabecalho, corpo, sem_comentarios  # noqa: F401  (tests/sql_util.py)
 
 PASTA = Path(__file__).resolve().parent.parent / "docs" / "sql"
 ok, erros = 0, []
@@ -24,36 +27,6 @@ def confere(condicao, texto):
         erros.append(texto)
 
 
-def sem_comentarios(sql):
-    return "\n".join(re.sub(r"--.*$", "", linha) for linha in sql.splitlines())
-
-
-def comandos(sql):
-    """Os comandos do script, separados por ';'. Um corpo de função entre $$ e $$ tem ';' dentro e continua sendo UM comando só."""
-    pedacos, atual, dentro = [], [], False
-    texto = sem_comentarios(sql)
-    i = 0
-    while i < len(texto):
-        if texto.startswith("$$", i):
-            dentro = not dentro
-            atual.append("$$")
-            i += 2
-            continue
-        if texto[i] == ";" and not dentro:
-            pedacos.append("".join(atual))
-            atual = []
-        else:
-            atual.append(texto[i])
-        i += 1
-    pedacos.append("".join(atual))
-    return [c.strip() for c in pedacos if c.strip()]
-
-
-def cabecalho(comando):
-    """O comando sem o corpo da função (o que está entre $$ e $$ só roda quando a função é chamada)."""
-    return re.sub(r"\$\$.*?\$\$", "$$ $$", comando, flags=re.S)
-
-
 scripts = sorted(PASTA.glob("*.sql"))
 confere(len(scripts) >= 4, f"scripts em docs/sql: {[s.name for s in scripts]}")
 for script in scripts:
@@ -64,7 +37,7 @@ for script in scripts:
     for cmd in cmds:
         baixo = " ".join(cabecalho(cmd).lower().split())
         # ("on delete cascade" dentro de um create table é opção de chave estrangeira, não um comando que apaga dado: por isso só o começo do comando conta)
-        perigoso = re.match(r"(drop|delete|truncate|update|insert)\b", baixo) or (baixo.startswith("alter table") and re.search(r"\b(drop|rename)\b|alter column \w+ (set data )?type", baixo))
+        perigoso = re.match(r"(drop|delete|truncate|update|insert|do|select|perform|call|copy)\b", baixo) or re.search(r"\bdisable row level security\b", baixo) or (baixo.startswith("alter table") and re.search(r"\b(drop|rename)\b|alter column \w+ (set data )?type", baixo))
         confere(not perigoso, f"{script.name}: comando que apaga, renomeia ou reescreve dado: {baixo[:70]}")
         if re.match(r"create (unique )?(table|index)\b", baixo):
             confere("if not exists" in baixo, f"{script.name}: precisa de 'if not exists' para poder rodar de novo: {baixo[:70]}")
@@ -79,12 +52,17 @@ for script in scripts:
                 abertas = [t for t in todos if re.match(rf"grant execute on function {nome.group(1)}\(", t)]
                 confere(len(abertas) == 1 and abertas[0].endswith("to service_role"), f"{script.name}: a função {nome.group(1)} só pode ser liberada para service_role: {abertas}")
             confere("security definer" not in baixo, f"{script.name}: função com 'security definer' roda com os direitos do dono: precisa de revisão de segurança, não entra por aqui")
+            miolo = " ".join((corpo(cmd) or "").lower().split())
+            confere(not re.search(r"\b(delete|drop|truncate|alter)\b", miolo) and not re.search(r"(?<!do )\bupdate\b", miolo),
+                    f"{script.name}: o corpo da função apaga ou reescreve dado fora de um 'insert ... on conflict do update': {miolo[:70]}")
         if re.match(r"create table\b", baixo):
             tabela = re.match(r"create table (?:if not exists )?(\w+)", baixo)
             confere(tabela is not None and f"alter table {tabela.group(1)} enable row level security" in todos,
                     f"{script.name}: a tabela {tabela.group(1) if tabela else '?'} precisa de 'alter table ... enable row level security' (sem política: só a chave secreta acessa)")
         if re.match(r"create policy\b", baixo):
             confere(False, f"{script.name}: política de acesso liberaria a chave pública: {baixo[:70]}")
+        if re.match(r"grant\b", baixo):
+            confere(not re.search(r"\bto\b.*\b(anon|authenticated|public)\b", baixo), f"{script.name}: liberar para a chave pública (anon, authenticated, public) não entra por aqui: {baixo[:70]}")
         if re.match(r"alter table\b", baixo) and re.search(r"\badd column\b", baixo):
             colunas = re.findall(r"add column (?:if not exists )?", baixo)
             confere(len(colunas) == baixo.count("add column") and baixo.count("add column") == baixo.count("add column if not exists"),

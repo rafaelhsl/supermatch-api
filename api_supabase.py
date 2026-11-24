@@ -33,7 +33,11 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 @asynccontextmanager
 async def ciclo_de_vida(_app):
     aquecer_catalogo(UF_DA_REGIAO, contexto="servidor iniciando")     # o servidor acabou de acordar: já começa a carregar o catálogo
-    yield
+    _medidor.ligar(_gravar_uso)         # a medição de uso só liga com o servidor de verdade: os testes, que chamam as funções direto, nunca falam com o banco por causa dela
+    try:
+        yield
+    finally:
+        _medidor.desligar(esperar=2.0)  # o servidor vai desligar: dá um instante para as somas que ainda estão na fila saírem
 
 
 app = FastAPI(title="Motor de Comparação de Supermercados API", lifespan=ciclo_de_vida)
@@ -116,13 +120,13 @@ _travas = {}      # uf -> trava: uma atualização por vez
 _travas_das_travas = threading.Lock()
 
 
-def _gravar_uso(evento: str):
-    """Soma 1 no contador do dia (função `registrar_uso` do banco, docs/sql/uso_do_site.sql). SÓ este texto, de uma lista fechada, sai daqui:
-    nada de CEP, estado, termo buscado, IP ou horário."""
-    supabase.rpc("registrar_uso", {"p_evento": evento}).execute()
+def _gravar_uso(evento: str, quantidade: int):
+    """Soma `quantidade` no contador do dia (função `registrar_uso` do banco, docs/sql/uso_do_site.sql). SÓ o nome do evento (de uma lista
+    fechada) e esse número saem daqui: nada de CEP, estado, termo buscado, IP ou horário."""
+    supabase.rpc("registrar_uso", {"p_evento": evento, "p_qtd": quantidade}).execute()
 
 
-_medidor = MedidorDeUso(_gravar_uso)    # medição de uso SEM rastrear ninguém: só somas por dia (medidor_de_uso.py, docs/uso_do_site.md)
+_medidor = MedidorDeUso()   # medição de uso SEM rastrear ninguém: só somas por dia (medidor_de_uso.py, docs/uso_do_site.md). Nasce DESLIGADO: `ciclo_de_vida` o liga
 
 
 def _trava_da_uf(uf: str):

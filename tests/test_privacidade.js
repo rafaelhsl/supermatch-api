@@ -34,10 +34,26 @@ confere(/não usa cookies/.test(texto), "o aviso diz que o site não usa cookies
 
 // ---- a medição de uso sem rastrear (medidor_de_uso.py): o que o aviso diz e o que o site de fato manda ----
 confere(/O que medimos/.test(texto), 'o aviso tem a seção "O que medimos"');
-confere(/a nossa API soma, a cada dia, quantas vezes o site foi aberto, quantas buscas e atualizações da lista de compras foram feitas e quantas vezes o histórico de um produto foi aberto/.test(texto), "o aviso lista exatamente o que é somado (aberturas do site, buscas e atualizações da lista, aberturas do histórico)");
-confere(/Essas somas ficam guardadas sem prazo, mas são só números: não dizem quem buscou, o que buscou nem qual era o CEP, e não há como ligar uma soma a uma pessoa/.test(texto), "o aviso diz que as somas são só números e não identificam ninguém (tests/test_medidor_de_uso.py torna isso verdade)");
+const sqlDoUso = fs.readFileSync(path.join(__dirname, "..", "docs", "sql", "uso_do_site.sql"), "utf8").replace(/--.*$/gm, "");
+const eventosDoSql = [...(sqlDoUso.match(/check \(evento in \(([^)]*)\)\)/) || ["", ""])[1].matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+const FRASE_DE_CADA_SOMA = {
+  abertura: "o site foi aberto",
+  busca: "uma busca foi feita",
+  busca_sem_resultado: "quantas delas não acharam nenhum produto",
+  atualizacao_da_lista: "o site renovou sozinho os preços da sua lista de compras",
+  historico: "o histórico de preços de um produto foi consultado",
+};
+igual(Object.keys(FRASE_DE_CADA_SOMA).sort(), [...eventosDoSql].sort(), "cada soma que o banco aceita (docs/sql/uso_do_site.sql) tem a sua frase neste teste: soma nova sem frase no aviso reprova aqui");
+for (const [evento, frase] of Object.entries(FRASE_DE_CADA_SOMA)) confere(texto.includes(frase), `o aviso diz o que é a soma «${evento}»: «${frase}»`);
+confere(/a nossa API soma, a cada dia, quantas vezes aconteceu cada uma destas coisas:/.test(texto), "o aviso diz que a soma é por dia e por tipo");
+confere(/Essas somas ficam guardadas sem prazo, mas são só números: sozinhas, não dizem quem usou o site, o que buscou nem qual era o CEP\. Os registros de 7 dias da API, descritos acima, são outra coisa\./.test(texto), "o aviso diz que as somas são só números que sozinhos não identificam ninguém, e separa os registros de 7 dias (tests/test_medidor_de_uso.py torna isso verdade)");
+confere(!/não há como ligar uma soma a uma pessoa/.test(texto), "o aviso não promete que é impossível ligar uma soma a uma pessoa (com poucos usuários e os registros de 7 dias com IP, não dá para prometer isso)");
+confere(/itens da sua lista de compras \(o site renova os preços dela sozinho\)/.test(texto) && /os itens da lista que o site renovou/.test(texto), "o aviso diz que a renovação dos preços da lista manda os itens (e o CEP) para a API e que isso aparece nos registros de 7 dias");
 const chamadasSaude = script.match(/[^\n]*\/saude[^\n]*/g) || [];
 confere(chamadasSaude.length === 1 && /fetch\(API \+ "\/saude\?origem=site"\)/.test(chamadasSaude[0]), `o único pedido a /saude é o aviso de que o site abriu, sem CEP nem termo: ${JSON.stringify(chamadasSaude)}`);
+const caminhosDaApi = [...new Set([...script.matchAll(/\$\{API\}\/([a-z]+)/g), ...script.matchAll(/API \+ "\/([a-z]+)/g)].map((m) => m[1]))].sort();
+igual(caminhosDaApi, ["comparar", "historico", "saude"], "os únicos caminhos da nossa API que o site chama (um caminho novo, como um de medição, precisa entrar no aviso e em docs/privacidade.md)");
+confere(!/sendBeacon|new Image\(|XMLHttpRequest|WebSocket|EventSource/.test(script), "o site só fala com a rede por fetch (nada de beacon, imagem, XHR, WebSocket), e todo fetch cai nos endereços e caminhos conferidos aqui");
 const chamadasComparar = script.match(/[^\n]*\/comparar\?[^\n]*/g) || [];
 confere(chamadasComparar.length === 2 && chamadasComparar.filter((l) => /&origem=lista`\)/.test(l)).length === 1,
   `dois pedidos a /comparar: a busca de uma pessoa (sem origem) e a renovação automática dos preços da lista (origem=lista, que a API não conta como busca): ${JSON.stringify(chamadasComparar.map((l) => l.trim().slice(0, 120)))}`);
