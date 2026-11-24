@@ -23,7 +23,7 @@ Até 19/11/2026 o Render guardava o **CEP inteiro** em duas linhas: a da própri
 - `EsconderCepDoLogDeAcesso` é um filtro no logger `uvicorn.access`, ligado quando a API é importada, que troca o `cep=` do endereço antes de a linha ser escrita (conferido com um uvicorn de verdade, igual ao comando do Render);
 - a API só consulta o ViaCEP com 8 dígitos (o resto responde "BR" sem consulta).
 
-**Registros antigos** (com o CEP inteiro) seguem o prazo de retenção do Render e saem sozinhos; a API não tem como apagá-los.
+**Registros antigos** (com o CEP inteiro) seguem o prazo de retenção do Render: **7 dias** no plano gratuito (informado pelo dono em 24/11/2026). Os últimos com o CEP inteiro são de 19/11/2026 (a correção entrou no ar nessa manhã) e **saem do Render até 26/11/2026**; a API não tem como apagá-los antes.
 
 ## "Apagar meus dados deste aparelho"
 
@@ -36,7 +36,7 @@ Apaga todas as chaves `sm_...` do navegador e as da versão anterior do site (`u
 | "não tem cadastro, anúncios nem rastreadores" | `tests/test_privacidade.js`: nenhum analytics/rastreador no HTML |
 | "não usa cookies" | o mesmo teste: nenhum `document.cookie` |
 | o CEP só vai para BrasilAPI, ViaCEP e a nossa API; o Google não recebe nada | o mesmo teste (e `tests/test_fontes.py`, `tests/navegador/test_site_fontes.py`): a lista dos endereços externos do site **tem de ser exatamente esta**; se o site falar com um endereço novo, o teste falha e lembra de atualizar o aviso e esta página |
-| "nos nossos registros ficam o que você buscou e só os 5 primeiros dígitos do CEP" | `tests/test_privacidade.py` (a máscara, o filtro do uvicorn, o print, e uma varredura que falha se um `print`/log novo escrever o CEP cru) |
+| "os registros da API ficam guardados por 7 dias e trazem o que você buscou e só os 5 primeiros dígitos do CEP" | `tests/test_privacidade.py` (a máscara, o filtro do uvicorn, o print, e uma varredura que falha se um `print`/log novo escrever o CEP cru) |
 | "Apagar meus dados" apaga tudo | `tests/navegador/test_site_privacidade.py`: com `sm_*`, `user_*` e uma chave de outro site guardadas, sobra só a de fora |
 | o aviso abre do rodapé e da janela do CEP, cabe em 320 px, Esc fecha e o foco volta | o mesmo teste de navegador |
 | "O Supermatch é mantido por Rafael Lima" e o e-mail para dúvidas | `tests/test_privacidade.js` (o texto, o link e o `mailto`) e o teste de navegador (o e-mail aparece escrito, o link abre o e-mail com assunto e cabe em 320 px) |
@@ -47,4 +47,4 @@ A janela diz **quem mantém o projeto (Rafael Lima, a pessoa responsável pelos 
 
 ## O que falta decidir (é do dono)
 
-- **Retenção.** O prazo dos registros do Render e do Netlify depende do plano de cada um; vale conferir nos painéis.
+- **Retenção.** Render: **7 dias** (plano gratuito; confirmado em 24/11/2026) e o aviso diz isso. Netlify: o prazo **não foi conferido**; o aviso fala de "registros técnicos de acesso, como o endereço IP" sem prometer prazo. Se o dono quiser dizer um prazo também para o Netlify, é só conferir com o provedor (painel ou suporte) e acrescentar à frase do aviso (e ao teste).

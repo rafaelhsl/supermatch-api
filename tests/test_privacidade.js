@@ -28,6 +28,7 @@ for (const [nome, fala] of [["BrasilAPI", "BrasilAPI"], ["ViaCEP", "ViaCEP"], ["
   confere(texto.includes(nome), `o aviso cita ${fala}`);
 }
 confere(!/Google/.test(texto), "o aviso não cita o Google (o site não pede nada a ele: as letras são daqui)");
+confere(/guardados por 7 dias/.test(texto), 'o aviso diz que os registros da API ficam guardados por 7 dias (o prazo do plano gratuito do Render; docs/privacidade.md)');
 confere(/5 primeiros dígitos do CEP/.test(texto), 'o aviso diz que nos registros ficam só "5 primeiros dígitos do CEP" (tests/test_privacidade.py torna isso verdade)');
 confere(/não usa cookies/.test(texto), "o aviso diz que o site não usa cookies");
 confere(!/document\.cookie/.test(html), "o site de fato não escreve cookies");
