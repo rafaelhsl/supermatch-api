@@ -1617,6 +1617,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 
   function fecharHistorico() { if (janelaHist.open) janelaHist.close(); }
   janelaHist.addEventListener("close", () => {
+    if (janelaHist.open) return;       // o evento chega DEPOIS do fechar: se já abriram outro produto neste meio tempo, esse é o que vale
     hist.numero++;
     if (hist.observador) { hist.observador.disconnect(); hist.observador = null; }
     const botao = hist.foco ? document.querySelector('[data-foco="' + hist.foco + '"]') : null;   // o cartão pode ter sido redesenhado: procura o botão de novo

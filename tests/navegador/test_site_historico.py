@@ -61,6 +61,7 @@ H = {
     ("Atacadao", "v:600:6"): [], ("Supernosso", "v:700:7"): [],                                            # produto sem histórico nenhum
     ("Atacadao", "v:800:8"): [{"desde": "2026-11-04", "ate": None, "preco": 9.9}], ("Supernosso", "v:810:8"): [{"desde": "2026-11-04", "ate": None, "preco": 9.5}],   # o do pedido que falha
     ("Atacadao", "v:900:9"): [{"desde": "2026-11-04", "ate": None, "preco": 5.0}], ("Supernosso", "v:910:9"): [{"desde": "2026-11-04", "ate": None, "preco": 6.0}],   # o do pedido lento
+    ("Atacadao", "v:950:10"): [{"desde": "2026-11-04", "ate": None, "preco": 4.0}], ("Supernosso", "v:960:10"): [{"desde": "2026-11-04", "ate": None, "preco": 4.5}],   # o aberto logo depois de fechar outro
 }
 
 
@@ -83,6 +84,8 @@ def resposta_comparar(com_chave=True):
               opcao("Atacadao", "Arroz Que Falha 2kg", 9.9, "7891000000005", c("v:800:8")), opcao("Supernosso", "Arroz Que Falha 2kg", 9.5, "7891000000005", c("v:810:8"))),
         grupo("Arroz Lento 3kg", "7891000000006",
               opcao("Atacadao", "Arroz Lento 3kg", 5.0, "7891000000006", c("v:900:9")), opcao("Supernosso", "Arroz Lento 3kg", 6.0, "7891000000006", c("v:910:9"))),
+        grupo("Arroz Rapido 4kg", "7891000000007",
+              opcao("Atacadao", "Arroz Rapido 4kg", 4.0, "7891000000007", c("v:950:10")), opcao("Supernosso", "Arroz Rapido 4kg", 4.5, "7891000000007", c("v:960:10"))),
     ]
     return {"status": "sucesso", "cep": "x", "uf": "MG", "item": "arroz", "mercados_consultados": MERCADOS, "equivalencia_familias": ["arroz"], "carrinho_comparativo": grupos}
 
@@ -189,7 +192,7 @@ async def rodar():
             ctx, pg = await abrir(nav, vp, mobile, api)
 
             # --- 1. o botão só aparece onde a API mandou a chave do histórico
-            confere(await pg.locator("article.produto [data-historico]").count() == 5, f"5 dos 6 produtos têm o botão (o Feijão não tem chave): {await pg.locator('article.produto [data-historico]').count()}")
+            confere(await pg.locator("article.produto [data-historico]").count() == 6, f"6 dos 7 produtos têm o botão (o Feijão não tem chave): {await pg.locator('article.produto [data-historico]').count()}")
             confere(await cartao(pg, "Feijão Preto").locator("[data-historico]").count() == 0, "o produto sem chave do histórico fica sem botão")
             botao = cartao(pg, "Camil").locator("[data-historico]")
             confere(limpo(await botao.inner_text()) == "Ver histórico de preços", f"texto do botão: «{limpo(await botao.inner_text())}»")
@@ -360,8 +363,8 @@ async def rodar():
 
             # --- 11. produto sem nenhum histórico
             await abrir_grafico(pg, "Sem Historico")
-            await pg.wait_for_selector("#histCorpo .estado strong", timeout=5000)
-            confere("Ainda não há histórico" in await pg.locator("#histCorpo .estado strong").inner_text(), "produto sem histórico: a janela explica, sem gráfico vazio")
+            await pg.wait_for_selector("#histCorpo .estado strong:has-text('Ainda não há histórico')", timeout=5000)      # (antes da resposta a janela diz "Buscando…")
+            confere(True, "produto sem histórico: a janela explica, sem gráfico vazio")
             confere(await pg.locator("#histPlot").count() == 0, "e não desenha gráfico nenhum")
             await fechar(pg)
 
@@ -382,6 +385,18 @@ async def rodar():
             await esperar_grafico(pg)
             await pg.wait_for_timeout(1500)                        # a resposta do Lento chega agora
             confere("Banana" in await pg.locator("#histProduto").inner_text() and "Nenhum dos preços mudou desde 18/11." in limpo(await pg.locator(".hist-frase").inner_text()), "a resposta atrasada de outro produto não sobrescreve a janela atual")
+            await fechar(pg)
+
+            # --- 13b. fechar e abrir outro produto no mesmo instante: o evento "close" do <dialog> chega depois e não pode cancelar a carga nova
+            await abrir_grafico(pg, "Camil")
+            await esperar_grafico(pg)
+            await pg.evaluate("""() => {
+              document.querySelector("#fecharHistorico").click();
+              [...document.querySelectorAll("article.produto")].find((a) => a.querySelector("h3").textContent.includes("Rapido")).querySelector("[data-historico]").click();
+            }""")
+            await pg.wait_for_selector("#histProduto:has-text('Rapido')", timeout=3000)
+            await esperar_grafico(pg)
+            confere(await pg.locator("#histPlot path.g-linha").count() == 2, "fechar e abrir outro produto (ainda sem cache) no mesmo instante: o gráfico novo aparece (o 'close' atrasado não o cancela)")
             await fechar(pg)
             await ctx.close()
 
