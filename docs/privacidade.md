@@ -10,6 +10,7 @@ O site mostra um aviso de privacidade (rodapé "Privacidade e seus dados" e link
 | BrasilAPI e ViaCEP (do navegador) | o CEP | descobrir a cidade (e saber se atendemos) |
 | API do Supermatch, no Render (do navegador) | o CEP e o termo buscado, a cada busca e a cada atualização da lista | calcular os preços |
 | ViaCEP (da API) | os 8 dígitos do CEP | saber o estado (UF) |
+| API do Supermatch, no Render (do navegador), ao abrir o gráfico de preços | a chave do produto (e o mercado), **sem CEP** | desenhar a evolução do preço (`/historico`) |
 | Netlify (as letras, em `fonts/`, junto com o site) | o IP, como em qualquer pedido ao site | as letras do site. **Desde 23/11/2026 não vêm mais do Google Fonts** |
 | Netlify e Render | registros técnicos de acesso (IP e o que o provedor guarda) | são os provedores de hospedagem |
 
