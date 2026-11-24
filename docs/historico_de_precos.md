@@ -47,6 +47,16 @@ Regras que protegem o histórico:
 
 A primeira carga com o histórico ligado é o **dia 1**; a carga sempre apagou os preços antigos, então não existe passado para recuperar.
 
+## O gráfico: `GET /historico`
+
+O site mostra a evolução do preço de um produto (o botão "Ver histórico de preços" do cartão), e para isso a API lê o histórico:
+
+- **`chave_historico`** vem em cada produto de `/comparar` (a mesma chave com que a carga grava: `v:productId:itemId` nos mercados com API, `n:…` no Super ABC). Quem monta o pedido não precisa saber como ela nasce.
+- **`GET /historico?chaves=Mercado|chave,Mercado|chave`** (até 8 produtos) devolve, para cada um, os `intervalos` de preço do varejo (`desde`, `ate` vazio = vale até hoje, `preco`) e o `hoje` de Brasília. Pedido mal formado (mercado que não existe, chave com caracteres estranhos, mais de 8 produtos) dá **400**; histórico fora do ar dá **503** (o motivo vai para o log, não para quem pediu). Não recebe CEP nem nada pessoal.
+- **Duas consultas por mercado** (uma em `catalogo`, uma em `precos`), nunca uma por produto, e o resultado fica **30 minutos em memória** (`serie_de_precos.CacheDeSeries`, até 2.000 produtos): o gráfico de um produto aberto por várias pessoas não repete a consulta, e a cota de saída de dados do plano gratuito não sofre. A carga grava às 07:30, e um produto que mudou de preço hoje se corrige sozinho até meia hora depois.
+- Só a **praça da coleta** (`betim`) entra (a mesma que o selo de queda usa), e produto sem histórico volta com a lista vazia.
+- `python tests/test_serie_de_precos.py` confere o pedido, a leitura, o cache e o endpoint.
+
 ## Como ligar
 
 1. No Supabase, abra o **SQL Editor** e rode o conteúdo de [`sql/historico_precos.sql`](sql/historico_precos.sql). Pode rodar mais de uma vez.

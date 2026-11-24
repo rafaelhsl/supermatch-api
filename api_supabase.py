@@ -9,14 +9,16 @@ import urllib.parse
 import urllib.request
 import json
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, Client
 
 from busca import buscar_detalhado, indexar, sem_acento
 from Comparador_inteligente import cruzar_multiplos_produtos
 from equivalencia import com_equivalencia, familias_equivalentes
+from historico import chave_do_produto, hoje_em_brasilia
 from quedas import QuedasDoHistorico
+from serie_de_precos import CacheDeSeries, PedidoInvalido, interpretar
 
 # --- 1. CONFIGURAÇÃO SEGURA DO BANCO ---
 SUPABASE_URL = "https://gtdvgdfalpsrnefzyfgu.supabase.co"
@@ -107,6 +109,7 @@ COLUNAS_SEM_UNIDADE = ("id,supermercado,nome,marca,ean,categoria,id_origem,termo
 COLUNAS_DO_CATALOGO = COLUNAS_SEM_UNIDADE + ",unidade"
 _catalogos = {}   # uf -> (momento em que foi carregado, catálogo indexado)
 _quedas = QuedasDoHistorico()   # preços de 7 dias antes, para o selo de queda
+_series = CacheDeSeries()       # séries de preço de produtos, para o gráfico "histórico de preços" (/historico)
 _travas = {}      # uf -> trava: uma atualização por vez
 _travas_das_travas = threading.Lock()
 
@@ -146,6 +149,13 @@ def baixar_catalogo(uf: str):
         if len(pagina) < TAMANHO_PAGINA:
             break
         inicio += TAMANHO_PAGINA
+    # `chave_historico`: a chave que o histórico de preços usa para este produto (historico.chave_do_produto). O site a manda para /historico
+    # quando a pessoa abre o gráfico. O produto sem nome (não deveria existir) fica sem ela, e o site não oferece o gráfico para ele.
+    for produto in produtos:
+        try:
+            produto["chave_historico"] = chave_do_produto(produto)
+        except (KeyError, TypeError):
+            pass
     # Selo "caiu X% em 7 dias": marca os produtos cujo preço caiu em relação ao de 7 dias antes (quedas.py). Se o histórico
     # falhar, o catálogo segue sem selos.
     _quedas.anotar(supabase, produtos)
@@ -221,6 +231,25 @@ def saude():
     # Aceita HEAD porque é o que vários monitores gratuitos enviam.
     aquecer_catalogo(UF_DA_REGIAO, tambem_se_vencido=False, contexto="chamada a /saude")
     return {"status": "ok"}
+
+@app.get("/historico")
+def historico_de_precos(chaves: str):
+    """Os intervalos de preço (varejo) de até 8 produtos, para o gráfico do site.
+
+    `chaves` = "Mercado|chave,Mercado|chave": o mercado e a `chave_historico` que a própria API pôs em cada produto de /comparar. A resposta traz,
+    para cada um, `intervalos` = [{"desde", "ate" (vazio = vale até hoje), "preco"}] e o `hoje` de Brasília. Não recebe CEP nem nada pessoal.
+    """
+    try:
+        pares = interpretar(chaves)
+    except PedidoInvalido as erro:
+        raise HTTPException(status_code=400, detail=str(erro))
+    try:
+        series = _series.obter(supabase, pares)
+    except Exception as erro:
+        print(f"⚠️ Histórico de preços indisponível: {erro!r}")
+        raise HTTPException(status_code=503, detail="O histórico de preços está indisponível agora.")
+    return {"hoje": hoje_em_brasilia().isoformat(), "produtos": [{"mercado": m, "chave": k, "intervalos": series[(m, k)]} for m, k in pares]}
+
 
 @app.get("/comparar")
 def buscar_e_comparar(cep: str, item: str, todos: bool = False):
