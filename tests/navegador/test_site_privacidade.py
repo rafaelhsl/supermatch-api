@@ -73,7 +73,7 @@ async def rodar():
             titulo = limpo(await pg.locator("#janelaPrivacidade h2").inner_text())
             confere(titulo == "Privacidade e seus dados", f"título do aviso: «{titulo}»")
             texto = limpo(await pg.locator("#janelaPrivacidade").inner_text())
-            for trecho in ("não tem cadastro, anúncios nem rastreadores", "não usa cookies", "BrasilAPI e ViaCEP", "5 primeiros dígitos do CEP", "Netlify", "Render"):
+            for trecho in ("não tem cadastro, anúncios nem rastreadores", "não usa cookies", "BrasilAPI e ViaCEP", "5 primeiros dígitos do CEP", "guardados por 7 dias", "Netlify", "Render"):
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")
             for trecho in ("Quem responde por isto", "O Supermatch é mantido por Rafael Lima"):
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")
