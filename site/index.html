@@ -285,6 +285,51 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 .link { background: none; border: 0; padding: 4px 2px; font: inherit; color: var(--tinta); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .link:hover { text-decoration-thickness: 2px; }
 
+/* ---------- histórico de preços: o botão do cartão e a janela com o gráfico ---------- */
+.produto .ver-historico { align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; margin: -8px 0 -6px; padding: 0 2px; background: none; border: 0; cursor: pointer; color: var(--tinta); font-size: 13.5px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.produto .ver-historico:hover { text-decoration-thickness: 2px; }
+.produto .ver-historico svg { flex: none; }
+.janela-grafico { width: min(640px, 100%); }
+.janela-grafico .hist-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.janela-grafico .hist-topo h2 { margin: 0 0 6px; font-size: 21px; }
+.janela-grafico .hist-produto { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--tinta); }
+.janela-grafico .hist-un { margin: 2px 0 14px; font-size: 13px; }
+.janela-grafico .hist-fechar { flex: none; width: 44px; height: 44px; margin: -10px -10px 0 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; cursor: pointer; color: var(--tinta); }
+.janela-grafico .hist-fechar:hover { background: var(--calcada); }
+.janela-grafico .hist-frase { margin: 0 0 12px; font-size: 14.5px; line-height: 1.45; color: var(--tinta); }
+.janela-grafico .hist-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 8px; padding: 0; list-style: none; font-size: 13px; font-weight: 600; }
+.janela-grafico .hist-legenda li { display: inline-flex; align-items: center; gap: 7px; }
+.janela-grafico .hist-nota { margin: 12px 0 0; font-size: 12.5px; line-height: 1.45; }
+.g-chave { display: inline-block; flex: none; width: 16px; height: 3px; border-radius: 2px; }
+.hist-plot { position: relative; touch-action: pan-y; -webkit-tap-highlight-color: transparent; border-radius: 12px; }
+.g-svg { display: block; overflow: visible; }
+.g-grade { stroke: var(--linha); stroke-width: 1; }
+.g-base { stroke: var(--picote); stroke-width: 1; }
+.g-eixo { font: 500 11.5px var(--texto); fill: var(--tinta-2); font-variant-numeric: tabular-nums; }
+.g-linha { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.g-fim, .g-ponto { stroke: var(--branco); stroke-width: 2; }
+.g-rotulo { font: 800 12.5px var(--texto); fill: var(--tinta); font-variant-numeric: tabular-nums; }
+.g-mira { stroke: var(--tinta); stroke-opacity: .55; stroke-width: 1; }
+.g-dica { position: absolute; z-index: 2; min-width: 150px; padding: 8px 11px 9px; border: 1.5px solid var(--linha); border-radius: 12px; background: var(--branco); box-shadow: 0 6px 16px rgba(24, 40, 72, .16); pointer-events: none; font-size: 12.5px; line-height: 1.3; }
+.g-dica-data { margin-bottom: 5px; font-weight: 700; color: var(--tinta-2); }
+.g-dica-linha { display: grid; grid-template-columns: 16px auto 1fr; align-items: center; gap: 8px; padding: 1.5px 0; }
+.g-dica-linha strong { font-size: 14px; font-weight: 800; color: var(--tinta); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.g-dica-linha.sem strong { font-size: 12.5px; font-weight: 500; color: var(--tinta-2); }
+.g-dica-nome { color: var(--tinta-2); }
+.janela-grafico .hist-tabela { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 14px; }
+.hist-tabela th, .hist-tabela td { padding: 9px 6px; border-top: 1px solid var(--linha); vertical-align: top; text-align: right; font-variant-numeric: tabular-nums; }
+.hist-tabela thead th { padding-top: 0; border-top: 0; font-size: 12px; font-weight: 600; color: var(--tinta-2); }
+.hist-tabela thead th:first-child { text-align: left; }
+.hist-tabela tbody th { text-align: left; font-weight: 700; }
+.hist-tabela th:first-child { padding-left: 0; }
+.hist-tabela td:last-child, .hist-tabela thead th:last-child { padding-right: 0; }
+.hist-tabela td:nth-child(2) { font-weight: 800; }
+.hist-tabela small { display: block; margin-top: 2px; font-size: 12px; font-weight: 500; line-height: 1.3; color: var(--tinta-2); }
+.hist-tabela .g-chave { margin-right: 8px; vertical-align: middle; }
+@media (max-width: 720px) {
+  .janela-grafico { padding: 22px 16px 18px; }
+}
+
 /* ---------- tablet e celular: uma coluna ---------- */
 @media (max-width: 960px) {
   .pagina {
@@ -419,7 +464,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     <h3>Para onde o seu CEP vai</h3>
     <ul class="dados">
       <li><strong>BrasilAPI e ViaCEP</strong>, serviços públicos de CEP, para descobrir a sua cidade.</li>
-      <li><strong>A nossa API</strong>, hospedada no Render, junto com o que você busca, para calcular os preços. Ela também pergunta ao ViaCEP o estado do CEP. Os registros da API ficam guardados por 7 dias e trazem o que você buscou e só os 5 primeiros dígitos do CEP.</li>
+      <li><strong>A nossa API</strong>, hospedada no Render, junto com o que você busca, para calcular os preços. Ela também pergunta ao ViaCEP o estado do CEP. Quando você abre o histórico de preços de um produto, a API recebe só qual é o produto, sem CEP. Os registros da API ficam guardados por 7 dias e trazem o que você buscou, os produtos de que abriu o histórico e só os 5 primeiros dígitos do CEP.</li>
     </ul>
     <h3>O que os serviços de hospedagem veem</h3>
     <p>O Netlify, que entrega este site, e o Render, que roda a nossa API, guardam registros técnicos de acesso, como o endereço IP.</p>
@@ -429,6 +474,20 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
       <button class="botao vazado" type="button" id="apagarMeusDados">Apagar meus dados deste aparelho</button>
       <button class="botao sol" type="button" id="fecharPrivacidade">Fechar</button>
     </div>
+  </div>
+</dialog>
+
+<dialog id="janelaHistorico" aria-labelledby="tituloHistorico">
+  <div class="janela janela-grafico">
+    <div class="hist-topo">
+      <div>
+        <h2 id="tituloHistorico">Histórico de preços</h2>
+        <p class="hist-produto" id="histProduto"></p>
+        <p class="hist-un" id="histUnidade"></p>
+      </div>
+      <button class="hist-fechar" type="button" id="fecharHistorico" aria-label="Fechar o histórico de preços"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 3.5l11 11M14.5 3.5l-11 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </div>
+    <div id="histCorpo"></div>
   </div>
 </dialog>
 
@@ -745,6 +804,162 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   const nomeDaOpcao = (opcao) => (porQuilo(opcao) ? semPesoDaPorcao(nomeBonito(opcao.nome)) : nomeBonito(opcao.nome));
   /* @unidade-fim */
 
+  /* @historico-inicio */
+  /* ---------- histórico de preços (o gráfico) ----------
+     GET /historico (serie_de_precos.py) manda, para cada produto, os intervalos em que o preço do varejo valeu ({ desde, ate, preco }; `ate` vazio =
+     vale até hoje) e o `hoje` de Brasília. Aqui ficam as contas do gráfico, sem nenhum desenho: montar as séries, a escala dos eixos, o caminho em
+     degraus, o preço de cada dia e as frases. O dia é um número inteiro (dias desde 1970), para a conta não depender de fuso horário nem de horário
+     de verão. Veja docs/historico_de_precos.md ("O gráfico"). */
+  const DIA_EM_MS = 86400000;
+  const PASSOS_DE_DIAS = [1, 2, 3, 7, 14, 28, 56, 91, 182, 365];
+
+  // "2026-11-18" (ou "2026-11-18T..."): o número do dia, ou NaN se não for uma data que existe.
+  const diaDoIso = (iso) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso == null ? "" : iso));
+    if (!m) return NaN;
+    const t = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+    return new Date(t).getUTCMonth() === +m[2] - 1 ? Math.round(t / DIA_EM_MS) : NaN;     // 31/02 viraria março: não é data
+  };
+  const dataDoDia = (dia) => {
+    const d = new Date(dia * DIA_EM_MS);
+    return String(d.getUTCDate()).padStart(2, "0") + "/" + String(d.getUTCMonth() + 1).padStart(2, "0");
+  };
+
+  // A resposta da API e os produtos pedidos ([{ id: mercado, nome, cor, chave }], na ordem em que o gráfico os mostra) viram as séries que
+  // o gráfico desenha: uma por mercado que tem histórico. Cada série guarda os `segmentos` ({ desde, ate, preco, fim }): o preço vale do dia
+  // `desde` ao dia `ate` (inclusive); `fim` é onde a linha termina no desenho (o dia em que o próximo preço começa, se ele vier no dia
+  // seguinte; senão, o último dia do segmento, e fica um buraco). Dado ruim (data que não existe, preço que não é número, intervalo ao
+  // contrário, começo depois de hoje) é descartado; intervalos que se sobrepõem ficam com o mais novo. Sem nenhum dado, devolve null.
+  function montarSerie(resposta, pedidos) {
+    const hoje = diaDoIso(resposta && resposta.hoje);
+    if (isNaN(hoje)) return null;
+    const lista = resposta && Array.isArray(resposta.produtos) ? resposta.produtos : [];
+    const series = [], semHistorico = [];
+    for (const pedido of pedidos) {
+      const produto = lista.find((x) => x && x.mercado === pedido.id && x.chave === pedido.chave);
+      const itens = [];
+      for (const i of produto && Array.isArray(produto.intervalos) ? produto.intervalos : []) {
+        const desde = diaDoIso(i && i.desde), preco = Number(i && i.preco), ate = i && i.ate ? diaDoIso(i.ate) : null;
+        if (isNaN(desde) || !isFinite(preco) || !(preco > 0) || (ate !== null && (isNaN(ate) || ate < desde))) continue;
+        itens.push({ desde, ate, preco });
+      }
+      itens.sort((a, b) => a.desde - b.desde);
+      const segmentos = [];
+      itens.forEach((it, k) => {
+        const seguinte = itens[k + 1];
+        let ate = it.ate === null || it.ate > hoje ? hoje : it.ate;
+        if (seguinte && seguinte.desde <= ate) ate = seguinte.desde - 1;
+        if (ate >= it.desde) segmentos.push({ desde: it.desde, ate, preco: it.preco, fim: ate });      // (começo depois de hoje: `ate` foi cortado em hoje e fica antes do começo, então some aqui)
+      });
+      segmentos.forEach((s, k) => { const seguinte = segmentos[k + 1]; if (seguinte && seguinte.desde === s.ate + 1) s.fim = seguinte.desde; });
+      if (!segmentos.length) { semHistorico.push(pedido); continue; }
+      const ultimo = segmentos[segmentos.length - 1], precos = segmentos.map((s) => s.preco);
+      let mudancas = 0, ultimaMudanca = null;
+      segmentos.forEach((s, k) => { if (k && s.preco !== segmentos[k - 1].preco) { mudancas++; ultimaMudanca = { dia: s.desde, de: segmentos[k - 1].preco, para: s.preco }; } });
+      const aberto = ultimo.ate >= hoje;      // ainda vale hoje; senão o mercado deixou de listar o produto no dia seguinte ao último
+      series.push({
+        id: pedido.id, nome: pedido.nome, cor: pedido.cor, chave: pedido.chave, opcao: pedido.opcao || null, segmentos,
+        primeiroDia: segmentos[0].desde, atual: aberto ? ultimo.preco : null, saiuEm: aberto ? null : ultimo.ate + 1,
+        menor: Math.min(...precos), maior: Math.max(...precos), mudancas, ultimaMudanca,
+      });
+    }
+    if (!series.length) return { hoje, inicio: null, series, semHistorico };
+    return { hoje, inicio: Math.min(...series.map((s) => s.primeiroDia)), series, semHistorico };
+  }
+
+  // Os dias que levam rótulo no eixo da data: de `fim` (hoje) para trás, de passo em passo, no máximo `maximo` rótulos.
+  function marcasDeData(inicio, fim, maximo) {
+    const intervalo = Math.max(1, fim - inicio);
+    const passo = PASSOS_DE_DIAS.find((p) => intervalo / p + 1 <= Math.max(2, maximo)) || PASSOS_DE_DIAS[PASSOS_DE_DIAS.length - 1];
+    const marcas = [];
+    for (let d = fim; d >= inicio; d -= passo) marcas.unshift(d);
+    return marcas;
+  }
+
+  // O eixo dos preços: de um pouco abaixo do menor a um pouco acima do maior, com riscos de números redondos (R$ 7,50, R$ 8,00...) e, no
+  // máximo, 5 deles. Preço único (linha reta) ganha uma folga de 10% para a linha não grudar na borda.
+  function escalaDePrecos(valores) {
+    const v = (valores || []).filter((n) => isFinite(n) && n > 0);
+    if (!v.length) return null;
+    let min = Math.min(...v), max = Math.max(...v);
+    const folga = max > min ? (max - min) * 0.1 : Math.max(max * 0.1, 0.1);
+    min = Math.max(0, min - folga); max += folga;
+    let ticks = [];
+    for (let e = -2; e <= 6 && !ticks.length; e++) {
+      for (const f of [1, 2, 2.5, 5]) {
+        const passo = f * Math.pow(10, e), de = Math.ceil(min / passo - 1e-9), ate = Math.floor(max / passo + 1e-9);
+        if (ate - de + 1 <= 5) {
+          for (let k = de; k <= ate; k++) ticks.push(Math.round(k * passo * 10000) / 10000);
+          break;
+        }
+      }
+    }
+    return { min, max, ticks };
+  }
+
+  // O traço em degraus (o preço vale até o dia em que muda; nada de linha diagonal entre dois preços). `x` e `y` levam dia e preço para a tela.
+  function caminhoEmDegraus(segmentos, x, y) {
+    const f = (n) => Math.round(n * 10) / 10;
+    let d = "";
+    segmentos.forEach((s, k) => {
+      const colado = k > 0 && segmentos[k - 1].ate + 1 === s.desde;
+      d += colado ? `V${f(y(s.preco))}` : `M${f(x(s.desde))} ${f(y(s.preco))}`;
+      d += `H${f(x(s.fim))}`;
+    });
+    return d;
+  }
+
+  // Rótulos ao lado das pontas das linhas: cada um quer ficar na altura da sua ponta; os que ficariam um em cima do outro se afastam
+  // (no mínimo `minimo` px) sem sair da faixa [topo, base]. Recebe e devolve uma lista na mesma ordem.
+  function espalharRotulos(ys, minimo, topo, base) {
+    const ordem = ys.map((y, i) => i).sort((a, b) => ys[a] - ys[b] || a - b), saida = ys.slice();
+    ordem.forEach((i, k) => { saida[i] = Math.max(ys[i], k ? saida[ordem[k - 1]] + minimo : topo); });
+    for (let k = ordem.length - 1; k >= 0; k--) {
+      const limite = k === ordem.length - 1 ? base : saida[ordem[k + 1]] - minimo;
+      saida[ordem[k]] = Math.min(saida[ordem[k]], limite);
+    }
+    return saida;
+  }
+
+  // O preço da série num dia (null se não há registro nele).
+  const precoNoDia = (serie, dia) => { const s = serie.segmentos.find((p) => p.desde <= dia && dia <= p.ate); return s ? s.preco : null; };
+
+  // O que a tabela diz de cada mercado, em poucas palavras.
+  function situacaoDaSerie(s, hoje) {
+    if (s.saiuEm) return `Sem preço desde ${dataDoDia(s.saiuEm)}`;
+    if (s.mudancas) return `Última mudança em ${dataDoDia(s.ultimaMudanca.dia)}`;
+    return s.primeiroDia >= hoje ? "Primeiro registro hoje" : `Não mudou desde ${dataDoDia(s.primeiroDia)}`;
+  }
+
+  // A frase que abre o gráfico: o que ele mostra, dito em palavras. `sufixo` = "/kg" nos produtos vendidos a peso.
+  function fraseDoGrafico(g, sufixo = "") {
+    const reais = (n) => moeda(n) + sufixo;
+    const quem = g.series.filter((s) => s.mudancas > 0).sort((a, b) => b.ultimaMudanca.dia - a.ultimaMudanca.dia)[0];
+    if (!quem) {
+      if (g.inicio >= g.hoje) return "O histórico deste produto começou hoje: ainda não há mudança de preço para mostrar.";
+      return g.series.length === 1 ? `O preço não mudou desde ${dataDoDia(g.inicio)}.` : `Nenhum dos preços mudou desde ${dataDoDia(g.inicio)}.`;
+    }
+    const u = quem.ultimaMudanca;
+    return `A última mudança foi no ${quem.nome}: o preço ${u.para < u.de ? "baixou" : "subiu"} de ${reais(u.de)} para ${reais(u.para)} em ${dataDoDia(u.dia)}.`;
+  }
+  /* @historico-fim */
+
+  // O histórico de um produto que a pessoa abre fica guardado por alguns minutos: abrir de novo (ou o mesmo produto em outra busca) não chama a API.
+  const HISTORICO_VALIDADE_MS = 10 * 60 * 1000;
+  const historicoGuardado = new Map();
+  // `pedidos`: [{ id: mercado, chave }]. Devolve o que a API respondeu ou lança erro (API fora do ar, pedido recusado). Não leva CEP: só o mercado e a chave do produto.
+  async function carregarHistorico(pedidos) {
+    const chaves = pedidos.map((p) => p.id + "|" + p.chave).join(",");
+    const guardado = historicoGuardado.get(chaves);
+    if (guardado && Date.now() - guardado.quando < HISTORICO_VALIDADE_MS) return guardado.dados;
+    const r = await fetch(`${API}/historico?chaves=${encodeURIComponent(chaves)}`);
+    if (!r.ok) throw new Error("api " + r.status);
+    const dados = await r.json();
+    if (!dados || !Array.isArray(dados.produtos)) throw new Error("resposta sem produtos");
+    historicoGuardado.set(chaves, { quando: Date.now(), dados });
+    return dados;
+  }
+
   /* ---------- busca ---------- */
   let numeroDaBusca = 0;   // respostas atrasadas de uma busca antiga não podem sobrescrever a atual
   async function buscar(termo, { todos = false } = {}) {
@@ -1019,9 +1234,10 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 
   window.Supermatch = {
     estado, MERCADOS, mercadosAtivos, situacaoDeEntrega, CIDADES_ATENDIDAS, cidadeAtendida, mercadoPorId, aoMudar: (f) => ouvintes.push(f), iniciar,
-    definirCep, definirModo, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo, atualizarPrecosDaLista,
+    definirCep, definirModo, buscar, adicionar, alterarQtd, remover, limparLista, qtdNaLista, comparar, esquecerTudo, atualizarPrecosDaLista, carregarHistorico,
     notasDaBusca: () => notasDaBusca(estado.busca, new Set(mercadosAtivos().map((m) => m.id))),
-    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora, quedaDaOpcao, porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, textoDasQuantidades, semPesoDaPorcao, nomeDaOpcao, avisoDePrecoVelho },
+    util: { moeda, partesPreco, formatarCep, semAcento, precoUnitario, opcaoDoMercado, esc, preservarFoco, nomeBonito, nomeDoGrupo, dataHora, quedaDaOpcao, porQuilo, grupoPorQuilo, passoDaLista, quantidadeNaLista, textoDasQuantidades, semPesoDaPorcao, nomeDaOpcao, avisoDePrecoVelho,
+      diaDoIso, dataDoDia, montarSerie, marcasDeData, escalaDePrecos, caminhoEmDegraus, espalharRotulos, precoNoDia, situacaoDaSerie, fraseDoGrafico },
   };
 })();
 </script>
@@ -1140,7 +1356,9 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     const acao = qtd
       ? `<div class="passos" role="group" aria-label="Quantidade na lista"><button type="button" data-foco="p-menos-${i}" data-menos="${i}" aria-label="Tirar ${passo} de ${nome}">−</button><span>${U.quantidadeNaLista(qtd, kg)} na lista</span><button type="button" data-foco="p-mais-${i}" data-mais="${i}" aria-label="Colocar mais ${passo} de ${nome}">+</button></div>`
       : `<button class="botao" type="button" data-foco="p-add-${i}" data-add="${i}" aria-label="Adicionar ${nome} à lista">Adicionar à lista</button>`;
-    return `<article class="produto"><h3>${nome}</h3>${equivalente ? `<p class="qualquer">Qualquer marca. Em cada mercado entra o mais barato.</p>` : ""}<ul class="pilulas">${pilulas}</ul><div class="acao">${acao}</div></article>`;
+    // o gráfico só é oferecido se a API mandou a chave do histórico de algum produto (uma API antiga não manda)
+    const historico = pedidosDoHistorico(g).length ? `<button class="ver-historico" type="button" data-foco="h-${i}" data-historico="${i}" aria-label="Ver histórico de preços de ${nome}">${SETA_HIST}Ver histórico de preços</button>` : "";
+    return `<article class="produto"><h3>${nome}</h3>${equivalente ? `<p class="qualquer">Qualquer marca. Em cada mercado entra o mais barato.</p>` : ""}<ul class="pilulas">${pilulas}</ul>${historico}<div class="acao">${acao}</div></article>`;
   }
 
   /* ---------- cupom ---------- */
@@ -1209,6 +1427,203 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     return `<li class="linha"><span class="nome">${nome}${real}${queda}</span><span class="valor">${U.moeda(l.subtotal)}</span>${ctrl}<span class="un">${un}</span></li>`;
   }
 
+  /* ---------- histórico de preços: a janela com o gráfico ----------
+     Abre pelo botão "Ver histórico de preços" do cartão do produto. O desenho é um SVG em degraus (o preço vale até o dia em que muda), uma linha por
+     mercado nas cores dos mercados, com o preço de hoje escrito ao lado de cada ponta. Passar o mouse, tocar ou usar as setas do teclado mostra o preço
+     de cada mercado em cada dia. A tabela embaixo diz tudo isso em números: o gráfico nunca é o único lugar de um valor. As contas estão em
+     site/index.html (bloco @historico, testado em tests/test_historico_grafico.js). */
+  const janelaHist = $("janelaHistorico"), corpoHist = $("histCorpo");
+  const hist = { grupo: null, foco: "", numero: 0, fase: "", pedidos: [], grafico: null, kg: false, dia: null, largura: 0, geo: null, aviso: "", observador: null };
+  const MARGEM_HIST = { topo: 12, base: 28, esquerda: 42 };
+  const alturaDoGrafico = (largura) => (largura < 440 ? 220 : 260);
+  const preco2 = (n) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const arred = (n) => Math.round(n * 10) / 10;
+  const SETA_HIST = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 11.5H5V6.5h4.5V10h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  // Os produtos que o gráfico mostra: o de cada mercado que entrega aqui (o que o cartão exibe), se a API mandou a chave do histórico dele.
+  function pedidosDoHistorico(g) {
+    const saida = [];
+    for (const m of S.mercadosAtivos()) {
+      const o = U.opcaoDoMercado(g, m.id, 1);
+      if (o && typeof o.chave_historico === "string" && o.chave_historico) saida.push({ id: m.id, nome: m.nome, cor: m.cor, chave: o.chave_historico, opcao: o });
+    }
+    return saida;
+  }
+
+  function abrirHistorico(g, botao) {
+    hist.foco = botao && botao.dataset.foco ? botao.dataset.foco : "";     // para devolver o foco ao botão ao fechar (o Safari não foca o botão ao clicar)
+    hist.grupo = g; hist.kg = U.grupoPorQuilo(g); hist.pedidos = pedidosDoHistorico(g);
+    $("histProduto").textContent = U.nomeDoGrupo(g);
+    $("histUnidade").textContent = hist.kg ? "Preço do varejo, em reais por quilo" : "Preço do varejo, em reais";
+    if (!janelaHist.open) janelaHist.showModal();
+    carregarHist();
+  }
+
+  async function carregarHist() {
+    const meu = ++hist.numero;
+    hist.fase = "carregando"; hist.aviso = ""; hist.dia = null; hist.grafico = null;
+    desenharHist();
+    const aviso = setTimeout(() => {
+      if (meu === hist.numero && hist.fase === "carregando") { hist.aviso = "O servidor estava em repouso e está acordando. Pode levar até 1 minuto."; desenharHist(); }
+    }, 8000);
+    try {
+      const dados = await S.carregarHistorico(hist.pedidos);
+      if (meu !== hist.numero) return;
+      hist.grafico = U.montarSerie(dados, hist.pedidos);
+      hist.fase = hist.grafico && hist.grafico.series.length ? "ok" : "vazio";
+    } catch (e) {
+      if (meu !== hist.numero) return;
+      hist.fase = "erro";
+    } finally { clearTimeout(aviso); }
+    desenharHist();
+  }
+
+  function desenharHist() {
+    if (hist.observador) { hist.observador.disconnect(); hist.observador = null; }
+    const f = hist.fase;
+    if (f === "carregando") corpoHist.innerHTML = `<div class="estado"><strong>Buscando o histórico<span class="pontinhos"></span></strong>${U.esc(hist.aviso || "Isso leva alguns segundos.")}</div>`;
+    else if (f === "erro") corpoHist.innerHTML = `<div class="estado"><strong>Não deu para carregar o histórico</strong>Confira a conexão e tente de novo.<br><br><button class="botao vazado" type="button" id="histTentar">Tentar de novo</button></div>`;
+    else if (f === "vazio") corpoHist.innerHTML = `<div class="estado"><strong>Ainda não há histórico deste produto</strong>O Supermatch guarda o preço de cada dia desde 04/11/2026. Um produto novo aparece aqui depois da próxima atualização diária.</div>`;
+    else desenharGraficoHist();
+  }
+
+  function desenharGraficoHist() {
+    const g = hist.grafico, sufixo = hist.kg ? "/kg" : "";
+    const equivalente = !!(hist.grupo && hist.grupo.equivalente);
+    const chave = (cor) => `<span class="g-chave" style="background:${cor}"></span>`;
+    const legenda = g.series.map((s) => `<li>${chave(s.cor)}${U.esc(s.nome)}</li>`).join("");
+    const linhas = g.series.map((s) => {
+      const produto = equivalente && s.opcao ? `<small>${U.esc(U.nomeDaOpcao(s.opcao))}</small>` : "";
+      return `<tr><th scope="row">${chave(s.cor)}${U.esc(s.nome)}<small>${U.esc(U.situacaoDaSerie(s, g.hoje))}</small>${produto}</th><td>${s.atual === null ? "—" : preco2(s.atual)}</td><td>${preco2(s.menor)}</td><td>${preco2(s.maior)}</td></tr>`;
+    }).concat(g.semHistorico.map((p) => `<tr><th scope="row">${chave(p.cor)}${U.esc(p.nome)}<small>Ainda sem histórico</small></th><td colspan="3">—</td></tr>`)).join("");
+    const nota = equivalente
+      ? "Cada linha é o histórico do produto que hoje sai mais barato no mercado. Só entra o preço do varejo, o da coleta diária; o de atacado não aparece."
+      : "Só entra o preço do varejo, o da coleta diária; o de atacado não aparece.";
+    corpoHist.innerHTML = `<p class="hist-frase">${U.esc(U.fraseDoGrafico(g, sufixo))}</p>
+      <ul class="hist-legenda" aria-label="Mercados">${legenda}</ul>
+      <div class="hist-plot" id="histPlot" tabindex="0" role="group" aria-label="Gráfico de linhas do preço de ${U.esc(U.nomeDoGrupo(hist.grupo))}. Use as setas para a esquerda e para a direita para ver o preço de cada dia."></div>
+      <div class="so-leitor" id="histLeitor" role="status" aria-live="polite"></div>
+      <table class="hist-tabela"><caption class="so-leitor">Preço de cada mercado, em reais${hist.kg ? " por quilo" : ""}</caption>
+        <thead><tr><th scope="col">Mercado</th><th scope="col">Hoje</th><th scope="col">Menor</th><th scope="col">Maior</th></tr></thead><tbody>${linhas}</tbody></table>
+      <p class="hist-nota">${U.esc(nota)}</p>`;
+    const caixa = $("histPlot");
+    desenharPlotHist();
+    caixa.addEventListener("pointerdown", (ev) => { const d = diaDoPonteiro(ev, caixa); if (d !== null) mostrarDiaHist(d); });
+    caixa.addEventListener("pointermove", (ev) => { const d = diaDoPonteiro(ev, caixa); if (d !== null) mostrarDiaHist(d); });
+    // com o mouse, o quadro some quando ele sai do gráfico (a não ser que o teclado esteja no gráfico); no toque, o dia escolhido fica até o próximo toque
+    caixa.addEventListener("pointerleave", (ev) => { if (ev.pointerType === "mouse" && !caixa.matches(":focus-visible")) esconderDiaHist(); });
+    caixa.addEventListener("focus", () => { if (hist.dia === null) mostrarDiaHist(g.hoje, true); });
+    caixa.addEventListener("blur", esconderDiaHist);
+    caixa.addEventListener("keydown", (ev) => {
+      const passo = ev.key === "ArrowLeft" ? -1 : ev.key === "ArrowRight" ? 1 : 0;
+      if (!passo && ev.key !== "Home" && ev.key !== "End") return;
+      ev.preventDefault();
+      const atual = hist.dia === null ? g.hoje : hist.dia;
+      mostrarDiaHist(ev.key === "Home" ? hist.geo.inicio : ev.key === "End" ? g.hoje : atual + passo, true);
+    });
+    // a largura da janela muda (girar o celular, redimensionar): o desenho é refeito na largura nova
+    if (window.ResizeObserver) {
+      hist.observador = new ResizeObserver(() => { const c = $("histPlot"); if (c && Math.abs(c.clientWidth - hist.largura) > 1) desenharPlotHist(); });
+      hist.observador.observe(corpoHist);
+    }
+  }
+
+  // O gráfico em si: o SVG, na largura que a janela tem agora. Devolve também a geometria (hist.geo) que o mouse e as setas usam.
+  function desenharPlotHist() {
+    const caixa = $("histPlot"), g = hist.grafico;
+    if (!caixa || !g) return;
+    const largura = Math.floor(caixa.clientWidth);
+    if (largura < 160) return;
+    hist.largura = largura;
+    const M = MARGEM_HIST, altura = alturaDoGrafico(largura), sufixo = hist.kg ? "/kg" : "";
+    const abertas = g.series.filter((s) => s.atual !== null);
+    const direita = Math.max(52, Math.round(26 + 7.2 * Math.max(0, ...abertas.map((s) => preco2(s.atual).length))));       // espaço para o traço de cor e o preço de hoje
+    const w = largura - M.esquerda - direita, h = altura - M.topo - M.base;
+    const inicio = g.inicio >= g.hoje ? g.hoje - 1 : g.inicio;
+    const x = (dia) => M.esquerda + ((dia - inicio) / (g.hoje - inicio)) * w;
+    const escala = U.escalaDePrecos(g.series.flatMap((s) => s.segmentos.map((p) => p.preco)));
+    const y = (v) => M.topo + ((escala.max - v) / (escala.max - escala.min)) * h;
+    const base = M.topo + h;
+    let svg = `<svg class="g-svg" width="${largura}" height="${altura}" viewBox="0 0 ${largura} ${altura}" aria-hidden="true" focusable="false">`;
+    for (const t of escala.ticks) svg += `<line class="g-grade" x1="${M.esquerda}" x2="${M.esquerda + w}" y1="${arred(y(t))}" y2="${arred(y(t))}"/><text class="g-eixo" x="${M.esquerda - 8}" y="${arred(y(t))}" dy=".34em" text-anchor="end">${preco2(t)}</text>`;
+    svg += `<line class="g-base" x1="${M.esquerda}" x2="${M.esquerda + w}" y1="${base}" y2="${base}"/>`;
+    for (const d of U.marcasDeData(inicio, g.hoje, Math.max(3, Math.floor(w / 52)))) svg += `<line class="g-base" x1="${arred(x(d))}" x2="${arred(x(d))}" y1="${base}" y2="${base + 4}"/><text class="g-eixo" x="${arred(x(d))}" y="${altura - 8}" text-anchor="middle">${U.dataDoDia(d)}</text>`;
+    for (const s of g.series) svg += `<path class="g-linha" stroke="${s.cor}" d="${U.caminhoEmDegraus(s.segmentos, x, y)}"/>`;
+    svg += `<line class="g-mira" id="gMira" y1="${M.topo}" y2="${base}" x1="0" x2="0" visibility="hidden"/>`;
+    g.series.forEach((s, k) => { svg += `<circle class="g-ponto" id="gPonto${k}" r="5.5" fill="${s.cor}" visibility="hidden"/>`; });
+    // a ponta de cada linha: marcador com anel e, se o preço ainda vale, o preço de hoje escrito ao lado
+    const pontas = g.series.map((s) => { const u = s.segmentos[s.segmentos.length - 1]; return { cx: x(u.fim), cy: y(u.preco) }; });
+    const rotulos = U.espalharRotulos(abertas.map((s) => pontas[g.series.indexOf(s)].cy), 15, M.topo + 6, base - 4);
+    g.series.forEach((s, k) => { svg += `<circle class="g-fim" cx="${arred(pontas[k].cx)}" cy="${arred(pontas[k].cy)}" r="5.5" fill="${s.cor}"/>`; });
+    // o preço vem com um traço da cor do mercado: o rótulo pode ter sido afastado da ponta para não ficar em cima de outro, e a cor diz de quem ele é
+    abertas.forEach((s, k) => {
+      const cx = pontas[g.series.indexOf(s)].cx;
+      svg += `<rect class="g-chave-rotulo" x="${arred(cx + 10)}" y="${arred(rotulos[k] - 1.5)}" width="9" height="3" rx="1.5" fill="${s.cor}"/><text class="g-rotulo" x="${arred(cx + 24)}" y="${arred(rotulos[k])}" dy=".34em">${preco2(s.atual)}</text>`;
+    });
+    svg += "</svg>";
+    caixa.innerHTML = svg + `<div class="g-dica" id="histDica" hidden></div>`;
+    hist.geo = { inicio, x, y, M, w, h, largura, sufixo };
+    if (hist.dia !== null) mostrarDiaHist(hist.dia);
+  }
+
+  // O dia que fica sob o ponteiro (null se o gráfico ainda não foi desenhado).
+  function diaDoPonteiro(ev, caixa) {
+    const geo = hist.geo, g = hist.grafico;
+    if (!geo || !g) return null;
+    const px = ev.clientX - caixa.getBoundingClientRect().left;
+    const dia = Math.round(geo.inicio + ((px - geo.M.esquerda) / geo.w) * (g.hoje - geo.inicio));
+    return Math.max(geo.inicio, Math.min(g.hoje, dia));
+  }
+
+  const rotuloDoDia = (dia, hoje) => new Date(dia * 86400000).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" }) + (dia === hoje ? " (hoje)" : "");
+
+  // Marca o dia: a linha vertical, um ponto em cada série que tem preço nele e o quadro com os preços de todos os mercados.
+  function mostrarDiaHist(dia, anunciar) {
+    const g = hist.grafico, geo = hist.geo, dica = $("histDica");
+    if (!g || !geo || !dica) return;
+    dia = Math.max(geo.inicio, Math.min(g.hoje, dia));
+    hist.dia = dia;
+    const gx = arred(geo.x(dia)), mira = $("gMira");
+    mira.setAttribute("x1", gx); mira.setAttribute("x2", gx); mira.setAttribute("visibility", "visible");
+    dica.textContent = "";
+    const cabeca = document.createElement("div");
+    cabeca.className = "g-dica-data"; cabeca.textContent = rotuloDoDia(dia, g.hoje);
+    dica.appendChild(cabeca);
+    const falados = [];
+    g.series.forEach((s, k) => {
+      const p = U.precoNoDia(s, dia), ponto = $("gPonto" + k);
+      if (p === null) ponto.setAttribute("visibility", "hidden");
+      else { ponto.setAttribute("cx", gx); ponto.setAttribute("cy", arred(geo.y(p))); ponto.setAttribute("visibility", "visible"); }
+      const texto = p === null ? "sem registro" : U.moeda(p) + geo.sufixo;
+      const linha = document.createElement("div"), chave = document.createElement("span"), valor = document.createElement("strong"), nome = document.createElement("span");
+      linha.className = "g-dica-linha" + (p === null ? " sem" : ""); chave.className = "g-chave"; chave.style.background = s.cor;
+      valor.textContent = texto; nome.className = "g-dica-nome"; nome.textContent = s.nome;
+      linha.append(chave, valor, nome);
+      dica.appendChild(linha);
+      falados.push(`${s.nome}: ${texto}`);
+    });
+    dica.hidden = false;
+    const larguraDaDica = dica.offsetWidth;                                                  // o quadro fica à direita da linha; no fim do gráfico, passa para a esquerda
+    const esquerda = gx + 14 + larguraDaDica > geo.largura ? gx - 14 - larguraDaDica : gx + 14;
+    dica.style.left = Math.max(2, Math.round(esquerda)) + "px"; dica.style.top = (geo.M.topo + 4) + "px";
+    if (anunciar) $("histLeitor").textContent = `${rotuloDoDia(dia, g.hoje)}. ${falados.join(". ")}.`;
+  }
+
+  function esconderDiaHist() {
+    hist.dia = null;
+    for (const e of corpoHist.querySelectorAll("#gMira, .g-ponto")) e.setAttribute("visibility", "hidden");
+    const dica = $("histDica"); if (dica) dica.hidden = true;
+  }
+
+  function fecharHistorico() { if (janelaHist.open) janelaHist.close(); }
+  janelaHist.addEventListener("close", () => {
+    hist.numero++;
+    if (hist.observador) { hist.observador.disconnect(); hist.observador = null; }
+    const botao = hist.foco ? document.querySelector('[data-foco="' + hist.foco + '"]') : null;   // o cartão pode ter sido redesenhado: procura o botão de novo
+    if (botao) botao.focus({ preventScroll: true });
+  });
+  $("fecharHistorico").addEventListener("click", fecharHistorico);
+
   function desenhar() {
     const e = S.estado;
     $("cepTexto").textContent = e.cep ? U.formatarCep(e.cep) + (e.cidade ? ", " + e.cidade : "") : "informe seu CEP";
@@ -1238,6 +1653,8 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     else if (t.dataset.menos !== undefined) S.alterarQtd(g[+t.dataset.menos], -1);
     else if (t.dataset.lmais !== undefined) S.alterarQtd(lista[+t.dataset.lmais].grupo, 1);
     else if (t.dataset.lmenos !== undefined) S.alterarQtd(lista[+t.dataset.lmenos].grupo, -1);
+    else if (t.dataset.historico !== undefined) abrirHistorico(g[+t.dataset.historico], t);
+    else if (t.id === "histTentar") carregarHist();
     else if (t.dataset.modo !== undefined) { extras = 0; S.definirModo(t.dataset.modo); }
     else if (t.dataset.mercado !== undefined) {
       escolhido = t.dataset.mercado; desenhar();

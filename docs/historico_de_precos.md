@@ -54,6 +54,7 @@ O site mostra a evolução do preço de um produto (o botão "Ver histórico de 
 - **`chave_historico`** vem em cada produto de `/comparar` (a mesma chave com que a carga grava: `v:productId:itemId` nos mercados com API, `n:…` no Super ABC). Quem monta o pedido não precisa saber como ela nasce.
 - **`GET /historico?chaves=Mercado|chave,Mercado|chave`** (até 8 produtos) devolve, para cada um, os `intervalos` de preço do varejo (`desde`, `ate` vazio = vale até hoje, `preco`) e o `hoje` de Brasília. Pedido mal formado (mercado que não existe, chave com caracteres estranhos, mais de 8 produtos) dá **400**; histórico fora do ar dá **503** (o motivo vai para o log, não para quem pediu). Não recebe CEP nem nada pessoal.
 - **Duas consultas por mercado** (uma em `catalogo`, uma em `precos`), nunca uma por produto, e o resultado fica **30 minutos em memória** (`serie_de_precos.CacheDeSeries`, até 2.000 produtos): o gráfico de um produto aberto por várias pessoas não repete a consulta, e a cota de saída de dados do plano gratuito não sofre. A carga grava às 07:30, e um produto que mudou de preço hoje se corrige sozinho até meia hora depois.
+- No site, o botão "Ver histórico de preços" de cada cartão abre o gráfico com esses dados (o desenho, o quadro do mouse e a tabela estão em [`site.md`](site.md#histórico-de-preços-o-gráfico)).
 - Só a **praça da coleta** (`betim`) entra (a mesma que o selo de queda usa), e produto sem histórico volta com a lista vazia.
 - `python tests/test_serie_de_precos.py` confere o pedido, a leitura, o cache e o endpoint.
 
@@ -91,7 +92,7 @@ where atual.desde >= '2026-11-05' order by variacao_pct desc limit 20;
 - **Uma praça só (`betim`).** `ultimo_dia` e `ativo` ficam no produto e valem para o mercado todo; quando houver mais de uma praça (CEP de outra cidade na carga), eles passam a ser por praça. A coluna `praca` já existe em `precos` e `coletas` para isso.
 - **Os robôs leem só a primeira página de cada busca**, e o que aparece nela muda de ordem. Nos testes, de 29/10 para 03/11, 190 produtos sumiram e 147 apareceram. Por isso o produto só é dado como saído depois de 3 cargas completas sem aparecer, e por isso o novo coletor (que lê o catálogo inteiro) deve diminuir esse ruído.
 - **Preço absurdo** (como um feijão de 1 kg a R$ 0,78) é registrado como veio. Filtrar é tarefa de quem lê o histórico.
-- **O site ainda só usa o histórico para o selo "caiu X% em 7 dias"** (próxima seção). Ficam para depois um endereço novo na API (`/historico`) para o gráfico de preço do produto, o menor preço dos últimos 90 dias e "sua lista ficou mais cara ou mais barata que na semana passada". O site nunca lê o Supabase direto.
+- **O site usa o histórico para o selo "caiu X% em 7 dias"** (próxima seção) e para o gráfico de preço de cada produto ("O gráfico", acima). Ficam para depois o menor preço dos últimos 90 dias e "sua lista ficou mais cara ou mais barata que na semana passada". O site nunca lê o Supabase direto.
 - Testes: `python tests/test_historico.py` (7 testes, com um repositório em memória e um Supabase falso).
 
 ## O selo "caiu X% em 7 dias"

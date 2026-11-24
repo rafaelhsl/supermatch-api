@@ -92,6 +92,21 @@ O site **não confia cegamente na marca**: `quedaDaOpcao` (bloco `@queda-inicio`
 
 `node tests/test_queda.js` confere a regra do site e `python tests/navegador/test_site_queda.py` confere a tela (celular, celular estreito e computador).
 
+## Histórico de preços (o gráfico)
+
+O cartão de cada produto tem o botão **"Ver histórico de preços"**. Ele só aparece se a API mandou `chave_historico` em algum produto do cartão (uma API antiga não manda, e então não há botão) e abre uma janela com a evolução do **preço do varejo** em cada mercado que entrega no CEP, desde o começo do histórico (04/11/2026; o hortifrúti, desde 19/11).
+
+- **Os dados:** `GET /historico?chaves=Mercado|chave,...` (veja [`historico_de_precos.md`](historico_de_precos.md#o-gráfico-get-historico)). O pedido leva só o mercado e a chave de cada produto, **sem CEP**. A página guarda a resposta por 10 minutos (abrir o mesmo produto de novo não chama a API); a API guarda por 30.
+- **O desenho** (SVG, `desenharPlotHist`): uma linha por mercado, na cor do mercado (a mesma dos quadros e da legenda), com 2 px e **em degraus**: o preço vale até o dia em que muda, sem linha diagonal. Produto que saiu do mercado e voltou aparece com um buraco, não com uma ponte. A ponta de cada linha leva um marcador de 9 px com anel branco de 2 px e, ao lado, o preço de hoje com um traço da cor do mercado (o rótulo pode ser afastado da ponta quando dois preços são parecidos, e a cor diz de quem ele é). Grade fina, eixo das datas terminando em hoje, eixo dos preços com números redondos.
+- **Ler o preço de um dia:** passar o mouse, tocar ou usar as setas do teclado (Home e End vão ao primeiro dia e a hoje) traz uma linha vertical e um quadro com o preço de cada mercado naquele dia ("sem registro" onde o mercado ainda não tinha o produto). O desenho é escondido do leitor de tela (`aria-hidden`): quem usa leitor ouve os preços do dia ao usar as setas e tem a tabela.
+- **A tabela embaixo** repete tudo em números (Hoje, Menor, Maior e quando o preço mudou pela última vez). Não é enfeite: o verde do Super ABC tem pouco contraste com o branco (a conta de contraste dá aviso), então nenhum valor fica só na cor.
+- **A frase de abertura** diz o que o gráfico mostra: "A última mudança foi no Apoio Entrega: o preço subiu de R$ 20,00 para R$ 21,99 em 20/11." ou "Nenhum dos preços mudou desde 18/11." (o histórico é novo, e a maioria dos produtos ainda tem linha reta).
+- **Por quilo:** a janela diz "em reais por quilo" e o quadro e a frase levam "/kg". **Modo equivalente:** a linha de cada mercado é o histórico do produto que hoje sai mais barato ali, e a tabela diz qual é.
+- **Estados:** carregando (com aviso se o servidor estava dormindo), erro com "Tentar de novo" e "Ainda não há histórico deste produto". Uma resposta que chega depois de a pessoa fechar a janela (ou abrir outro produto) não pinta por cima.
+- **Limite conhecido:** dois mercados com o mesmo preço no mesmo dia desenham a linha um por cima do outro (a do que vem depois na legenda cobre a outra). O quadro do mouse, os rótulos das pontas e a tabela mostram os dois.
+
+As contas (montar as séries, os eixos, o traço em degraus, o preço de cada dia, as frases) estão no bloco `@historico-inicio` / `@historico-fim` de `site/index.html`; `node tests/test_historico_grafico.js` confere. `python tests/navegador/test_site_historico.py` confere a tela (celular, celular estreito e computador): o botão, o pedido sem CEP, as cores, os degraus, os rótulos, o mouse e o teclado, a tabela, os estados de erro, o contraste e a largura.
+
 ## Aviso de preço velho
 
 Os preços vêm da carga diária (07:30 de Brasília; a de reserva do GitHub às vezes atrasa umas horas). Um preço com **até 36 horas** de idade é normal. Passou disso, a coleta de um dia não veio e o site avisa, na busca ("Atenção: Estes preços são de 16/11 (há 3 dias): a atualização mais recente ainda não chegou. Confira no site do mercado antes de comprar.") e no cupom, com a data de Brasília. Vale o preço **mais antigo da tela**: um mercado em dia e outro atrasado avisam, com a data do atrasado. Data ilegível ou no futuro (relógio errado) não avisa.
@@ -147,6 +162,7 @@ O código fica no bloco `@unidade-inicio` / `@unidade-fim` (`porQuilo`, `grupoPo
 
 - `GET /saude` ao abrir a página: acorda o servidor do Render, que dorme após 15 minutos. A primeira busca depois disso pode levar cerca de 1 minuto; a tela avisa depois de 8 segundos.
 - `GET /comparar?cep=<8 dígitos>&item=<texto>`: devolve `carrinho_comparativo`, uma lista de `{ produto_base, opcoes_de_compra: [{ supermercado, nome, preco_varejo, preco_atacado, quantidade_atacado, atualizado_em, ... }] }`. A API usa o CEP só para descobrir a UF.
+- `GET /historico?chaves=Mercado|chave,...` ao abrir o gráfico de um produto (veja "Histórico de preços (o gráfico)"): leva só o mercado e a chave de cada produto, sem CEP.
 - Uma busca antiga que responde depois de uma nova é descartada. Resposta de erro do servidor aparece como "Não deu para consultar", e não como "Nada encontrado".
 
 ## O que fica no navegador
