@@ -76,10 +76,14 @@ def resposta(termo, cenario):
     return {**base, "carrinho_comparativo": g}
 
 
+ORIGENS = []        # o "origem=" de cada pedido a /comparar do último abrir()
+
+
 async def abrir(nav, vp, mobile, lista, cenario="ok", atraso_s=0.0):
     ctx = await nav.new_context(viewport=vp, locale="pt-BR", timezone_id="America/Sao_Paulo", has_touch=mobile, is_mobile=mobile)
     pg = await ctx.new_page()
     pedidos = []
+    ORIGENS.clear()
     pg.on("pageerror", lambda e: falhas.append(f"pageerror: {e}"))
     pg.on("console", lambda m: falhas.append(f"console.{m.type}: {m.text}") if m.type == "error" and "Failed to load resource" not in m.text else None)
 
@@ -89,6 +93,7 @@ async def abrir(nav, vp, mobile, lista, cenario="ok", atraso_s=0.0):
             return await rota.fulfill(status=200, content_type="application/json", body="{}")
         termo = parse_qs(u.query).get("item", [""])[0]
         pedidos.append(termo)
+        ORIGENS.append(parse_qs(u.query).get("origem", [""])[0])
         if atraso_s:
             await asyncio.sleep(atraso_s)
         if cenario == "fora":
@@ -121,6 +126,7 @@ async def rodar():
             await pg.wait_for_function("() => /Preços de/.test(document.querySelector('#cupom .meta')?.innerText || '') && !/Atualizando/.test(document.querySelector('#cupom .meta').innerText)", timeout=15000)
             await pg.wait_for_timeout(300)
             confere(sorted(pedidos) == ["arroz", "cafe", "macarrão", "sal"], f"consulta só os termos dos itens velhos, uma vez cada (feijão está em dia): {sorted(pedidos)}")
+            confere(ORIGENS and set(ORIGENS) == {"lista"}, f"a renovação automática avisa a API que é a lista (origem=lista), para a medição não contá-la como busca de alguém: {sorted(set(ORIGENS))}")
             lista = await guardada(pg)
             por_nome = {i["grupo"]["produto_base"]: i for i in lista}
             confere(set(por_nome) == {"Arroz Tio João Tipo 1 5kg", "Café Pilão 500g", "Sal refinado, 1 kg", "Feijão Carioca Camil 1kg", "Macarrão Adria 500g"}, f"os itens e os nomes continuam os mesmos (o nome de hoje do arroz não troca o da lista): {sorted(por_nome)}")

@@ -160,8 +160,8 @@ O código fica no bloco `@unidade-inicio` / `@unidade-fim` (`porQuilo`, `grupoPo
 
 ## Como conversa com a API
 
-- `GET /saude` ao abrir a página: acorda o servidor do Render, que dorme após 15 minutos. A primeira busca depois disso pode levar cerca de 1 minuto; a tela avisa depois de 8 segundos.
-- `GET /comparar?cep=<8 dígitos>&item=<texto>`: devolve `carrinho_comparativo`, uma lista de `{ produto_base, opcoes_de_compra: [{ supermercado, nome, preco_varejo, preco_atacado, quantidade_atacado, atualizado_em, ... }] }`. A API usa o CEP só para descobrir a UF.
+- `GET /saude?origem=site` ao abrir a página: acorda o servidor do Render, que dorme após 15 minutos, e a API soma 1 "abertura" no dia (sem CEP nem nada pessoal; [`uso_do_site.md`](uso_do_site.md)). A primeira busca depois disso pode levar cerca de 1 minuto; a tela avisa depois de 8 segundos.
+- `GET /comparar?cep=<8 dígitos>&item=<texto>`: devolve `carrinho_comparativo`, uma lista de `{ produto_base, opcoes_de_compra: [{ supermercado, nome, preco_varejo, preco_atacado, quantidade_atacado, atualizado_em, ... }] }`. A API usa o CEP só para descobrir a UF. A renovação automática dos preços da lista de compras (ao abrir a página e ao voltar à aba depois de 3 h) acrescenta `&origem=lista`: assim a API não a conta como busca de alguém ([`uso_do_site.md`](uso_do_site.md)).
 - `GET /historico?chaves=Mercado|chave,...` ao abrir o gráfico de um produto (veja "Histórico de preços (o gráfico)"): leva só o mercado e a chave de cada produto, sem CEP.
 - Uma busca antiga que responde depois de uma nova é descartada. Resposta de erro do servidor aparece como "Não deu para consultar", e não como "Nada encontrado".
 

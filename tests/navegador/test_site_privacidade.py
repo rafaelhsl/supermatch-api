@@ -16,6 +16,7 @@ from playwright.async_api import async_playwright
 from _comum import SAIDA, URL  # noqa: E402  (tests/navegador/_comum.py)
 
 falhas, ok = [], 0
+CHAMADAS_API = []       # os pedidos que o site fez à API (zera a cada abrir())
 PERMITIDOS = {"127.0.0.1", "supermatch-api.onrender.com", "brasilapi.com.br", "viacep.com.br"}      # 127.0.0.1 é o próprio site, servido pelo teste (_comum.py); o Google não está na lista
 
 
@@ -39,6 +40,8 @@ async def abrir(nav, vp, mobile, guardado=None):
     pg.on("pageerror", lambda e: falhas.append(f"pageerror: {e}"))
     pg.on("console", lambda m: falhas.append(f"console.{m.type}: {m.text}") if m.type == "error" and "Failed to load resource" not in m.text else None)
     pg.on("request", lambda r: destinos.add(urlparse(r.url).hostname) if r.url.startswith("http") else None)
+    CHAMADAS_API.clear()
+    pg.on("request", lambda r: CHAMADAS_API.append(r.url) if r.url.startswith("https://supermatch-api.onrender.com") else None)
 
     async def api(rota):
         cab = {"access-control-allow-origin": "*"}
@@ -66,6 +69,12 @@ async def rodar():
             # --- 1. primeira visita: a janela do CEP já avisa para onde o CEP vai e leva ao aviso inteiro
             ctx, pg, destinos = await abrir(nav, vp, mobile)
             confere(await aberta(pg, "janelaCep"), "primeira visita: a janela do CEP abre sozinha")
+            for _ in range(100):
+                if CHAMADAS_API:
+                    break
+                await asyncio.sleep(0.02)
+            confere(len(CHAMADAS_API) == 1 and urlparse(CHAMADAS_API[0]).path == "/saude" and urlparse(CHAMADAS_API[0]).query == "origem=site",
+                    f"ao abrir, o site só avisa a API que abriu (/saude?origem=site), sem CEP nem nada pessoal: {CHAMADAS_API}")
             texto_cep = limpo(await pg.locator("#janelaCep").inner_text())
             confere("Usamos o CEP só para achar a sua cidade e os mercados que entregam aí" in texto_cep, "a janela do CEP diz para que serve o CEP")
             await pg.locator("#abrirPrivacidadeCep").evaluate("(e) => e.click()")
@@ -77,6 +86,9 @@ async def rodar():
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")
             for trecho in ("Quem responde por isto", "O Supermatch é mantido por Rafael Lima"):
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")
+            for trecho in ("O que medimos", "a nossa API soma, a cada dia, quantas vezes o site foi aberto, quantas buscas e atualizações da lista de compras foram feitas",
+                           "quantas vezes o histórico de um produto foi aberto", "são só números", "não dizem quem buscou, o que buscou nem qual era o CEP", "não há como ligar uma soma a uma pessoa"):
+                confere(trecho in texto, f"o aviso diz sobre a medição: «{trecho}»")
             email = pg.locator("#contatoEmail")
             confere(limpo(await email.inner_text()) == "rafaelhsts@gmail.com", f"o e-mail do responsável aparece escrito: «{limpo(await email.inner_text())}»")
             href = await email.get_attribute("href")

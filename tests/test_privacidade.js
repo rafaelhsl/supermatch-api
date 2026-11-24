@@ -31,6 +31,16 @@ confere(!/Google/.test(texto), "o aviso não cita o Google (o site não pede nad
 confere(/guardados por 7 dias/.test(texto), 'o aviso diz que os registros da API ficam guardados por 7 dias (o prazo do plano gratuito do Render; docs/privacidade.md)');
 confere(/5 primeiros dígitos do CEP/.test(texto), 'o aviso diz que nos registros ficam só "5 primeiros dígitos do CEP" (tests/test_privacidade.py torna isso verdade)');
 confere(/não usa cookies/.test(texto), "o aviso diz que o site não usa cookies");
+
+// ---- a medição de uso sem rastrear (medidor_de_uso.py): o que o aviso diz e o que o site de fato manda ----
+confere(/O que medimos/.test(texto), 'o aviso tem a seção "O que medimos"');
+confere(/a nossa API soma, a cada dia, quantas vezes o site foi aberto, quantas buscas e atualizações da lista de compras foram feitas e quantas vezes o histórico de um produto foi aberto/.test(texto), "o aviso lista exatamente o que é somado (aberturas do site, buscas e atualizações da lista, aberturas do histórico)");
+confere(/Essas somas ficam guardadas sem prazo, mas são só números: não dizem quem buscou, o que buscou nem qual era o CEP, e não há como ligar uma soma a uma pessoa/.test(texto), "o aviso diz que as somas são só números e não identificam ninguém (tests/test_medidor_de_uso.py torna isso verdade)");
+const chamadasSaude = script.match(/[^\n]*\/saude[^\n]*/g) || [];
+confere(chamadasSaude.length === 1 && /fetch\(API \+ "\/saude\?origem=site"\)/.test(chamadasSaude[0]), `o único pedido a /saude é o aviso de que o site abriu, sem CEP nem termo: ${JSON.stringify(chamadasSaude)}`);
+const chamadasComparar = script.match(/[^\n]*\/comparar\?[^\n]*/g) || [];
+confere(chamadasComparar.length === 2 && chamadasComparar.filter((l) => /&origem=lista`\)/.test(l)).length === 1,
+  `dois pedidos a /comparar: a busca de uma pessoa (sem origem) e a renovação automática dos preços da lista (origem=lista, que a API não conta como busca): ${JSON.stringify(chamadasComparar.map((l) => l.trim().slice(0, 120)))}`);
 confere(!/document\.cookie/.test(html), "o site de fato não escreve cookies");
 confere(!/google-analytics|googletagmanager|gtag\(|fbq\(|hotjar|clarity\.ms|plausible|matomo|segment\.com/i.test(html), "o site não carrega analytics nem rastreadores (o aviso diz que não há)");
 confere(/Apagar meus dados deste aparelho/.test(texto), 'o aviso tem o botão "Apagar meus dados deste aparelho"');

@@ -282,9 +282,18 @@ O parâmetro opcional `todos=1` (`/comparar?cep=...&item=...&todos=1`) devolve t
 desses vem marcada com `"so_cita": true`. É o que o botão "Mostrar também" do site pede.
 
 O endpoint `/saude` (GET ou HEAD) responde `{"status": "ok"}` sem esperar o banco (só dispara o carregamento do
-catálogo em segundo plano quando o servidor não tem nenhum). O site o chama ao abrir a página para acordar o servidor,
-que no plano gratuito do Render dorme após 15 minutos sem uso; o acordar do servidor (cerca de 30 a 60 s) é o maior
-tempo de espera da primeira busca do dia, a menos que alguém o mantenha acordado (próxima seção).
+catálogo em segundo plano quando o servidor não tem nenhum). O site o chama ao abrir a página, com `?origem=site`, para
+acordar o servidor, que no plano gratuito do Render dorme após 15 minutos sem uso; o acordar do servidor (cerca de 30 a 60 s)
+é o maior tempo de espera da primeira busca do dia, a menos que alguém o mantenha acordado (próxima seção). Só a chamada
+com `origem=site` conta como "abertura" na medição de uso ([`uso_do_site.md`](uso_do_site.md)); a do monitor, sem o
+parâmetro, não conta.
+
+### Tabela `uso_diario` (medição de uso)
+
+Criada por [`sql/uso_do_site.sql`](sql/uso_do_site.sql): `dia`, `evento` e `total`, uma linha por dia e tipo de ocorrência.
+Segue a regra das outras tabelas: RLS ligado e nenhuma política, então só a chave secreta (a da API) lê e grava. A API não
+faz `insert`: chama a função `registrar_uso(p_evento)`, que soma 1 de forma atômica. Sem CEP, estado, termo, IP nem horário:
+o que ela guarda e o que não guarda está em [`uso_do_site.md`](uso_do_site.md).
 
 ### Manter o servidor acordado
 

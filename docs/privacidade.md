@@ -11,10 +11,16 @@ O site mostra um aviso de privacidade (rodapé "Privacidade e seus dados" e link
 | API do Supermatch, no Render (do navegador) | o CEP e o termo buscado, a cada busca e a cada atualização da lista | calcular os preços |
 | ViaCEP (da API) | os 8 dígitos do CEP | saber o estado (UF) |
 | API do Supermatch, no Render (do navegador), ao abrir o gráfico de preços | a chave do produto (e o mercado), **sem CEP** | desenhar a evolução do preço (`/historico`). O pedido entra no log da API, com os 7 dias do Render |
+| API do Supermatch, no Render (do navegador), ao abrir a página | só o aviso de que o site abriu (`/saude?origem=site`), **sem CEP** e sem nada pessoal | acordar o servidor e somar 1 "abertura" no dia |
+| Banco (Supabase), pela API | só **somas por dia**: quantas aberturas do site, buscas, atualizações da lista de compras e aberturas do histórico | saber se o site é usado (`uso_diario`; veja [`uso_do_site.md`](uso_do_site.md)) |
 | Netlify (as letras, em `fonts/`, junto com o site) | o IP, como em qualquer pedido ao site | as letras do site. **Desde 23/11/2026 não vêm mais do Google Fonts** |
 | Netlify e Render | registros técnicos de acesso (IP e o que o provedor guarda) | são os provedores de hospedagem |
 
-O banco (Supabase) **não recebe CEP**: só guarda produtos e preços.
+O banco (Supabase) **não recebe CEP**: só guarda produtos, preços e as somas por dia da medição de uso (`uso_diario`: dia, tipo e total; nada que identifique alguém).
+
+## Medição de uso (sem rastrear)
+
+A medição de uso (decidida em 24/11/2026) faz a API **somar por dia** quantas vezes o site foi aberto, quantas buscas e atualizações da lista de compras foram feitas e quantas vezes o histórico de um produto foi aberto. É só um número por dia e tipo: sem CEP, sem estado, sem termo buscado, sem IP, sem horário e sem identificador, e a tabela nem tem coluna para isso. Esse é o limite do "sem rastrear": dá para saber **quantas vezes**, nunca **quem**. O desenho, o que cada soma quer dizer e como ler os números estão em [`uso_do_site.md`](uso_do_site.md). As somas ficam guardadas sem prazo (são só números); os registros do provedor, com IP e busca, continuam com os prazos desta página.
 
 ## O que a API escreve no log
 
@@ -38,6 +44,8 @@ Apaga todas as chaves `sm_...` do navegador e as da versão anterior do site (`u
 | "não usa cookies" | o mesmo teste: nenhum `document.cookie` |
 | o CEP só vai para BrasilAPI, ViaCEP e a nossa API; o Google não recebe nada | o mesmo teste (e `tests/test_fontes.py`, `tests/navegador/test_site_fontes.py`): a lista dos endereços externos do site **tem de ser exatamente esta**; se o site falar com um endereço novo, o teste falha e lembra de atualizar o aviso e esta página |
 | "os registros da API ficam guardados por 7 dias e trazem o que você buscou, os produtos de que abriu o histórico e só os 5 primeiros dígitos do CEP" | `tests/test_privacidade.py` (a máscara, o filtro do uvicorn, o print, e uma varredura que falha se um `print`/log novo escrever o CEP cru) |
+| "a nossa API soma, a cada dia, quantas vezes o site foi aberto, quantas buscas e atualizações da lista de compras foram feitas e quantas vezes o histórico de um produto foi aberto" | `tests/test_privacidade.js` (o texto, o único pedido a `/saude` e os dois pedidos a `/comparar`) e `tests/navegador/test_site_privacidade.py` (o texto na tela; ao abrir, o site só chama `/saude?origem=site`, sem CEP) |
+| "Essas somas ficam guardadas sem prazo, mas são só números: não dizem quem buscou, o que buscou nem qual era o CEP, e não há como ligar uma soma a uma pessoa" | `tests/test_medidor_de_uso.py`: só o nome do evento sai da API (nenhuma chamada ao banco contém CEP, estado, termo, produto ou IP) e o SQL só tem `dia`, `evento` e `total`, sem horário; `tests/test_sql.py` (tabela só da chave secreta) |
 | "Quando você abre o histórico de preços de um produto, a API recebe só qual é o produto, sem CEP" | `tests/navegador/test_site_historico.py`: o pedido a `/historico` só tem o parâmetro `chaves` e não contém o CEP guardado |
 | "Apagar meus dados" apaga tudo | `tests/navegador/test_site_privacidade.py`: com `sm_*`, `user_*` e uma chave de outro site guardadas, sobra só a de fora |
 | o aviso abre do rodapé e da janela do CEP, cabe em 320 px, Esc fecha e o foco volta | o mesmo teste de navegador |
@@ -49,4 +57,4 @@ A janela diz **quem mantém o projeto (Rafael Lima, a pessoa responsável pelos 
 
 ## O que falta decidir (é do dono)
 
-- **Retenção.** Render: **7 dias** (plano gratuito; confirmado em 24/11/2026) e o aviso diz isso. Netlify: o prazo **não foi conferido**; o aviso fala de "registros técnicos de acesso, como o endereço IP" sem prometer prazo. Se o dono quiser dizer um prazo também para o Netlify, é só conferir com o provedor (painel ou suporte) e acrescentar à frase do aviso (e ao teste).
+- **Retenção.** Render: **7 dias** (plano gratuito; confirmado em 24/11/2026) e o aviso diz isso. Netlify: o painel **Observability** do plano gratuito mostra só as **últimas 24 horas** (conferido pelo dono em 24/11/2026; planos pagos guardam mais). Isso diz o que o dono consegue ver; o prazo que o provedor mantém por conta própria é regra dele (política de privacidade do Netlify). Detalhes do painel e dos planos em [`netlify.md`](netlify.md). O aviso continua falando de "registros técnicos de acesso, como o endereço IP" sem prometer prazo para o Netlify.
