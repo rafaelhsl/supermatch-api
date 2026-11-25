@@ -206,7 +206,7 @@ def teste_coletar_por_robo():
     anterior = ab.ROBOS
     ab.ROBOS = {"Super ABC": super_abc}
     try:
-        coleta = asyncio.run(ab.coletar_por_robo("Super ABC", ab.alvos_da_lista(termos), paralelo=2, segunda_rodada=False))
+        coleta = asyncio.run(ab.coletar_por_robo("Super ABC", ab.alvos_da_lista(termos, "Super ABC"), paralelo=2, segunda_rodada=False))
     finally:
         ab.ROBOS = anterior
     assert maximo[0] <= 2 and len(chamadas) == 5                                    # nunca mais de 2 navegadores juntos
@@ -218,8 +218,9 @@ def teste_coletar_por_robo():
 
 
 def teste_termo_com_mais_de_uma_busca_conta_uma_vez():
-    termos = [{"termo": "sal", "consultas_robo": ["sal refinado", "sal grosso"]}, {"termo": "arroz"}]
-    assert ab.alvos_da_lista(termos) == [("sal", "sal refinado", termos[0]), ("sal", "sal grosso", termos[0]), ("arroz", "arroz", termos[1])]
+    termos = [{"termo": "sal", "consultas": ["sal"], "consultas_super_abc": ["sal refinado", "sal grosso"]}, {"termo": "arroz"}]
+    assert ab.alvos_da_lista(termos, "Super ABC") == [("sal", "sal refinado", termos[0]), ("sal", "sal grosso", termos[0]), ("arroz", "arroz", termos[1])]
+    assert ab.alvos_da_lista(termos, "Atacadao") == [("sal", "sal", termos[0]), ("arroz", "arroz", termos[1])]       # a consulta própria é só do Super ABC
 
     async def robo(texto):
         if texto.startswith("sal"):
@@ -229,7 +230,7 @@ def teste_termo_com_mais_de_uma_busca_conta_uma_vez():
     anterior = ab.ROBOS
     ab.ROBOS = {"Super ABC": robo}
     try:
-        coleta = asyncio.run(ab.coletar_por_robo("Super ABC", ab.alvos_da_lista(termos)))
+        coleta = asyncio.run(ab.coletar_por_robo("Super ABC", ab.alvos_da_lista(termos, "Super ABC")))
     finally:
         ab.ROBOS = anterior
     assert coleta.termos_total == 2 and coleta.termos_falhos == ["sal"]            # o termo falha uma vez, mesmo com duas buscas caídas
@@ -270,7 +271,7 @@ def teste_coletas_pela_api():
 
 def alvos_de(n):
     termos = [{"termo": f"termo{i:03d}"} for i in range(n)]
-    return ab.alvos_da_lista(termos)
+    return ab.alvos_da_lista(termos, "Super ABC")
 
 
 def com_robo(robo, **opcoes):

@@ -85,6 +85,7 @@ gh api -X POST repos/rafaelhsl/supermatch-api/actions/workflows/main.yml/dispatc
 ## Se algo falhar
 
 - **O disparo principal falhou ou a carga ficou vermelha:** o GitHub avisa por e-mail; a reserva roda no fim do dia (não pula, porque só a carga bem-sucedida conta). O site fica no máximo um dia com preços velhos.
+- **Só o Super ABC falhou, e a mensagem diz "o login anônimo do Super ABC falhou":** a chave pública da loja mudou. Como achar a nova está em [`coletor_por_api.md`](coletor_por_api.md#super-abc-loja-vip-commerce). Se diz "a unidade 8 do Super ABC agora é …", a loja renumerou as unidades (mesmo lugar). Nos dois casos os dados do Super ABC ficam os do dia anterior e os outros mercados são gravados normalmente.
 - **O cron-job.org avisou de falha (401):** o token venceu ou foi apagado; veja abaixo.
 - **Rodou duas vezes no mesmo dia:** é inofensivo (carga repetida não duplica nada; só repete o trabalho). Se acontecer sempre, confira se o `run-name` do `main.yml` ainda traz `gravar=` e `mercados=`.
 
@@ -100,7 +101,7 @@ O que sobra de falha segue a regra de sempre (tabela em [`robos.md`](robos.md#a-
 Duas decisões:
 
 - O **HTTP 403 não entrou** na lista de status que o coletor repete na hora (`STATUS_QUE_REPETE`). Um 403 costuma ser bloqueio, e martelar o site em seguida só piora; quem cuida dele é a segunda rodada, depois da pausa.
-- A mensagem de erro do Super ABC deixou de ser cortada em 300 caracteres (agora 3.000). O motivo real de um clique que esgota o tempo ("element intercepts pointer events", "not visible"...) vem no **fim** do log do Playwright, e o corte o escondia justamente ali ("...waiting for element to be visible, enabled and").
+- A mensagem de erro do Super ABC deixou de ser cortada em 300 caracteres (agora 3.000). O motivo real de um clique que esgota o tempo ("element intercepts pointer events", "not visible"...) vem no **fim** do log do Playwright, e o corte o escondia justamente ali ("...waiting for element to be visible, enabled and"). (O robô do Super ABC saiu da carga em 25/11/2026; o que vale para os robôs que restam continua valendo.)
 
 Os dois números, `LIMITE_DE_FALHAS_SEGUIDAS = 6` e `PAUSA_DA_SEGUNDA_RODADA = 60` (segundos), ficam no topo de `disjuntor.py`. Os testes: `python tests/test_disjuntor.py` (a regra), `tests/test_coletor_vtex.py` (a coleta pela API) e `tests/test_carga.py` (o robô e a carga).
 

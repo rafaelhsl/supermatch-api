@@ -304,6 +304,26 @@ def teste_http_nao_repete_erro_definitivo_e_desiste():
         assert abrir.call_count == 3
 
 
+def teste_cada_mercado_recebe_as_consultas_dele():
+    termo = {"termo": "sal", "consultas": ["sal"], "consultas_super_abc": ["sal refinado", "sal grosso"]}
+    assert c.consultas_do_termo(termo, "Super ABC") == ["sal refinado", "sal grosso"]            # a consulta própria do mercado
+    assert c.consultas_do_termo(termo, "Supernosso") == ["sal"]                                    # os outros seguem a `consultas`
+    assert c.consultas_do_termo({"termo": "arroz"}, "Super ABC") == ["arroz"]                      # sem nenhuma: o nome do termo
+    assert c.consultas_do_termo({"termo": "x", "consultas": ["a"], "consultas_apoio_entrega": ["b"]}, "Apoio Entrega") == ["b"]   # espaço vira "_"
+    assert c.consultas_do_termo({"termo": "x", "consultas": ["a"], "consultas_super_abc": []}, "Super ABC") == ["a"]               # vazio não vale
+
+    pedidas = []
+
+    def baixar(mercado):
+        def baixador(http, consulta):
+            pedidas.append((mercado, consulta))
+            return []
+        return baixador
+
+    c.coletar(object(), ["Super ABC", "Supernosso"], [termo], 100, baixadores={"Super ABC": baixar("Super ABC"), "Supernosso": baixar("Supernosso")}, segunda_rodada=False)
+    assert sorted(pedidas) == [("Super ABC", "sal grosso"), ("Super ABC", "sal refinado"), ("Supernosso", "sal")]
+
+
 def teste_coletar_continua_depois_de_um_erro():
     def baixar_ok(http, consulta):
         return [{"id_origem": consulta, "nome": consulta, "categoria": "", "peso_variavel": False}]
