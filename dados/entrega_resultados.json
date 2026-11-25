@@ -25,12 +25,12 @@
   "mercado": "Super ABC",
   "cep": "30130010",
   "status": "atende",
-  "produtos": 29,
-  "detalhe": "ABC Atacado e Varejo Barreiro - BH Belo Horizonte / MG",
-  "segundos": 34,
+  "produtos": 20,
+  "detalhe": "ABC - Belo Horizonte (Horto)",
+  "segundos": 4,
   "cidade": "Belo Horizonte",
   "bairro": "Centro",
-  "data": "2026-10-30T09:38:11+00:00"
+  "data": "2026-11-25T17:16:54+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -333,12 +333,12 @@
   "mercado": "Super ABC",
   "cep": "32600055",
   "status": "atende",
-  "produtos": 30,
-  "detalhe": "ABC Atacado e Varejo Betim Betim / MG",
-  "segundos": 32,
+  "produtos": 20,
+  "detalhe": "ABC - Betim",
+  "segundos": 3,
   "cidade": "Betim",
   "bairro": "Centro",
-  "data": "2026-10-30T09:38:43+00:00"
+  "data": "2026-11-25T17:16:58+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -473,10 +473,10 @@
   "cep": "32481000",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Brumadinho/MG",
-  "segundos": 16,
+  "segundos": 3,
   "cidade": "Brumadinho",
   "bairro": "Do Carmo",
-  "data": "2026-10-30T09:41:28+00:00"
+  "data": "2026-11-25T17:17:20+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -548,10 +548,10 @@
   "cep": "32041000",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Contagem/MG",
-  "segundos": 16,
+  "segundos": 2,
   "cidade": "Contagem",
   "bairro": "Três Barras",
-  "data": "2026-10-30T09:38:59+00:00"
+  "data": "2026-11-25T17:17:00+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -656,10 +656,10 @@
   "cep": "32800060",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Esmeraldas/MG",
-  "segundos": 16,
+  "segundos": 1,
   "cidade": "Esmeraldas",
   "bairro": "Centro",
-  "data": "2026-10-30T09:40:55+00:00"
+  "data": "2026-11-25T17:17:15+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -730,10 +730,10 @@
   "cep": "32405113",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Ibirité/MG",
-  "segundos": 16,
+  "segundos": 2,
   "cidade": "Ibirité",
   "bairro": "Morada da Serra",
-  "data": "2026-10-30T09:40:21+00:00"
+  "data": "2026-11-25T17:17:11+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -803,10 +803,10 @@
   "cep": "32510050",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Igarapé/MG",
-  "segundos": 16,
+  "segundos": 2,
   "cidade": "Igarapé",
   "bairro": "Centro",
-  "data": "2026-10-30T09:41:12+00:00"
+  "data": "2026-11-25T17:17:17+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -874,10 +874,10 @@
   "cep": "34000132",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Nova Lima/MG",
-  "segundos": 17,
+  "segundos": 2,
   "cidade": "Nova Lima",
   "bairro": "Centro",
-  "data": "2026-10-30T09:40:38+00:00"
+  "data": "2026-11-25T17:17:13+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -980,10 +980,10 @@
   "cep": "33805276",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Ribeirão das Neves/MG",
-  "segundos": 17,
+  "segundos": 2,
   "cidade": "Ribeirão das Neves",
   "bairro": "Tânia",
-  "data": "2026-10-30T09:39:16+00:00"
+  "data": "2026-11-25T17:17:02+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -1088,10 +1088,10 @@
   "cep": "34505000",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Sabará/MG",
-  "segundos": 16,
+  "segundos": 1,
   "cidade": "Sabará",
   "bairro": "Centro",
-  "data": "2026-10-30T09:39:48+00:00"
+  "data": "2026-11-25T17:17:07+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -1163,10 +1163,10 @@
   "cep": "33010000",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Santa Luzia/MG",
-  "segundos": 15,
+  "segundos": 4,
   "cidade": "Santa Luzia",
   "bairro": "Centro",
-  "data": "2026-10-30T09:39:32+00:00"
+  "data": "2026-11-25T17:17:06+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -1239,10 +1239,10 @@
   "cep": "32450000",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Sarzedo/MG",
-  "segundos": 16,
+  "segundos": 2,
   "cidade": "Sarzedo",
   "bairro": "",
-  "data": "2026-10-30T09:42:02+00:00"
+  "data": "2026-11-25T17:17:24+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -1312,10 +1312,10 @@
   "cep": "32920000",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em São Joaquim de Bicas/MG",
-  "segundos": 16,
+  "segundos": 2,
   "cidade": "São Joaquim de Bicas",
   "bairro": "",
-  "data": "2026-10-30T09:41:45+00:00"
+  "data": "2026-11-25T17:17:22+00:00"
  },
  {
   "mercado": "Supernosso",
@@ -1384,10 +1384,10 @@
   "cep": "33200356",
   "status": "nao_atende",
   "motivo": "o Super ABC não tem unidade em Vespasiano/MG",
-  "segundos": 16,
+  "segundos": 2,
   "cidade": "Vespasiano",
   "bairro": "Centro",
-  "data": "2026-10-30T09:40:05+00:00"
+  "data": "2026-11-25T17:17:09+00:00"
  },
  {
   "mercado": "Supernosso",

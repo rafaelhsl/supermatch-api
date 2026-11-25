@@ -5,7 +5,7 @@ região de entrega, o catálogo disponível. Por isso cada robô **informa o CEP
 segue se o site **confirmar** que assumiu esse CEP. Se não confirmar, o robô para e levanta um erro,
 em vez de devolver preços de um lugar desconhecido.
 
-> **Desde 25/11/2026 o Super ABC não é mais coletado por robô.** O site dele trocou de plataforma, o botão de unidades que o robô usava deixou de existir e a carga passou a usar a API da loja ([`coletor_por_api.md`](coletor_por_api.md#super-abc-loja-vip-commerce)). Os trechos abaixo sobre ele descrevem o robô antigo e ficam como história.
+> **Desde 25/11/2026 o Super ABC não é mais coletado por robô.** O site dele trocou de plataforma, o botão de unidades que o robô usava deixou de existir e a carga passou a usar a API da loja ([`coletor_por_api.md`](coletor_por_api.md#super-abc-loja-vip-commerce)). Os trechos abaixo sobre ele descrevem o robô antigo, que foi apagado (`Scraper_SuperABC.py`; está no histórico do git), e ficam como história. O levantamento de entrega por cidade também passou a usar a API da loja.
 
 Código comum: [`robos_comum.py`](../robos_comum.py). Erros:
 

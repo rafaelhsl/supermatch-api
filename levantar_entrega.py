@@ -1,8 +1,9 @@
 """Levanta, cidade por cidade, quais mercados entregam: roda cada robô com CEPs de amostra e anota o que o site respondeu.
 
 Os sites não têm uma lista pública de onde entregam; a única forma de saber é informar um CEP e ver se o site o
-aceita. Por isso o levantamento usa os próprios robôs da carga (com a busca "arroz") em CEPs reais de bairros
-diferentes de cada cidade, e guarda o resultado em `dados/entrega_resultados.json`. Dele saem a tabela agregada
+aceita. Por isso o levantamento usa os robôs dos mercados (com a busca "arroz") em CEPs reais de bairros
+diferentes de cada cidade, e guarda o resultado em `dados/entrega_resultados.json`. O Super ABC não tem mais robô (o site novo
+dele, de 25/11/2026, tem API): ele não localiza por CEP, e a sondagem procura na lista de unidades da loja uma unidade na cidade do CEP. Dele saem a tabela agregada
 `dados/entrega_por_cidade.json`, o documento `docs/entrega_por_cidade.md` e o bloco `ENTREGA_POR_CIDADE` de `site/index.html`
 (é com ele que o site esconde os mercados que não entregam na cidade do CEP).
 
@@ -37,7 +38,7 @@ SITE = PASTA / "site" / "index.html"
 ITEM = "arroz"
 MERCADOS = ["Apoio Entrega", "Atacadao", "Supernosso", "Super ABC"]
 NOME_NA_TELA = {"Apoio Entrega": "Apoio Entrega", "Atacadao": "Atacadão", "Supernosso": "Supernosso", "Super ABC": "Super ABC"}
-# O Super ABC não localiza por CEP: o robô escolhe a unidade da cidade do CEP. Basta uma sondagem por cidade.
+# O Super ABC não localiza por CEP: quem atende a cidade é a unidade que fica nela. Basta uma sondagem por cidade.
 SO_UMA_POR_CIDADE = {"Super ABC"}
 CANAL_APOIO = "15"          # só para a busca depois da localização; a cobertura é decidida antes, pelo CEP
 PRAZO_DA_SONDAGEM = 420     # segundos por CEP e mercado, com as repetições do robô
@@ -45,8 +46,36 @@ PRAZO_DA_SONDAGEM = 420     # segundos por CEP e mercado, com as repetições do
 
 # ============================== a sondagem de um CEP em um mercado ==============================
 
+async def sondar_super_abc(cep, http=None, descobrir_cidade=None):
+    """Sonda o Super ABC pela API da loja, no lugar do robô de navegador (que morreu com o site novo, em 25/11/2026).
+
+    A loja não localiza por CEP: ela tem unidades, e quem atende uma cidade é a unidade que fica nela. Então descobre a cidade do CEP (ViaCEP,
+    com BrasilAPI de reserva), procura na lista de unidades da loja uma unidade nessa cidade e busca "arroz" nela. Sem unidade na cidade, é
+    "não atende" definitivo (a mesma resposta do robô antigo); o resto das falhas é passageiro e vira "inconclusivo".
+    """
+    import coletor_vip
+    import coletor_vtex
+    from robos_comum import BuscaNaoRealizada, FalhaNoRobo, LocalizacaoNaoConfirmada, cidade_do_cep
+    http = http or coletor_vtex.ClienteHttp()
+    info = await asyncio.to_thread(descobrir_cidade or cidade_do_cep, cep)
+    if not info:
+        raise FalhaNoRobo("Super ABC", f"não consegui descobrir a cidade do CEP {cep}")
+    cidade, uf = info
+    cabecalhos = await asyncio.to_thread(coletor_vip.entrar_sem_unidade, http)
+    unidade = coletor_vip.unidade_da_cidade(await asyncio.to_thread(coletor_vip.lista_de_unidades, http, cabecalhos), cidade, uf)
+    if unidade is None:
+        raise LocalizacaoNaoConfirmada("Super ABC", f"o Super ABC não tem unidade em {cidade}/{uf}", definitiva=True)
+    print(f"📍 [Super ABC] Unidade confirmada: {unidade.get('nome_site') or unidade.get('nome')}")
+    baixador = coletor_vip.BaixadorSuperAbc(centro=unidade["id"], max_paginas=1)
+    baixador.cabecalhos = cabecalhos          # o login já foi feito acima: a unidade da cidade do CEP não é a de Betim que o baixador conferiria
+    produtos = await asyncio.to_thread(baixador, http, ITEM)
+    if not produtos:
+        raise BuscaNaoRealizada("Super ABC", f"a busca por '{ITEM}' na unidade não trouxe nenhum produto com preço")
+    return produtos
+
+
 def robo_do_mercado(mercado):
-    """Função que recebe o CEP e roda o robô de verdade, com a repetição automática da carga."""
+    """Função que recebe o CEP e roda o robô de verdade, com a repetição automática da carga (o Super ABC, pela API da loja)."""
     from robos_comum import com_novas_tentativas
     if mercado == "Apoio Entrega":
         from Scraper_Apoio_v2 import buscar_no_apoio
@@ -58,8 +87,7 @@ def robo_do_mercado(mercado):
         from Scraper_Supernosso import buscar_no_supernosso
         return lambda cep: com_novas_tentativas(buscar_no_supernosso, cep_usuario=cep, item_usuario=ITEM)
     if mercado == "Super ABC":
-        from Scraper_SuperABC import buscar_na_plataforma_regex
-        return lambda cep: com_novas_tentativas(buscar_na_plataforma_regex, "https://superabconline.com.br/", "Super ABC", ITEM, cep_usuario=cep)
+        return lambda cep: com_novas_tentativas(sondar_super_abc, cep)
     raise SystemExit(f"Mercado desconhecido: {mercado}. Opções: {MERCADOS}")
 
 
@@ -212,9 +240,21 @@ def celula(info):
     return f"{TEXTO_DA_SITUACAO[info['situacao']]} ({info['ceps_que_atendem']} de {info['ceps_testados']})"
 
 
+def ultima_sondagem(resultados):
+    """A data da última sondagem. Quando os mercados foram sondados em dias diferentes (um deles foi refeito sozinho), diz a de cada um."""
+    por_mercado = {}
+    for r in resultados:
+        if r.get("data"):
+            por_mercado[r["mercado"]] = max(por_mercado.get(r["mercado"], ""), r["data"][:10])
+    if not por_mercado:
+        return "sem dados"
+    if len(set(por_mercado.values())) == 1:
+        return next(iter(por_mercado.values()))
+    return "; ".join(f"{NOME_NA_TELA.get(m, m)} {por_mercado[m]}" for m in MERCADOS if m in por_mercado)
+
+
 def gerar_documento(tabela, resultados, amostras):
-    datas = sorted(r["data"] for r in resultados if r.get("data"))
-    periodo = datas[-1][:10] if datas else "sem dados"
+    periodo = ultima_sondagem(resultados)
     linhas = [
         "# Entrega por cidade",
         "",
@@ -237,13 +277,15 @@ def gerar_documento(tabela, resultados, amostras):
         "",
         "## Como foi feito",
         "",
-        "- Para cada CEP e cada mercado, o levantamento roda o **mesmo robô da carga diária** (busca de \"arroz\"). "
+        "- Para cada CEP e cada mercado, o levantamento roda o **robô do mercado** (busca de \"arroz\"). "
         "O robô informa o CEP e só segue se o site o assumir; é essa resposta que vira a tabela. Nada é gravado no banco.",
         "- **Atacadão, Apoio e Supernosso** respondem por CEP. O Supernosso e o Atacadão dizem de forma explícita que não "
         "atendem (\"Ainda não atendemos essa região\"). O Apoio não diz nada: o painel fica girando sem responder. Por isso o "
         "\"não\" do Apoio (**não assumiu o CEP**) só vale depois de repetido; aqui foi repetido três vezes, e uma delas esperando 40 s.",
-        "- **Super ABC** não localiza por CEP: o robô escolhe a unidade da cidade do CEP. \"Não entrega\" quer dizer "
-        "que **não há unidade do Super ABC naquela cidade**. Uma unidade vizinha pode entregar lá, mas o site não deixa conferir.",
+        "- **Super ABC** não localiza por CEP, e não é sondado por robô de navegador: o levantamento descobre a cidade do CEP e procura, na lista "
+        "de unidades da loja (a mesma API que a carga diária usa), uma unidade nessa cidade; achando, busca \"arroz\" nela. \"Não entrega\" quer dizer "
+        "que **não há unidade do Super ABC naquela cidade**. Uma unidade vizinha pode entregar lá, mas a loja não deixa conferir. "
+        "(Até 24/11/2026 isso era feito por um robô, que escolhia a unidade no site.)",
         "- Os CEPs são de ruas e bairros reais (veja abaixo). Cidades grandes têm mais CEPs, porque os sites decidem por CEP e "
         "a resposta pode mudar de bairro para bairro. Em São Joaquim de Bicas e Sarzedo, que têm CEP único, a amostra é o CEP geral e o do Centro.",
         "",
@@ -282,8 +324,9 @@ def gerar_documento(tabela, resultados, amostras):
                     extra = ""
                     if r.get("detalhe") and m in ("Atacadao", "Super ABC"):
                         unidade = r["detalhe"].split(", CEP")[0]
-                        unidade = re.sub(r"^loja\s+|^ABC Atacado e Varejo\s+", "", unidade)   # Atacadão: "loja Pampulha"; Super ABC: "ABC Atacado e Varejo Betim - Betim / MG"
+                        unidade = re.sub(r"^loja\s+|^ABC Atacado e Varejo\s+|^ABC - ", "", unidade)   # Atacadão: "loja Pampulha"; Super ABC: "ABC - Betim" (e, até 24/11/2026, "ABC Atacado e Varejo Betim - Betim / MG")
                         unidade = re.sub(r"\s*/\s*MG$", "", unidade)
+                        unidade = re.sub(r"\s*\(([^)]*)\)", r" - \1", unidade)       # "Belo Horizonte (Horto)" não pode abrir parênteses dentro dos parênteses da célula
                         extra = " (" + unidade[:50] + ")"
                     celulas.append(base + extra)
             cep_fmt = f"{a['cep'][:5]}-{a['cep'][5:]}"

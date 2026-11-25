@@ -2,7 +2,7 @@
 
 Em vez de abrir um navegador e ler a primeira página de cada busca (20 a 30 itens), pergunta direto à API que
 os próprios sites usam. Isso traz até `teto` produtos por termo, com marca, categoria e código de barras (EAN).
-O Super ABC não tem API aberta e continua pelo robô (Scraper_SuperABC.py).
+O Super ABC, que roda em outra plataforma (VIP Commerce), é coletado por coletor_vip.py.
 
 De onde vem cada dado (sondado em 05/11/2026, ver docs/coletor_por_api.md):
 - Supernosso: API de catálogo `/api/catalog_system/pub/products/search/`; só vale o que tem estoque.

@@ -155,6 +155,33 @@ def teste_codigo_de_barras_interno_e_descartado():
         assert v.linha_do_produto(produto(1, "Arroz", ean=codigo), "arroz")["ean"] == esperado, codigo
 
 
+# ============================== a unidade de uma cidade (levantar_entrega.py) ==============================
+
+def unidade(id_, nome, cidade, estado="Minas Gerais", ativo=True):
+    return {"id": id_, "nome": nome, "nome_site": nome, "ativo": ativo, "endereco": {"cep": "30000000", "cidade": cidade, "estado": estado}}
+
+
+def teste_unidade_da_cidade():
+    unidades = [unidade(1, "ABC - Divinópolis (Goiás)", "Divinópolis"), unidade(19, "ABC - Belo Horizonte (Horto)", "Belo Horizonte"),
+                unidade(24, "ABC - Belo Horizonte (Barreiro)", "Belo Horizonte"), unidade(8, "ABC - Betim", "Betim"), unidade(40, "ABC - Pará de Minas", "Pará de Minas")]
+    achar = lambda cidade, uf="MG": (v.unidade_da_cidade(unidades, cidade, uf) or {}).get("id")
+    assert achar("Betim") == 8 and achar("Divinópolis") == 1
+    assert achar("Belo Horizonte") == 19, "com duas unidades na cidade vale a primeira da lista"
+    assert achar("belo horizonte") == 19 and achar("PARA DE MINAS") == 40 and achar("Pará de Minas") == 40      # sem acento e sem caixa
+    assert achar("Contagem") is None and achar("Betim", "SP") is None and achar("Betim", "mg") == 8              # o estado entra na conta
+    assert achar("Bet") is None and achar("Belo") is None and achar("Belo Horizonte Norte") is None             # o nome da cidade vale inteiro
+    assert v.unidade_da_cidade([], "Betim", "MG") is None and v.unidade_da_cidade(None, "Betim", "MG") is None
+
+
+def teste_unidade_da_cidade_ignora_inativa_e_trata_endereco_estranho():
+    lista = [unidade(1, "ABC - Betim", "Betim", ativo=False), unidade(2, "ABC - Betim 2", "Betim")]
+    assert v.unidade_da_cidade(lista, "Betim", "MG")["id"] == 2                                                   # a inativa não atende
+    assert v.unidade_da_cidade([{"id": 1, "ativo": True}, {"id": 2, "endereco": None}, {"id": 3, "endereco": {"cidade": None, "estado": None}}], "Betim", "MG") is None
+    assert v.unidade_da_cidade([unidade(1, "ABC - Santos", "Santos", "São Paulo")], "Santos", "SP")["id"] == 1    # fora de MG: o estado por extenso vira a sigla
+    assert v.unidade_da_cidade([unidade(1, "ABC - Santos", "Santos", "Atlântida")], "Santos", "SP") is None       # estado que não conhece não casa por engano
+    assert set(v.UF_DO_ESTADO.values()) == {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"}
+
+
 # ============================== login, sessão e unidade ==============================
 
 def teste_entra_uma_vez_e_manda_a_identificacao_da_loja_em_toda_busca():
