@@ -18,8 +18,8 @@ Medido em 03/11/2026, comparando a coleta de 29/10 com a de agora: 19% dos produ
 
 `produtos` não serve de chave para o histórico porque a carga a recria todo dia e seus ids mudam. `chave_origem` tem dois formatos:
 
-- `v:productId:itemId`: o id do produto no catálogo do mercado, quando o coletor por API o traz (Apoio, Atacadão e Supernosso);
-- `n:…`: um resumo do nome normalizado (sem acento, sem pontuação, em minúsculas), para o produto que não tem id (Super ABC, que vem do robô).
+- `v:productId:itemId`: o id do produto no catálogo do mercado, quando o coletor por API o traz (nos quatro mercados; no Super ABC, desde 25/11/2026, é o `produto_id` da loja: `v:<produto_id>`);
+- `n:…`: um resumo do nome normalizado (sem acento, sem pontuação, em minúsculas), para o produto que não tem id (era o caso do Super ABC, que vinha do robô, até 24/11/2026).
 
 **Religação.** Os produtos que o histórico já guardava pelo nome (`n:…`) e passam a chegar com o id do mercado são **religados**: a
 mesma linha de `catalogo` troca a chave para `v:…` e ganha EAN, marca e categoria, e o histórico de preços continua de onde
@@ -51,7 +51,7 @@ A primeira carga com o histórico ligado é o **dia 1**; a carga sempre apagou o
 
 O site mostra a evolução do preço de um produto (o botão "Ver histórico de preços" do cartão), e para isso a API lê o histórico:
 
-- **`chave_historico`** vem em cada produto de `/comparar` (a mesma chave com que a carga grava: `v:productId:itemId` nos mercados com API, `n:…` no Super ABC). Quem monta o pedido não precisa saber como ela nasce.
+- **`chave_historico`** vem em cada produto de `/comparar` (a mesma chave com que a carga grava: `v:…` nos mercados com API, `n:…` no produto sem id). Quem monta o pedido não precisa saber como ela nasce.
 - **`GET /historico?chaves=Mercado|chave,Mercado|chave`** (até 8 produtos) devolve, para cada um, os `intervalos` de preço do varejo (`desde`, `ate` vazio = vale até hoje, `preco`) e o `hoje` de Brasília. Pedido mal formado (mercado que não existe, chave com caracteres estranhos, mais de 8 produtos) dá **400**; histórico fora do ar dá **503** (o motivo vai para o log, não para quem pediu). Não recebe CEP nem nada pessoal.
 - **Duas consultas por mercado** (uma em `catalogo`, uma em `precos`), nunca uma por produto, e o resultado fica **30 minutos em memória** (`serie_de_precos.CacheDeSeries`, até 2.000 produtos): o gráfico de um produto aberto por várias pessoas não repete a consulta, e a cota de saída de dados do plano gratuito não sofre. A carga grava às 07:30, e um produto que mudou de preço hoje se corrige sozinho até meia hora depois.
 - No site, o botão "Ver histórico de preços" de cada cartão abre o gráfico com esses dados (o desenho, o quadro do mouse e a tabela estão em [`site.md`](site.md#histórico-de-preços-o-gráfico)).

@@ -5,6 +5,8 @@ região de entrega, o catálogo disponível. Por isso cada robô **informa o CEP
 segue se o site **confirmar** que assumiu esse CEP. Se não confirmar, o robô para e levanta um erro,
 em vez de devolver preços de um lugar desconhecido.
 
+> **Desde 25/11/2026 o Super ABC não é mais coletado por robô.** O site dele trocou de plataforma, o botão de unidades que o robô usava deixou de existir e a carga passou a usar a API da loja ([`coletor_por_api.md`](coletor_por_api.md#super-abc-loja-vip-commerce)). Os trechos abaixo sobre ele descrevem o robô antigo e ficam como história.
+
 Código comum: [`robos_comum.py`](../robos_comum.py). Erros:
 
 - `LocalizacaoNaoConfirmada`: o site não atende o CEP, ou o robô não conseguiu informá-lo.
@@ -24,7 +26,7 @@ e 32041000 (Contagem). Os sites mudam: se um robô começar a falhar, é aqui qu
 | **Atacadão** | "Informar localização" > "Entrega em Casa" > digita o CEP > número genérico `100` > Confirmar (CEP único de cidade, sem rua, não pede número: o site mostra só "Confirme seu endereço") | O cabeçalho passa a dizer `Entregue pela Loja - <loja> para o CEP 32607-600` ou `Entregue pela <unidade> para o CEP 32315-010`; o CEP do cabeçalho tem de ser o pedido | O site abre "Ainda não atendemos essa região" (resposta definitiva) |
 | **Apoio** | Ícone do carrinho (`a.btn-top-cart`) abre "Informe seu CEP"; digita e clica em Buscar; escolhe "Quero receber" | O quadro mostra `Atendemos sua região` e `CEP informado 32607-600` | O quadro nunca aparece e o painel volta ao início |
 | **Supernosso** | Clica em "qual a forma de entrega?" > digita o CEP (tecla por tecla) > envia > escolhe o horário da entrega agendada | O cabeçalho passa a dizer `entrega no cep 32.607-600` | O site mostra "que pena, ainda não atendemos a sua região" |
-| **Super ABC** | Não localiza por CEP. O robô descobre a **cidade** do CEP (ViaCEP, com BrasilAPI de reserva) e escolhe uma unidade dessa cidade no seletor de lojas | O botão do cabeçalho passa a mostrar a unidade e a cidade (`ABC Atacado e Varejo Betim - Betim / MG`) | Não há unidade na cidade (Contagem, por exemplo) e o robô aborta |
+| **Super ABC** (robô antigo) | Não localiza por CEP. O robô descobre a **cidade** do CEP (ViaCEP, com BrasilAPI de reserva) e escolhe uma unidade dessa cidade no seletor de lojas | O botão do cabeçalho passa a mostrar a unidade e a cidade (`ABC Atacado e Varejo Betim - Betim / MG`) | Não há unidade na cidade (Contagem, por exemplo) e o robô aborta |
 
 ### Pegadinhas que já custaram tempo
 
@@ -36,7 +38,7 @@ e 32041000 (Contagem). Os sites mudam: se um robô começar a falhar, é aqui qu
   funciona depois disso. O texto "Carrinho" aparece também no título escondido do painel, por isso o
   robô usa o seletor `a.btn-top-cart`. Clicar em "Comprar" para abrir o painel adicionaria um produto
   ao carrinho.
-- **Super ABC:** a busca de unidade por CEP não funciona (só por nome ou endereço). Unidades na
+- **Super ABC (robô antigo):** a busca de unidade por CEP não funciona (só por nome ou endereço). Unidades na
   região de BH: Barreiro e Horto (BH), Betim, Pará de Minas e Itaúna. Em cidades com mais de uma
   unidade, o robô escolhe a primeira da lista.
 - **Atacadão:** as lojas variam por CEP (Betim, Pampulha, Uberlândia), mas nos produtos testados
@@ -76,7 +78,7 @@ e 32041000 (Contagem). Os sites mudam: se um robô começar a falhar, é aqui qu
     produtos em comum são os mesmos.
   - Antes disso, uma espera fixa de 7 s só fazia 4 de 11 buscas voltarem com 0 itens; a espera pelos
     produtos (até 20 s) continua, mas não era a causa.
-- **Super ABC, busca:** a página tem dois campos de busca iguais (desktop e celular); só o visível
+- **Super ABC, busca (robô antigo):** a página tem dois campos de busca iguais (desktop e celular); só o visível
   serve. A URL de resultados vem **codificada duas vezes** (`Açucar` vira `A%25C3%25A7ucar`).
 - **Supernosso, no começo da carga:** com os 4 navegadores abrindo juntos, uma etapa (painel de CEP,
   cabeçalho ou a busca de "Arroz") se perde de vez em quando. Isolada, a mesma busca passa sempre.
@@ -109,7 +111,7 @@ Um robô levanta `FalhaNoRobo` quando prefere parar a devolver dado duvidoso:
 
 A carga (`com_novas_tentativas`) **repete o robô uma vez, com navegador novo**, quando a falha é
 passageira. Falhas **definitivas** não são repetidas: "o site informa que não atende a região"
-(Supernosso) e "o Super ABC não tem unidade na cidade".
+(Supernosso) e, no robô antigo, "o Super ABC não tem unidade na cidade".
 
 ## Verificação feita antes de entrar na `main`
 
@@ -126,9 +128,8 @@ Betim; Apoio e Supernosso recusam Uberlândia; o Super ABC recusa Contagem (sem 
 
 ## A carga e as falhas
 
-Desde a carga pela API, só o **Super ABC** é coletado pelo robô (nos 128 termos da lista: 100 de prateleira e 28 de hortifrúti, 3 navegadores por vez); os outros três
-mercados vêm da [API pública](coletor_por_api.md). Os robôs do Apoio, do Atacadão e do Supernosso seguem no código e voltam a ser
-usados quando a carga é disparada à mão com `coleta = robos` (modo antigo, 11 itens, tudo ou nada).
+Desde 25/11/2026 os **quatro** mercados vêm da [API pública](coletor_por_api.md) (o Super ABC, por `coletor_vip.py`, que também confere que a unidade 8 ainda é a de Betim antes de ler qualquer preço). Até 24/11 só ele era coletado por robô (nos 128 termos da lista, 3 navegadores por vez). Os robôs do Apoio, do Atacadão e do Supernosso seguem no código e voltam a ser
+usados quando a carga é disparada à mão com `coleta = robos` (modo antigo, 11 itens, tudo ou nada); nesse modo o Super ABC, que não tem mais robô, também vem pela API.
 
 Cada mercado recebe um destes resultados:
 
@@ -138,9 +139,8 @@ Cada mercado recebe um destes resultados:
 | **parcial** | falharam até 10% dos termos (pelo menos 1) | grava o que veio, **mantém as linhas antigas dos termos que falharam**, registra `parcial` no histórico e deixa um aviso (`::warning`) na execução; a execução **não** fica vermelha |
 | **falhou** | falharam mais de 10% dos termos, ou nada veio | não grava, mantém os dados antigos do mercado, anota a falha no histórico e a execução termina com erro (e-mail de aviso) |
 
-- Termo sem resultado **não é falha**. O Super ABC responde "Ops... Nenhum produto foi encontrado para a busca realizada"
-  quando não vende o que foi buscado; o robô confere duas vezes (com uma espera) e devolve lista vazia. Já uma página sem
-  produtos e sem essa mensagem continua sendo falha passageira (página lida cedo demais) e repete, agora até 3 vezes.
+- Termo sem resultado **não é falha**: o mercado simplesmente não vende o que foi buscado. Pela API, a busca responde sem produtos (no Super ABC, `total_pages = 0`) e a lista vem vazia. Nos robôs, uma página sem
+  produtos continua sendo falha passageira (página lida cedo demais) e repete.
 - **Mercado fora do ar.** Depois de 6 falhas seguidas as buscas que faltam **não são tentadas** (cada uma custaria uns 2 minutos no robô) e, no fim, há **uma segunda rodada** depois de 60 s com tudo o que não deu certo. Veja [`carga_diaria.md`](carga_diaria.md#quando-um-mercado-cai-no-meio-da-carga).
 - A gravação insere os produtos novos primeiro e só depois apaga os antigos do mesmo mercado (`atualizado_em` anterior ao
   início da carga), exceto os de termos que falharam.

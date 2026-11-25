@@ -29,7 +29,7 @@ on:
           - nao
         default: sim
       coleta:
-        description: 'Como coletar: "api" (padrão: API pública para Apoio, Atacadão e Supernosso e robô para o Super ABC, 100 produtos) ou "robos" (modo antigo, só robôs, 11 itens, tudo ou nada)'
+        description: 'Como coletar: "api" (padrão: API pública dos quatro mercados, 128 termos) ou "robos" (modo antigo: robôs de navegador para Apoio, Atacadão e Supernosso e API para o Super ABC, 11 itens, tudo ou nada)'
         type: choice
         options:
           - api
@@ -70,7 +70,7 @@ jobs:
     # `!cancelled()` e não só `needs`: se o job `decidir` quebrar por qualquer motivo, a carga roda mesmo assim.
     if: ${{ !cancelled() && needs.decidir.outputs.pular != 'sim' }}
     runs-on: ubuntu-latest # O GitHub liga um Linux para nós
-    timeout-minutes: 150   # a carga com os 100 produtos leva 15 a 45 minutos (o Super ABC é o mais lento)
+    timeout-minutes: 150   # a carga pela API leva poucos minutos por mercado; o teto largo é para o modo antigo (robôs) e para uma API muito lenta
 
     steps:
     - name: Puxando o código do projeto
@@ -84,7 +84,10 @@ jobs:
     - name: Instalando as bibliotecas (requirements.txt)
       run: pip install -r requirements.txt
 
+    # Os navegadores só servem ao modo antigo (coleta = robos): na carga pela API ninguém abre navegador, e a instalação (1 a 2 minutos, e uma
+    # fonte de falha por si só) não é feita.
     - name: Instalando os navegadores fantasmas (Playwright)
+      if: ${{ github.event.inputs.coleta == 'robos' }}
       run: python -m playwright install --with-deps chromium
 
     - name: 🚀 Acordando os Robôs e Salvando no Supabase!

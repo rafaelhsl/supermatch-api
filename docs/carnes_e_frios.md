@@ -42,7 +42,7 @@ Outros pontos que a coleta mostrou:
 1. **Lista e filtros (fora da carga).** Um arquivo próprio (`dados/lista_carnes_e_frios.json`) com cerca de 30 termos por tipo de produto, filtro por categoria do mercado ("Açougue", "Carnes, aves e peixes", "Frios e Laticínios > Queijos"...) e por nome, casos reais de "entra" e "sai" e testes, como a [lista do hortifrúti](hortifruti.md). O coletor já sabe ler (`aceita_peso_variavel`).
 2. **Equivalência** (uma família, como a do hortifrúti) por **corte, forma, estado, tempero e faixa de qualidade**, com o preço por quilo valendo "1 kg". Itens que o nome não deixa classificar ficam sem chave (só no modo exato).
 3. **Site:** quase nada: já mostra "/kg", conta a lista em quilos e esconde o peso da porção. Talvez um rótulo de estado ("congelado") quando for útil.
-4. **Super ABC:** reconhecer com o robô (só embalado? há corte a peso?) e decidir se entra.
+4. **Super ABC:** reconhecer pela API da loja (`coletor_vip.py`: o robô saiu em 25/11/2026; só embalado? há corte a peso?) e decidir se entra.
 5. **Ligar na carga**, com a mesma cautela (OK explícito; uma coleta só com as outras listas, porque a gravação apaga o resto do mercado). Custo estimado: ~30 termos a mais na coleta por API (poucos segundos) e, se o Super ABC participar, ~30 buscas a mais do robô (as 28 do hortifrúti somaram uns 2 minutos à carga).
 
 ## O que precisa ser decidido

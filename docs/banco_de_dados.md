@@ -25,13 +25,13 @@ tabela inteira é apagada e regravada.
 | `preco_atacado` | `numeric` (`decimal(10,2)`) | sim | scrapers | Preço unitário a partir de `quantidade_atacado`. Sem atacado, é igual a `preco_varejo` |
 | `quantidade_atacado` | `integer` | sim | scrapers | A partir de quantas unidades vale `preco_atacado`. Sem atacado, vale `1` |
 | `uf_cobertura` | `text` | sim | `alimentar_banco.py` | UF atendida pelo mercado: `MG` (Apoio, Supernosso, Super ABC) ou `BR` (Atacadão) |
-| `texto_original` | `text` | não | scrapers | Texto bruto do card do produto, guardado para depuração (só o robô do Super ABC preenche) |
-| `ean` | `text` | não | coletor por API | Código de barras. O mesmo EAN é o mesmo produto em qualquer mercado. O robô do Super ABC não lê |
+| `texto_original` | `text` | não | scrapers | Texto bruto do card do produto, guardado para depuração (só o robô antigo do Super ABC preenchia; hoje fica vazio) |
+| `ean` | `text` | não | coletor por API | Código de barras. O mesmo EAN é o mesmo produto em qualquer mercado |
 | `marca` | `text` | não | coletor por API | Marca do produto |
 | `categoria` | `text` | não | coletor por API | Como o mercado classifica, ex.: `Mercearia > Grãos > Arroz` |
 | `id_origem` | `text` | não | coletor por API | Identidade do produto no mercado (`productId:itemId`); é a chave do histórico de preços |
-| `termo` | `text` | não | coletor por API e robô da lista | Termo da [lista de produtos](../dados/lista_de_produtos.json) que trouxe o item, ex.: `arroz`. Vazio nas linhas do modo antigo |
-| `unidade` | `text` | não | coletor por API (a carga normaliza) | Como o mercado vende: `kg` = o **preço é por quilo**; `un` = por unidade ou pacote; vazio = não informado (o robô do Super ABC) ou unidade desconhecida. Só chegam ao banco esses valores. Veja [`hortifruti.md`](hortifruti.md) |
+| `termo` | `text` | não | coletor por API | Termo da [lista de produtos](../dados/lista_de_produtos.json) que trouxe o item, ex.: `arroz`. Vazio nas linhas do modo antigo |
+| `unidade` | `text` | não | coletor por API (a carga normaliza) | Como o mercado vende: `kg` = o **preço é por quilo**; `un` = por unidade ou pacote; vazio = não informado ou unidade desconhecida. Só chegam ao banco esses valores. Veja [`hortifruti.md`](hortifruti.md) |
 | `atualizado_em` | `timestamptz` | sim, automática | banco (`now()` em UTC) | Momento em que a linha foi inserida, ou seja, a hora da coleta |
 
 `ean`, `marca`, `categoria`, `id_origem` e `termo` vêm de [`sql/colunas_do_coletor.sql`](sql/colunas_do_coletor.sql). Sem elas a carga grava só as colunas
@@ -143,10 +143,10 @@ catálogo crescer a ponto de não caber em memória).
 
 1. Lê a lista de 128 produtos: os 100 de prateleira ([`dados/lista_de_produtos.json`](../dados/lista_de_produtos.json)) e os 28 de
    hortifrúti ([`dados/lista_hortifruti.json`](../dados/lista_hortifruti.json)), numa coleta só (até 100 por termo e
-   mercado). **Apoio Entrega, Atacadão e Supernosso** são coletados pela API pública
-   ([`coletor_por_api.md`](coletor_por_api.md)), em paralelo, no CEP fixo `32607600` (Betim). O **Super ABC**, que não
-   tem API aberta, é coletado pelo robô nos mesmos 128 termos (3 navegadores por vez), com o mesmo filtro de nome.
-   Cada robô informa o CEP **antes** de buscar e só segue se o site confirmar a localização (veja [`robos.md`](robos.md)).
+   mercado). Os quatro mercados são coletados pela API pública
+   ([`coletor_por_api.md`](coletor_por_api.md)), em paralelo, na região de Betim (CEP fixo `32607600`; no Super ABC, a unidade de Betim, conferida a cada
+   carga). Até 24/11/2026 o **Super ABC** era coletado por robô; o site dele mudou e hoje ele tem API como os outros (os robôs de navegador só
+   voltam no modo antigo, `coleta = robos`, e informam o CEP **antes** de buscar, só seguindo se o site confirmar a localização: veja [`robos.md`](robos.md)).
 2. Define `uf_cobertura` e guarda tudo em memória, por mercado.
 3. Grava **um mercado por vez**, conforme o resultado da coleta (veja [A carga e as falhas](robos.md#a-carga-e-as-falhas)):
    insere os produtos novos (em lotes de 200) e só então apaga os antigos do mesmo mercado (`atualizado_em` anterior ao
@@ -228,12 +228,12 @@ limit 1000 offset <0, 1000, 2000, ...>;
    2. **EAN diferente, nome praticamente idêntico** (pontuação de similaridade 95 ou mais), mesma medida e
       mesmas tags, **em mercados diferentes**: junta. O mesmo produto às vezes tem um EAN em cada mercado (o do
       Apoio costuma diferir nos últimos dígitos). `Heineken Zero` e `Heineken` (pontuação ~86) ficam separados.
-   3. **Sem EAN** (o robô do Super ABC não o lê): entra no grupo mais parecido pelo nome, como sempre foi
+   3. **Sem EAN** (o produto sem código de barras válido, como o de balança): entra no grupo mais parecido pelo nome, como sempre foi
       (mesma medida, mesmas tags, similaridade a partir de 75).
 
    Nas três regras vale mais uma: **preço por quilo não se mistura com preço de pacote.** Um item com
    `unidade = kg` (hortifrúti vendido a peso) só entra num grupo de itens por quilo, e um que não é por quilo
-   (`un`, vazio, ou sem a informação, como o do Super ABC) só num grupo dos que não são. Sem isso, "Repolho Branco
+   (`un`, vazio ou sem a informação) só num grupo dos que não são. Sem isso, "Repolho Branco
    Quilo" (R$ 3,49 o quilo) se juntava a "Repolho Misto 200g" (R$ 11,99 o pacote). Ainda no hortifrúti, **o nome parecido não basta**:
    um produto de hortifrúti (o que a API marca com chave de equivalência `hortifruti|…`) só junta com quem tem a **mesma chave**, e não junta
    com quem não é hortifrúti. "Batata Doce Quilo" (Atacadão) e "Batata Doce Roxa 500g" (Supernosso) têm 85 de similaridade e são variedades

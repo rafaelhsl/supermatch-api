@@ -47,7 +47,11 @@ STATUS_QUE_REPETE = (408, 425, 429, 500, 502, 503, 504)
 
 
 class ErroDeColeta(Exception):
-    """A API não respondeu como esperado, mesmo depois de repetir."""
+    """A API não respondeu como esperado, mesmo depois de repetir. `status` é o código HTTP da última resposta, quando houve uma."""
+
+    def __init__(self, mensagem="", status=None):
+        super().__init__(mensagem)
+        self.status = status
 
 
 # ============================== rede ==============================
@@ -77,12 +81,12 @@ class ClienteHttp:
             except urllib.error.HTTPError as erro:
                 ultimo = erro
                 if erro.code not in STATUS_QUE_REPETE:
-                    raise ErroDeColeta(f"HTTP {erro.code} em {url[:140]}") from erro
+                    raise ErroDeColeta(f"HTTP {erro.code} em {url[:140]}", status=erro.code) from erro
             except (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError, OSError) as erro:
                 ultimo = erro
             if numero < self.tentativas:
                 time.sleep(self.espera * numero)
-        raise ErroDeColeta(f"sem resposta depois de {self.tentativas} tentativas ({ultimo!r}) em {url[:140]}")
+        raise ErroDeColeta(f"sem resposta depois de {self.tentativas} tentativas ({ultimo!r}) em {url[:140]}", status=getattr(ultimo, "code", None))
 
     def get_json(self, url, cabecalhos=None):
         return self._enviar(url, None, cabecalhos)
@@ -388,6 +392,12 @@ def sem_atacado_se_por_quilo(linha):
     return linha
 
 
+def consultas_do_termo(termo, mercado):
+    """O que a busca do `mercado` recebe para este termo: o campo `consultas_<mercado>` do termo, se houver (`consultas_super_abc`: o buscador
+    de cada site entende de um jeito, e "sal" que acha sal numa loja traz salame em outra); senão `consultas`; senão o nome do termo."""
+    return termo.get("consultas_" + sem_acento(mercado).replace(" ", "_")) or termo.get("consultas") or [termo["termo"]]
+
+
 def _casa(padroes, texto):
     return any(re.search(p, texto) for p in padroes or [])
 
@@ -448,7 +458,7 @@ def _coletar_mercado(http, mercado, termos, teto, ao_terminar_termo, baixadores,
                 continue
             try:
                 brutas = []
-                for consulta in termo.get("consultas") or [nome]:
+                for consulta in consultas_do_termo(termo, mercado):
                     brutas += baixadores[mercado](http, consulta)
                 escolhidas = [sem_atacado_se_por_quilo(linha) for linha in selecionar(brutas, termo, teto)]
             except ErroDeColeta as erro:

@@ -1,15 +1,16 @@
 """Carga diária: coleta os mercados e grava o banco de produtos e o histórico de preços.
 
-Apoio Entrega, Atacadão e Supernosso são coletados pela API pública (coletor_vtex.py, docs/coletor_por_api.md) e o Super ABC,
-que não tem API aberta, pelo robô (Scraper_SuperABC.py), com os 128 termos de dados/lista_de_produtos.json (100, de prateleira) e de
-dados/lista_hortifruti.json (28, frutas, verduras e legumes: o preço é por quilo, docs/hortifruti.md), numa coleta só.
+Os quatro mercados são coletados pela API pública, com os 128 termos de dados/lista_de_produtos.json (100, de prateleira) e de
+dados/lista_hortifruti.json (28, frutas, verduras e legumes: o preço é por quilo, docs/hortifruti.md), numa coleta só: Apoio Entrega,
+Atacadão e Supernosso por coletor_vtex.py e o Super ABC, desde o site novo dele (25/11/2026), por coletor_vip.py (docs/coletor_por_api.md).
 
 Quando uma parte da coleta falha, a carga não perde tudo nem grava dado duvidoso:
 - falharam poucos termos (até 10%): grava o que veio, mantém as linhas antigas dos termos que falharam e registra a coleta como
   "parcial" no histórico (produto que não apareceu não conta como "saiu");
 - falharam muitos, ou nada veio: não grava, mantém os dados antigos do mercado e a execução fica vermelha.
 
-COLETA_POR_API=0 volta ao modo antigo (robôs com os 11 itens de ITENS_PARA_BUSCAR em todos os mercados, tudo ou nada).
+COLETA_POR_API=0 volta ao modo antigo (robôs com os 11 itens de ITENS_PARA_BUSCAR em todos os mercados, tudo ou nada). O Super ABC não tem
+mais robô: nesse modo os 11 itens dele também vêm pela API.
 """
 import asyncio
 import math
@@ -24,9 +25,9 @@ from supabase import create_client
 from Scraper_Apoio_v2 import buscar_no_apoio
 from Scraper_Atacadao_v2 import buscar_no_atacadao
 from Scraper_Supernosso import buscar_no_supernosso
-from Scraper_SuperABC import buscar_na_plataforma_regex
 from robos_comum import FalhaNoRobo, com_novas_tentativas
 from historico import RepositorioSupabase, hoje_em_brasilia, normalizar_nome, registrar_falha, registrar_mercado
+import coletor_vip
 import coletor_vtex
 import disjuntor
 
@@ -53,9 +54,10 @@ CANAL_APOIO_BASE = "15"
 
 # Nome do mercado (como é gravado na coluna `supermercado`) -> UF que ele atende.
 MERCADOS = {"Apoio Entrega": "MG", "Atacadao": "BR", "Supernosso": "MG", "Super ABC": "MG"}
-MERCADOS_PELA_API = ("Apoio Entrega", "Atacadao", "Supernosso")
+MERCADOS_PELA_API = ("Apoio Entrega", "Atacadao", "Supernosso", "Super ABC")
 TAMANHO_LOTE = 200
-# Quantos navegadores do Super ABC ao mesmo tempo na lista de 100 termos (com 4 de uma vez o site ficava instável).
+# Quantos navegadores ao mesmo tempo, para um mercado que volte a ser coletado por robô (hoje nenhum: o Super ABC foi o último, com 3 por
+# vez, porque com 4 o site dele ficava instável).
 ROBOS_PARALELOS = int(os.environ.get("ROBOS_PARALELOS", "3"))
 # Até esta fração dos termos pode falhar e a carga ainda grava o que veio (coleta "parcial").
 TOLERANCIA_DE_TERMOS_COM_FALHA = 0.10
@@ -67,17 +69,27 @@ COLUNAS_NOVAS = ("ean", "marca", "categoria", "id_origem", "termo")
 # a carga funciona com ou sem ela, na ordem que o SQL e o código chegarem.
 COLUNAS_DA_UNIDADE = ("unidade",)
 
+
+async def super_abc_pela_api(item):
+    """O Super ABC não tem mais robô (o site novo não tem o botão de unidades que ele usava): no modo antigo, cada item dele também vem pela API."""
+    return await asyncio.to_thread(coletor_vip.baixar_super_abc, coletor_vtex.ClienteHttp(), item)
+
+
 # Um robô por mercado, já com repetição automática para falha passageira (site lento).
 ROBOS = {
     "Apoio Entrega": lambda item: com_novas_tentativas(buscar_no_apoio, cep_usuario=CEP_BASE, item_usuario=item, canal_de_vendas=CANAL_APOIO_BASE),
     "Atacadao": lambda item: com_novas_tentativas(buscar_no_atacadao, cep_usuario=CEP_BASE, item_usuario=item),
     "Supernosso": lambda item: com_novas_tentativas(buscar_no_supernosso, cep_usuario=CEP_BASE, item_usuario=item),
-    "Super ABC": lambda item: com_novas_tentativas(buscar_na_plataforma_regex, "https://superabconline.com.br/", "Super ABC", item, cep_usuario=CEP_BASE, tentativas=3),
+    "Super ABC": super_abc_pela_api,
 }
 
 # SO_MERCADOS="Apoio Entrega" (vários, separados por vírgula) roda a carga só desses mercados; vazio = todos.
 # Serve para refazer um mercado que falhou sem mexer nos outros.
 ESCOLHIDOS = [nome.strip() for nome in os.environ.get("SO_MERCADOS", "").split(",") if nome.strip()]
+
+
+# Quem baixa cada mercado pela API: os três da VTEX (coletor_vtex.py) e o Super ABC (coletor_vip.py).
+BAIXADORES_DA_CARGA = {**coletor_vtex.BAIXADORES, **coletor_vip.BAIXADORES}
 
 
 def mercados_da_carga():
@@ -118,6 +130,7 @@ def avaliar_coleta(produtos, termos_total, termos_falhos, tolerancia=TOLERANCIA_
 def coletas_pela_api(mercados, termos, teto, http=None, baixadores=None, **opcoes):
     """Coleta os mercados pela API pública. -> {mercado: Coleta}. Bloqueante (rodar numa linha de execução à parte)."""
     http = http or coletor_vtex.ClienteHttp()
+    baixadores = baixadores or BAIXADORES_DA_CARGA
 
     def progresso(mercado, termo, brutos, escolhidas):
         print(f"   ✅ {mercado} '{termo['termo']}': {len(escolhidas)} itens ({brutos} lidos)", flush=True)
@@ -338,14 +351,13 @@ def gravar_coletas(banco, coletas, inicio, dia):
 
 # ============================== a carga ==============================
 
-def alvos_da_lista(termos):
-    """O robô busca pelo nome do termo, ou pelas `consultas_robo` dele quando o buscador do site não entende o nome da lista
-    (ex.: "sal" no Super ABC traz salame; "sal refinado" traz sal). O filtro do termo tira o ruído do resultado."""
-    return [(t["termo"], consulta, t) for t in termos for consulta in (t.get("consultas_robo") or [t["termo"]])]
+def alvos_da_lista(termos, mercado):
+    """O que o robô do `mercado` busca em cada termo: as consultas dele (`coletor_vtex.consultas_do_termo`). O filtro do termo tira o ruído."""
+    return [(t["termo"], consulta, t) for t in termos for consulta in coletor_vtex.consultas_do_termo(t, mercado)]
 
 
 async def coletar_tudo(mercados):
-    """{mercado: Coleta}. Pela API, os três mercados com API ao mesmo tempo e o Super ABC por robô; no modo antigo, só robôs."""
+    """{mercado: Coleta}. Pela API, os quatro mercados ao mesmo tempo (cada um numa linha de execução); no modo antigo, só robôs."""
     if not COLETA_POR_API:
         print(f"ℹ️  COLETA_POR_API=0: modo antigo, robôs com {len(ITENS_PARA_BUSCAR)} itens, tudo ou nada.")
         alvos = [(item, item, None) for item in ITENS_PARA_BUSCAR]
@@ -361,7 +373,7 @@ async def coletar_tudo(mercados):
     if pela_api:
         tarefas.append(asyncio.to_thread(coletas_pela_api, pela_api, termos, teto))
     for mercado in por_robo:
-        tarefas.append(coletar_por_robo(mercado, alvos_da_lista(termos), paralelo=ROBOS_PARALELOS))
+        tarefas.append(coletar_por_robo(mercado, alvos_da_lista(termos, mercado), paralelo=ROBOS_PARALELOS))
     coletas = {}
     for resultado in await asyncio.gather(*tarefas):
         coletas.update(resultado if isinstance(resultado, dict) else {resultado.mercado: resultado})

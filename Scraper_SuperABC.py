@@ -1,3 +1,9 @@
+"""OBSOLETO desde 25/11/2026: o robô antigo do Super ABC (site superabconline.com.br, plataforma anterior).
+
+O Super ABC trocou de site (www.abcdelivery.com.br, VIP Commerce) e o botão de unidades que este robô procura não existe mais; a carga diária o
+coleta pela API da loja (coletor_vip.py, docs/coletor_por_api.md). Este arquivo só continua porque levantar_entrega.py ainda o importa e precisa
+ser migrado para a lista de unidades da loja; depois disso, apague-o junto com tests/test_super_abc_unidade.py.
+"""
 import asyncio
 import re
 from playwright.async_api import async_playwright

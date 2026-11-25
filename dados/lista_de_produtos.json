@@ -156,10 +156,6 @@
    ],
    "consultas": [
     "sal"
-   ],
-   "consultas_robo": [
-    "sal refinado",
-    "sal grosso"
    ]
   },
   {
@@ -1248,10 +1244,6 @@
    "consultas": [
     "lava roupas em pó",
     "sabão em pó"
-   ],
-   "consultas_robo": [
-    "sabão em pó",
-    "lava roupas pó"
    ]
   },
   {
@@ -1269,10 +1261,6 @@
    ],
    "consultas": [
     "líquido"
-   ],
-   "consultas_robo": [
-    "sabão líquido",
-    "lava roupas líquido"
    ]
   },
   {
@@ -1290,9 +1278,6 @@
    ],
    "consultas": [
     "sabão em barra"
-   ],
-   "consultas_robo": [
-    "sabão barra"
    ]
   },
   {
@@ -1445,9 +1430,6 @@
    ],
    "consultas": [
     "álcool"
-   ],
-   "consultas_robo": [
-    "álcool líquido"
    ]
   },
   {
@@ -1598,9 +1580,6 @@
    ],
    "consultas": [
     "escova"
-   ],
-   "consultas_robo": [
-    "escova dental"
    ]
   },
   {
@@ -1819,9 +1798,6 @@
    "categorias": [],
    "consultas": [
     "ração para gatos"
-   ],
-   "consultas_robo": [
-    "ração gatos"
    ]
   },
   {

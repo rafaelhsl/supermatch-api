@@ -1,13 +1,13 @@
 name: Coletor por API (teste, não grava em banco)
 
-# Só leitura: roda o coletor por API (coletor_vtex.py) com a lista inteira e guarda o resultado como arquivo da execução.
+# Só leitura: roda os coletores por API (coletor_vtex.py, e coletor_vip.py para o Super ABC) com a lista inteira e guarda o resultado como arquivo da execução.
 # Serve para conferir, do servidor do GitHub, se as APIs públicas dos mercados respondem como respondem no computador.
 # Não usa segredo nenhum e não escreve no Supabase.
 on:
   workflow_dispatch:
     inputs:
       termos:
-        description: 'Só estes termos da lista (separados por vírgula). Vazio = os 100.'
+        description: 'Só estes termos da lista (separados por vírgula). Vazio = todos os 128.'
         required: false
         default: ''
 
@@ -34,6 +34,17 @@ jobs:
           python coletor_vtex.py --saida coleta.json | tee relatorio.txt
         fi
 
+    - name: Coletando o Super ABC pela API da loja (sem banco)
+      if: always()
+      env:
+        TERMOS: ${{ github.event.inputs.termos }}
+      run: |
+        if [ -n "$TERMOS" ]; then
+          python coletor_vip.py --termos "$TERMOS" --saida coleta-super-abc.json | tee relatorio-super-abc.txt
+        else
+          python coletor_vip.py --saida coleta-super-abc.json | tee relatorio-super-abc.txt
+        fi
+
     - name: Guardando o resultado
       if: always()
       uses: actions/upload-artifact@v7
@@ -42,4 +53,6 @@ jobs:
         path: |
           coleta.json
           relatorio.txt
+          coleta-super-abc.json
+          relatorio-super-abc.txt
         if-no-files-found: ignore
