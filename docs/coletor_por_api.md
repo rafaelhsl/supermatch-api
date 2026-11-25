@@ -118,7 +118,7 @@ Executada no GitHub em 05/11/2026 ([run 42007495508](https://github.com/rafaelhs
 - **Termos que se sobrepõem**: o mesmo produto pode aparecer em dois termos (por exemplo, "Leite em Pó Integral" em "leite integral" e "leite em pó", embora o filtro tente separar). Na carga, a linha vale uma vez por mercado.
 - **Hortifrúti** entra na carga diária desde 18/11/2026, com a própria lista (`dados/lista_hortifruti.json`, 28 termos) coletada **junto** com a de 100 (`carregar_lista_da_carga`): é preciso o campo `unidade`, a equivalência e o "/kg" no site, e as três existem. O resto do **peso variável** (queijo e frios a peso, carne moída, frango) continua de fora: veja [`hortifruti.md`](hortifruti.md).
 - O catálogo do Apoio muda de região para região (canal de vendas); o coletor usa o de Betim, como a carga diária.
-- **`levantar_entrega.py` ainda usa o robô antigo do Super ABC** (`Scraper_SuperABC.py`), que não funciona mais no site novo: o levantamento de entrega por cidade do Super ABC precisa ser refeito com a lista de unidades da loja (`.../loja/centros_distribuicoes/retiradas`). A tabela já levantada (`dados/entrega_por_cidade.json`) continua valendo, e a carga diária não usa esse robô.
+- **O levantamento de entrega por cidade** (`levantar_entrega.py`) também deixou o robô antigo: para o Super ABC ele descobre a cidade do CEP e procura, na lista de unidades da loja (`.../loja/centros_distribuicoes/retiradas`, com cidade e estado de cada uma), uma unidade ali; achando, busca "arroz" nela. Refeito em 25/11/2026, deu a mesma tabela de antes (só Belo Horizonte e Betim têm unidade entre as 14 cidades). O arquivo do robô (`Scraper_SuperABC.py`) foi apagado.
 
 ## Próximos passos
 

@@ -1,6 +1,6 @@
 # Entrega por cidade
 
-Quais mercados entregam em cada uma das 14 cidades atendidas pelo Supermatch. Gerado por [`levantar_entrega.py`](../levantar_entrega.py), que informa CEPs reais de bairros diferentes em cada site e anota o que ele respondeu. Última sondagem: 2026-10-30. Os sites mudam: para atualizar, rode o script de novo.
+Quais mercados entregam em cada uma das 14 cidades atendidas pelo Supermatch. Gerado por [`levantar_entrega.py`](../levantar_entrega.py), que informa CEPs reais de bairros diferentes em cada site e anota o que ele respondeu. Última sondagem: Apoio Entrega 2026-10-30; Atacadão 2026-10-30; Supernosso 2026-10-30; Super ABC 2026-11-25. Os sites mudam: para atualizar, rode o script de novo.
 
 ## Resumo
 
@@ -25,9 +25,9 @@ Cada célula diz quantos dos CEPs sondados na cidade o site aceitou. **Entrega**
 
 ## Como foi feito
 
-- Para cada CEP e cada mercado, o levantamento roda o **mesmo robô da carga diária** (busca de "arroz"). O robô informa o CEP e só segue se o site o assumir; é essa resposta que vira a tabela. Nada é gravado no banco.
+- Para cada CEP e cada mercado, o levantamento roda o **robô do mercado** (busca de "arroz"). O robô informa o CEP e só segue se o site o assumir; é essa resposta que vira a tabela. Nada é gravado no banco.
 - **Atacadão, Apoio e Supernosso** respondem por CEP. O Supernosso e o Atacadão dizem de forma explícita que não atendem ("Ainda não atendemos essa região"). O Apoio não diz nada: o painel fica girando sem responder. Por isso o "não" do Apoio (**não assumiu o CEP**) só vale depois de repetido; aqui foi repetido três vezes, e uma delas esperando 40 s.
-- **Super ABC** não localiza por CEP: o robô escolhe a unidade da cidade do CEP. "Não entrega" quer dizer que **não há unidade do Super ABC naquela cidade**. Uma unidade vizinha pode entregar lá, mas o site não deixa conferir.
+- **Super ABC** não localiza por CEP, e não é sondado por robô de navegador: o levantamento descobre a cidade do CEP e procura, na lista de unidades da loja (a mesma API que a carga diária usa), uma unidade nessa cidade; achando, busca "arroz" nela. "Não entrega" quer dizer que **não há unidade do Super ABC naquela cidade**. Uma unidade vizinha pode entregar lá, mas a loja não deixa conferir. (Até 24/11/2026 isso era feito por um robô, que escolhia a unidade no site.)
 - Os CEPs são de ruas e bairros reais (veja abaixo). Cidades grandes têm mais CEPs, porque os sites decidem por CEP e a resposta pode mudar de bairro para bairro. Em São Joaquim de Bicas e Sarzedo, que têm CEP único, a amostra é o CEP geral e o do Centro.
 
 ## Limites desta tabela
@@ -44,7 +44,7 @@ Cada célula diz quantos dos CEPs sondados na cidade o site aceitou. **Entrega**
 
 | CEP | Bairro | Apoio Entrega | Atacadão | Supernosso | Super ABC |
 |---|---|---|---|---|---|
-| 30130-010 | Centro | entrega | entrega (Pampulha) | entrega | entrega (Barreiro - BH Belo Horizonte) |
+| 30130-010 | Centro | entrega | entrega (Pampulha) | entrega | entrega (Belo Horizonte - Horto) |
 | 30140-008 | Savassi | entrega | entrega (Pampulha) | entrega | mesma da cidade |
 | 31340-505 | Bandeirantes (Pampulha) | entrega | entrega (Pampulha) | entrega | mesma da cidade |
 | 31610-070 | Venda Nova | entrega | entrega (Pampulha) | entrega | mesma da cidade |
@@ -58,7 +58,7 @@ Cada célula diz quantos dos CEPs sondados na cidade o site aceitou. **Entrega**
 
 | CEP | Bairro | Apoio Entrega | Atacadão | Supernosso | Super ABC |
 |---|---|---|---|---|---|
-| 32600-055 | Centro | entrega | entrega (Betim) | entrega | entrega (Betim Betim) |
+| 32600-055 | Centro | entrega | entrega (Betim) | entrega | entrega (Betim) |
 | 32607-600 | Teixeirinha | entrega | entrega (Betim) | entrega | mesma da cidade |
 | 32678-166 | Granja Verde | entrega | entrega (Contagem) | entrega | mesma da cidade |
 

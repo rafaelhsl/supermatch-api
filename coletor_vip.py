@@ -85,8 +85,8 @@ def unidade_da_lista(unidades, centro=CENTRO_DE_BETIM, nome=NOME_DA_UNIDADE):
     raise ErroDeColeta(f"a unidade {centro} do Super ABC (Betim) não está mais na lista de unidades da loja: nenhum preço foi coletado")
 
 
-def entrar(http, centro=CENTRO_DE_BETIM, nome=NOME_DA_UNIDADE):
-    """Login anônimo + sessão + conferência da unidade. -> cabeçalhos das buscas."""
+def entrar_sem_unidade(http):
+    """Login anônimo + sessão, sem escolher unidade. -> cabeçalhos das chamadas da loja."""
     base = cabecalhos_basicos()
     try:
         token = _dado(http.post_json(f"{API}/auth/loja/login", {"domain": DOMINIO, "username": USUARIO, "key": CHAVE_DO_SITE}, base), "o login anônimo")
@@ -100,9 +100,41 @@ def entrar(http, centro=CENTRO_DE_BETIM, nome=NOME_DA_UNIDADE):
         cabecalhos["sessao-id"] = _dado(http.get_json(f"{API}/loja/sessao_cliente", cabecalhos), "a sessão")["sessao_id"]
     except (ErroDeColeta, KeyError, TypeError) as erro:
         _avisar(http, f"Super ABC: sem sessão da loja ({str(erro)[:100]}); as buscas seguem sem ela")
-    unidades = _dado(http.get_json(f"{API}/filial/{FILIAL}/loja/centros_distribuicoes/retiradas", cabecalhos), "a lista de unidades")
-    print(f"📍 Super ABC: unidade confirmada: {unidade_da_lista(unidades, centro, nome)}", flush=True)
     return cabecalhos
+
+
+def lista_de_unidades(http, cabecalhos):
+    """As unidades da loja (22 em 25/11/2026), cada uma com `id`, `nome_site`, `ativo` e `endereco` (`cidade` e `estado` por extenso)."""
+    return _dado(http.get_json(f"{API}/filial/{FILIAL}/loja/centros_distribuicoes/retiradas", cabecalhos), "a lista de unidades")
+
+
+def entrar(http, centro=CENTRO_DE_BETIM, nome=NOME_DA_UNIDADE):
+    """Login anônimo + sessão + conferência da unidade. -> cabeçalhos das buscas."""
+    cabecalhos = entrar_sem_unidade(http)
+    print(f"📍 Super ABC: unidade confirmada: {unidade_da_lista(lista_de_unidades(http, cabecalhos), centro, nome)}", flush=True)
+    return cabecalhos
+
+
+UF_DO_ESTADO = {"acre": "AC", "alagoas": "AL", "amapa": "AP", "amazonas": "AM", "bahia": "BA", "ceara": "CE", "distrito federal": "DF", "espirito santo": "ES",
+                "goias": "GO", "maranhao": "MA", "mato grosso": "MT", "mato grosso do sul": "MS", "minas gerais": "MG", "para": "PA", "paraiba": "PB", "parana": "PR",
+                "pernambuco": "PE", "piaui": "PI", "rio de janeiro": "RJ", "rio grande do norte": "RN", "rio grande do sul": "RS", "rondonia": "RO", "roraima": "RR",
+                "santa catarina": "SC", "sao paulo": "SP", "sergipe": "SE", "tocantins": "TO"}
+
+
+def unidade_da_cidade(unidades, cidade, uf):
+    """A primeira unidade ativa da loja na cidade `cidade`/`uf` (o endereço dela traz a cidade e o estado por extenso), ou None se não há.
+
+    Serve ao levantamento de onde o Super ABC entrega (levantar_entrega.py): o site não localiza por CEP, e quem atende uma cidade é a unidade
+    que fica nela. Compara sem acento e sem diferença de caixa; o estado entra na conta porque há cidades com o mesmo nome em estados diferentes.
+    """
+    for unidade in unidades or []:
+        endereco = unidade.get("endereco") or {}
+        estado = sem_acento(str(endereco.get("estado") or ""))
+        uf_da_unidade = UF_DO_ESTADO.get(estado, estado.upper())
+        if (unidade.get("ativo") is not False and sem_acento(str(endereco.get("cidade") or "")) == sem_acento(str(cidade))
+                and uf_da_unidade == str(uf).upper()):
+            return unidade
+    return None
 
 
 def _limpar_nome(texto):
