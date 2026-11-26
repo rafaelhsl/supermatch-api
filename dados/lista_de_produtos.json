@@ -881,15 +881,18 @@
    "termo": "queijo mussarela",
    "grupo": "Laticínios e frios",
    "nome_inclui": [
-    "^queijo(?=.*mussarela)|^mussarela"
+    "^queijo(?=.*(?:mussarela|mucarela))|^(?:mussarela|mucarela)"
    ],
-   "nome_exclui": [],
+   "nome_exclui": [
+    "vegano|castanha"
+   ],
    "categorias": [],
    "categorias_proibidas": [
     "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
    ],
    "consultas": [
-    "mussarela"
+    "mussarela",
+    "muçarela"
    ]
   },
   {
@@ -945,7 +948,7 @@
    "termo": "frango congelado",
    "grupo": "Carnes e congelados",
    "nome_inclui": [
-    "^(frango (inteiro|a passarinho|em pedacos|congelado)|coxa|sobrecoxa|asa|meio da asa|coxinha da asa|passarinho|figado de frango|moela)"
+    "^(frango (inteiro|a passarinho|em pedacos|congelado|caipira)|coxa|sobrecoxa|asa|meio da asa|coxinha da asa|passarinho|figado de frango|moela)"
    ],
    "nome_exclui": [
     "empanad|nugget|steak|hamburguer|mortadela|salsicha|linguica|torta|pizza|folhado|pao|caldo|tempero|molho|salgad|lasanha|recheado|bolinho"
@@ -1060,7 +1063,8 @@
    "nome_exclui": [],
    "categorias": [
     "^carnes,\\ aves\\ e\\ peixes\\ >\\ secas,\\ salgadas\\ e\\ defumadas\\ >\\ bacon(?: > |$)",
-    "^aves,\\ carnes\\ e\\ peixes\\ >\\ salsichas,\\ linguicas\\ e\\ embutidos(?: > |$)"
+    "^aves,\\ carnes\\ e\\ peixes\\ >\\ salsichas,\\ linguicas\\ e\\ embutidos(?: > |$)",
+    "^acougue\\ >\\ salsichas\\ e\\ linguicas(?: > |$)"
    ],
    "categorias_proibidas": [
     "cabelo|cuidado com|corpo|higiene|beleza|perfum|automotiv|motor|racao|animais|utensilio|vestuario|calcado|brinquedo|papelaria|farmacia|suplement|bomboniere|embalagens|descartav|limpeza|para casa|para cozinha|para banheiro|para roupas"
