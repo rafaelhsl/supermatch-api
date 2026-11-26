@@ -127,6 +127,9 @@ CASOS = {
         ["Ovos Planalto Vermelho Cage Free 20 Unidades", "Ovos Vermelhos Cage Free 20 Unidades"],                                  # adaptado: o 2º é de outra marca
         # ---- hortifrúti (sem a unidade; os casos com a unidade estão em tests/test_equivalencia_hortifruti.py)
         ["Banana Prata Sn 1Kg", "Banana Prata Bandeja 1Kg"],                                                                       # adaptado: o 2º, em bandeja de 1 kg
+        # ---- cortes de carne e queijos a peso (sem a unidade, só o embalado de peso fixo; os casos por quilo estão em tests/test_equivalencia_carnes.py)
+        ["Queijo Minas Padrão Itambé Fatiado 150g", "QUEIJO MINAS PADRÃO FATIADO 150G", "Queijo Minas Padrao President 150g Fat"],
+        ["Queijo Parmesão Galbani 180g", "Queijo Parmesão Président Cilindro 180g", "Queijo Parmesão Fracionado Itambé 180g"],
     ],
     "separam": [
         ("Leite UHT Integral Itambé Caixa com Tampa 1l", "Leite UHT Desnatado Itambé Caixa com Tampa 1l"),

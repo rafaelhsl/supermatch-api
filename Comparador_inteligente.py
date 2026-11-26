@@ -71,12 +71,16 @@ def _medidas_conflitam(medida_a, medida_b):
     return bool(medida_a and medida_b and medida_a != medida_b)
 
 
-def _chave_do_hortifruti(produto):
-    """A chave de equivalência do produto, se ele é hortifrúti (a API a calcula antes de agrupar). Hortifrúti não tem marca nem EAN confiável:
-    o nome parecido não basta ("Batata Doce Quilo" e "Batata Doce Roxa 500g" têm 85 de similaridade e são variedades diferentes). Só junta com
-    quem tem a MESMA chave; um hortifrúti também não junta com quem não é (um processado, um produto fora da tabela)."""
+FAMILIAS_QUE_TRAVAM_O_AGRUPAMENTO = ('hortifruti|', 'carnes_a_peso|')
+
+
+def _chave_travada(produto):
+    """A chave de equivalência do produto, se ele é hortifrúti ou corte de carne e queijo a peso (a API a calcula antes de agrupar). Esses produtos não
+    têm marca nem EAN confiável, e o nome parecido não basta: "Batata Doce Quilo" e "Batata Doce Roxa 500g" têm 85 de similaridade e são variedades
+    diferentes; "Picanha Angus Cong 1Kg" e "Picanha Fatiada 1Kg" são parecidos no nome e não no preço (premium e congelado nunca disputam o "mais barato"
+    com o comum e o fresco). Só junta com quem tem a MESMA chave; um deles também não junta com quem não é (um processado, um produto fora da tabela)."""
     chave = produto.get('chave_equivalencia') or ''
-    return chave if chave.startswith('hortifruti|') else None
+    return chave if chave.startswith(FAMILIAS_QUE_TRAVAM_O_AGRUPAMENTO) else None
 
 
 def _por_quilo(produto):
@@ -117,7 +121,7 @@ def _juntar_grupos_de_ean_diferente(grupos, limite=LIMITE_NOME_IDENTICO):
                 continue
             if set(grupo['opcoes_dict']) & set(outro['opcoes_dict']) or _medidas_conflitam(grupo['medida'], outro['medida']):
                 continue
-            if grupo['por_quilo'] != outro['por_quilo'] or grupo['chave_hortifruti'] != outro['chave_hortifruti']:
+            if grupo['por_quilo'] != outro['por_quilo'] or grupo['chave_travada'] != outro['chave_travada']:
                 continue
             if grupo['tags'] != outro['tags'] and grupo['tags'] and outro['tags']:
                 continue
@@ -159,7 +163,7 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
                 "tags": extrair_tags_chave(produto['nome']),
                 "ean": produto['ean'],
                 "por_quilo": _por_quilo(produto),
-                "chave_hortifruti": _chave_do_hortifruti(produto),
+                "chave_travada": _chave_travada(produto),
                 "opcoes_dict": {},
             }
             candidatos.append(grupo)
@@ -190,7 +194,7 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
                 continue
 
             # 1b. Preço por quilo nunca se mistura com preço de pacote (veja _por_quilo)
-            if _por_quilo(produto) != grupo['por_quilo'] or _chave_do_hortifruti(produto) != grupo['chave_hortifruti']:
+            if _por_quilo(produto) != grupo['por_quilo'] or _chave_travada(produto) != grupo['chave_travada']:
                 continue
 
             # 2. Se um for "Grão" e o outro "Pó" (ou Extraforte vs Tradicional), bloqueia!
@@ -210,7 +214,7 @@ def cruzar_multiplos_produtos(lista_de_resultados_dos_robos, limite_confianca=75
                 "medida": medida_produto,
                 "tags": tags_produto,
                 "por_quilo": _por_quilo(produto),
-                "chave_hortifruti": _chave_do_hortifruti(produto),
+                "chave_travada": _chave_travada(produto),
                 "opcoes_dict": { produto['supermercado']: produto }
             })
 

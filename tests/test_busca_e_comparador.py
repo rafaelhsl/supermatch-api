@@ -446,6 +446,49 @@ def teste_hortifruti_com_ean_diferente_so_junta_com_a_mesma_chave():
     assert len(sem_chave) == 2
 
 
+# ============================== cortes de carne e queijos a peso também só juntam com a mesma chave ==============================
+
+def sem_chave(*produtos):
+    return [{k: v for k, v in p.items() if k != "chave_equivalencia"} for p in produtos]
+
+
+def teste_corte_premium_nao_junta_com_o_comum_mesmo_com_nome_parecido():
+    # decisão de 26/11/2026: premium e congelado nunca disputam o "mais barato" com o comum e o fresco
+    premium = hf("Picanha Bassi Resfriada 1Kg", mercado="Supernosso", preco=144.99)
+    comum = hf("Picanha A Resfriada 1Kg", mercado="Apoio Entrega", preco=69.99)
+    assert len(comp.cruzar_multiplos_produtos([sem_chave(premium, comum)])) == 1           # sem a chave, o nome parecido os juntaria (prova de que a trava vale)
+    grupos = comp.cruzar_multiplos_produtos([[premium, comum]])
+    assert len(grupos) == 2 and all(len(g["opcoes_de_compra"]) == 1 for g in grupos)
+    congelado = hf("Picanha Angus Cong 1Kg", mercado="Supernosso", preco=259.99)
+    fatiada = hf("Picanha Fatiada 1Kg", mercado="Apoio Entrega", preco=45.99)
+    assert len(comp.cruzar_multiplos_produtos([[congelado, fatiada]])) == 2
+
+
+def teste_queijo_minas_light_ou_de_outro_tipo_nao_junta_com_o_padrao():
+    padrao = hf("Queijo Minas Padrão 500g", mercado="Apoio Entrega", preco=40.0)
+    light = hf("Queijo Minas Padrão Light 500g", mercado="Supernosso", preco=50.0)
+    assert len(comp.cruzar_multiplos_produtos([sem_chave(padrao, light)])) == 1
+    assert len(comp.cruzar_multiplos_produtos([[padrao, light]])) == 2
+    assert len(comp.cruzar_multiplos_produtos([[padrao, hf("Queijo Minas Frescal 500g", mercado="Supernosso", preco=30.0)]])) == 2
+
+
+def teste_corte_da_mesma_chave_continua_juntando_pelo_nome():
+    grupos = comp.cruzar_multiplos_produtos([[
+        hf("Picanha A Resfriada 1Kg", mercado="Apoio Entrega", preco=89.99),
+        hf("Picanha A Resfriada 1Kg", mercado="Supernosso", preco=69.99),
+        hf("Picanha A Resfriada 1Kg", mercado="Atacadao", preco=79.9),
+    ]])
+    assert len(grupos) == 1 and len(grupos[0]["opcoes_de_compra"]) == 3 and "Supernosso" in grupos[0]["vencedor_preco_baixo"]
+
+
+def teste_corte_nao_junta_com_quem_nao_e_o_corte():
+    grupos = comp.cruzar_multiplos_produtos([[
+        hf("Alcatra Peça 1Kg", mercado="Apoio Entrega", preco=55.0),
+        hf("Alcatra Suína Peça 1Kg", mercado="Supernosso", preco=25.0),                          # a mesma peça de porco: sem chave
+    ]])
+    assert len(grupos) == 2
+
+
 def teste_produto_comum_nao_depende_da_chave():
     # sem chave de hortifrúti nenhuma, nada muda (o agrupamento de sempre)
     grupos = comp.cruzar_multiplos_produtos([[

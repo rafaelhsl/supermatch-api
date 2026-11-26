@@ -794,6 +794,100 @@ def _hortifruti(t, unidade=None):
 
 FAMILIAS.append(Familia("hortifruti", "frutas, verduras e legumes", lambda t: _produto_do_hortifruti(t) is not None, _hortifruti, usa_unidade=True))
 
+# ============================== sétima leva: cortes de carne e queijos a peso ==============================
+# Uma família só, como a do hortifrúti, para os produtos da lista de carnes e frios a peso (docs/carnes_e_frios.md): oito cortes bovinos (patinho, acém, coxão mole, músculo,
+# alcatra, fraldinha, picanha, contra filé) e os queijos minas e parmesão. A chave junta o corte (ou o tipo do queijo) e o que muda o preço do quilo:
+#  - a FORMA (peça, fatiada, bife, cubos, moída; o queijo, fatiado, fração, cilindro...), o ESTADO (congelado; o resto vale como resfriado), o TEMPERO e a FAIXA
+#    DE QUALIDADE ("premium" é o que o nome diz: Angus, Wagyu, Reserva, Maturatta...). Premium e congelado NUNCA se juntam com o comum e o fresco;
+#  - o preço POR QUILO (unidade "kg": o preço é de 1 kg, seja qual for o peso do nome, que é o da porção) vale "1 kg"; o embalado de peso fixo ("un") vale o peso do nome.
+# Sem peso (por quilo ou no nome), ou com o nome de outra coisa (a mesma peça de porco, o queijo ralado, o vegano), o produto fica sem chave: só aparece no modo exato.
+# Veja docs/carnes_e_frios.md.
+
+_PREFIXO_DE_CORTE = r"(?:carne\s+)?(?:bovina\s+|bovino\s+|bov\s+)?(?:bife\s+(?:de\s+)?|steak\s+)?"
+# (id, rótulo, gênero, o corte depois do prefixo, partes do mesmo corte: (regex, nome)). Em alcatra, "miolo", "bombom" e "coração" são partes; em acém, o "miolo".
+_CORTES_BOVINOS = [
+    ("patinho", "Patinho", "m", r"patinho", []),
+    ("acem", "Acém", "m", r"(?:miolo\s+(?:de\s+|do\s+)?)?acem", [(r"miolo", "miolo")]),
+    ("coxao mole", "Coxão mole", "m", r"coxao\s+mole", []),
+    ("musculo", "Músculo", "m", r"musculo", []),
+    ("alcatra", "Alcatra", "f", r"(?:(?:miolo|bombom|coracao)\s+(?:de\s+|da\s+)?)?alcatra", [(r"miolo", "miolo"), (r"bombom", "bombom"), (r"coracao", "coração")]),
+    ("fraldinha", "Fraldinha", "f", r"fraldinha", []),
+    ("picanha", "Picanha", "f", r"picanha", []),
+    ("contra file", "Contra filé", "m", r"contra\s?file", []),
+]
+_FORMAS_DE_CORTE = [(r"moid", ("moída", "moído")), (r"\bcubos?\b|strog", ("em cubos", "em cubos")), (r"\bbifes?\b|steak|babybeef", ("em bifes", "em bifes")),
+                    (r"fatiad|\bfat\b", ("fatiada", "fatiado")), (r"\bpeca\b|pedaco|inteir|noix|principal|porcionad|\bporc\b", ("em peça", "em peça"))]
+# O que o nome diz de qualidade. Uma marca premium que o nome não traz (um açougue de grife sem a palavra) fica entre os comuns: o preço dela aparece como o de um comum.
+_PREMIUM_DE_CORTE = r"angus|wagyu|kobe|carapreta|reserva|maturatta|maturad|premium|gourmet|\bprime\b|dry ?aged|bassi"
+_CONGELADO = r"\bcong\b|congelad|congela\b"
+_TEMPERADO = r"temperad|\btemp\b"
+
+
+def _corte_bovino(t):
+    for corte in _CORTES_BOVINOS:
+        if re.match(_PREFIXO_DE_CORTE + corte[3] + r"\b", t):
+            return corte
+    return None
+
+
+def _tipo_de_queijo(t):
+    if re.match(r"queijo\s+(?:supernosso\s+|abc\s+)?minas\b", t):
+        return "minas"
+    if re.match(r"(?:queijo\s+)?parmesao\b", t):
+        return "parmesao"
+    return None
+
+
+def _a_peso(t):
+    return _corte_bovino(t) or _tipo_de_queijo(t)
+
+
+def _concorda(par, genero):
+    return par[0] if genero == "f" else par[1]
+
+
+def _carne_ou_queijo_a_peso(t, unidade=None):
+    """Corte bovino ou queijo minas ou parmesão: o que o nome diz sobre forma, estado, tempero e faixa de qualidade, e o peso (1 kg por quilo; o do nome no embalado)."""
+    produto = _a_peso(t)
+    t = re.sub(r"\b\d+ a \d+ unidades?\b", " ", t)           # "500 g (1 a 2 unidades)": o Super ABC diz quantas vêm, e não é um multipacote
+    if produto is None or re.search(r"suin|ralad|\bral\b|vegano|castanha", t) or re.search(_MULTIPACOTE, t):
+        return None
+    if unidade == "kg":                                          # o preço é de 1 kg, seja qual for o peso que o nome cita (ele é o de cada porção)
+        m = (True, 1000)
+    else:
+        m = medida(t, "massa", varrer=True)
+        if m is None:
+            return None
+    if isinstance(produto, tuple):
+        id_, nome, genero, _, partes = produto
+        parte = escolher(t, partes, "")
+        forma = escolher(t, [(padrao, _concorda(par, genero)) for padrao, par in _FORMAS_DE_CORTE], "")
+        peso_do_nome = medida(t, "massa", varrer=True)
+        if not forma and peso_do_nome and peso_do_nome[1] >= 1000:      # sem a forma no nome, uma porção de 1 kg ou mais de corte é a peça ("Picanha Montana 1.5Kg")
+            forma = "em peça"
+        congelado = re.search(_CONGELADO, t) is not None
+        temperado = re.search(_TEMPERADO, t) is not None
+        premium = re.search(_PREMIUM_DE_CORTE, t) is not None
+        palavras = [nome + (f" {parte}" if parte else ""), forma, ("congelada" if genero == "f" else "congelado") if congelado else "",
+                    ("temperada" if genero == "f" else "temperado") if temperado else "", "premium" if premium else ""]
+        partes_da_chave = ["corte", id_, parte, forma, "congelado" if congelado else "", "temperado" if temperado else "", "premium" if premium else ""]
+        return _Analise(partes_da_chave, m, " ".join(p for p in palavras if p))
+    if produto == "minas":
+        tipo = escolher(t, [(r"frescal", "frescal"), (r"meia cura|\bmc\b|semi ?curad", "meia cura"), (r"curad|maturad", "curado"), (r"padrao|\bpad\b", "padrão")], "")
+        especiais = _todos(t, [(r"zero lactose|sem lactose|lacfree|zero lact\b", "zero lactose"), (r"light", "light"), (r"artesanal", "artesanal"), (r"bufala|bufalo", "de búfala"),
+                               (r"defumad", "defumado"), (r"acafrao|pimenta|pimentinha|cachaca|condimentad|calamel|\bmel\b|ervas|temperad", "temperado")])
+        fatiado = re.search(r"fatiad|\bfat\b", t) is not None
+        palavras = ["Queijo minas", tipo, "fatiado" if fatiado else "", especiais]
+        return _Analise(["queijo", "minas", tipo, "fatiado" if fatiado else "", especiais], m, " ".join(p for p in palavras if p))
+    forma = "fatiado" if re.search(r"fatiad|lascas", t) else ""                  # o cilindro, a fração e a peça são o mesmo pedaço: o peso diz o tamanho
+    maturado = re.search(r"maturad|\b\d+ meses\b|reserva", t) is not None
+    importado = re.search(r"importad|argentin|\barg\b|italian|reggiano|grana padano", t) is not None
+    palavras = ["Queijo parmesão", forma, "maturado" if maturado else "", "importado" if importado else ""]
+    return _Analise(["queijo", "parmesao", forma, "maturado" if maturado else "", "importado" if importado else ""], m, " ".join(p for p in palavras if p))
+
+
+FAMILIAS.append(Familia("carnes_a_peso", "cortes de carne e queijos a peso", lambda t: _a_peso(t) is not None, _carne_ou_queijo_a_peso, usa_unidade=True))
+
 
 # ============================== a interface ==============================
 
@@ -810,6 +904,8 @@ def equivalencia(nome, familias=None, unidade=None) -> Optional[Equivalencia]:
     for f in (FAMILIAS if familias is None else familias):
         if not f.casa(t):
             continue
+        if unidade == "kg" and not f.usa_unidade:       # o preço é por quilo e o peso do nome é o da porção: só as famílias que leem a unidade sabem comparar
+            return None
         r = f.analisar(t, unidade) if f.usa_unidade else f.analisar(t)
         if not r:
             return None
