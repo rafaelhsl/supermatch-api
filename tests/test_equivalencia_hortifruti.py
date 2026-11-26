@@ -152,8 +152,8 @@ for item, esperado in rotulos.items():
     confere(r is not None and r.rotulo == esperado, f"rótulo de {item[0]}: {r.rotulo if r else None!r} (esperado {esperado!r})")
 
 # ============================== a família está na lista, no fim, e as 57 anteriores não mudaram ==============================
-confere(eq.FAMILIAS[-1].id == "hortifruti" and eq.FAMILIAS[-1].titulo == "frutas, verduras e legumes" and eq.FAMILIAS[-1].usa_unidade, "a família do hortifrúti é a última e pede a unidade")
-confere(len(eq.FAMILIAS) == 58 and sum(1 for f in eq.FAMILIAS if f.usa_unidade) == 1, f"famílias: {len(eq.FAMILIAS)}; só uma pede a unidade")
+confere(eq.FAMILIAS[-2].id == "hortifruti" and eq.FAMILIAS[-2].titulo == "frutas, verduras e legumes" and eq.FAMILIAS[-2].usa_unidade, "a família do hortifrúti é a penúltima e pede a unidade")
+confere(len(eq.FAMILIAS) == 59 and [f.id for f in eq.FAMILIAS if f.usa_unidade] == ["hortifruti", "carnes_a_peso"], f"famílias: {len(eq.FAMILIAS)}; só o hortifrúti e os cortes a peso pedem a unidade")
 confere("frutas, verduras e legumes" in eq.familias_equivalentes(), "a lista de famílias que o site mostra traz o hortifrúti")
 
 if erros:
