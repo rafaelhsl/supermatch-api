@@ -1,0 +1,206 @@
+{
+ "versao": 1,
+ "teto_por_termo": 100,
+ "observacao": "Carnes e queijos vendidos a peso (docs/carnes_e_frios.md, etapa 1). NÃO é lida pela carga diária: só entra em coletor_vtex.carregar_lista_da_carga depois do OK explícito do dono. Os tipos que já têm termo em lista_de_produtos.json (frango congelado, peito de frango, carne moída, linguiça, bacon, presunto, queijo mussarela, queijo prato) não estão aqui. Premium e congelado entram e são separados pela chave de equivalência, não pela lista. Gerada por um script; mexa nas regras no script e não aqui.",
+ "termos": [
+  {
+   "termo": "patinho",
+   "grupo": "Carnes",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "patinho"
+   ],
+   "nome_inclui": [
+    "^(?:carne\\s+)?(?:bovina\\s+|bovino\\s+|bov\\s+)?(?:bife\\s+(?:de\\s+)?|steak\\s+)?patinho\\b"
+   ],
+   "nome_exclui": [
+    "suin"
+   ],
+   "categorias": [
+    "^acougue(?: > |$)",
+    "^carnes, aves e peixes(?: > |$)",
+    "^aves, carnes e peixes(?: > |$)"
+   ],
+   "categorias_proibidas": []
+  },
+  {
+   "termo": "acém",
+   "grupo": "Carnes",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "acém"
+   ],
+   "nome_inclui": [
+    "^(?:carne\\s+)?(?:bovina\\s+|bovino\\s+|bov\\s+)?(?:bife\\s+(?:de\\s+)?|steak\\s+)?(?:miolo\\s+(?:de\\s+|do\\s+)?)?acem\\b"
+   ],
+   "nome_exclui": [
+    "suin"
+   ],
+   "categorias": [
+    "^acougue(?: > |$)",
+    "^carnes, aves e peixes(?: > |$)",
+    "^aves, carnes e peixes(?: > |$)"
+   ],
+   "categorias_proibidas": []
+  },
+  {
+   "termo": "coxão mole",
+   "grupo": "Carnes",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "coxão mole"
+   ],
+   "nome_inclui": [
+    "^(?:carne\\s+)?(?:bovina\\s+|bovino\\s+|bov\\s+)?(?:bife\\s+(?:de\\s+)?|steak\\s+)?coxao\\s+mole\\b"
+   ],
+   "nome_exclui": [
+    "suin"
+   ],
+   "categorias": [
+    "^acougue(?: > |$)",
+    "^carnes, aves e peixes(?: > |$)",
+    "^aves, carnes e peixes(?: > |$)"
+   ],
+   "categorias_proibidas": []
+  },
+  {
+   "termo": "músculo",
+   "grupo": "Carnes",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "músculo"
+   ],
+   "nome_inclui": [
+    "^(?:carne\\s+)?(?:bovina\\s+|bovino\\s+|bov\\s+)?(?:bife\\s+(?:de\\s+)?|steak\\s+)?musculo\\b"
+   ],
+   "nome_exclui": [
+    "suin"
+   ],
+   "categorias": [
+    "^acougue(?: > |$)",
+    "^carnes, aves e peixes(?: > |$)",
+    "^aves, carnes e peixes(?: > |$)"
+   ],
+   "categorias_proibidas": []
+  },
+  {
+   "termo": "alcatra",
+   "grupo": "Carnes",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "alcatra"
+   ],
+   "nome_inclui": [
+    "^(?:carne\\s+)?(?:bovina\\s+|bovino\\s+|bov\\s+)?(?:bife\\s+(?:de\\s+)?|steak\\s+)?(?:(?:miolo|bombom|coracao)\\s+(?:de\\s+|da\\s+)?)?alcatra\\b"
+   ],
+   "nome_exclui": [
+    "suin"
+   ],
+   "categorias": [
+    "^acougue(?: > |$)",
+    "^carnes, aves e peixes(?: > |$)",
+    "^aves, carnes e peixes(?: > |$)"
+   ],
+   "categorias_proibidas": []
+  },
+  {
+   "termo": "fraldinha",
+   "grupo": "Carnes",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "fraldinha"
+   ],
+   "nome_inclui": [
+    "^(?:carne\\s+)?(?:bovina\\s+|bovino\\s+|bov\\s+)?(?:bife\\s+(?:de\\s+)?|steak\\s+)?fraldinha\\b"
+   ],
+   "nome_exclui": [
+    "suin"
+   ],
+   "categorias": [
+    "^acougue(?: > |$)",
+    "^carnes, aves e peixes(?: > |$)",
+    "^aves, carnes e peixes(?: > |$)"
+   ],
+   "categorias_proibidas": []
+  },
+  {
+   "termo": "picanha",
+   "grupo": "Carnes",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "picanha"
+   ],
+   "nome_inclui": [
+    "^(?:carne\\s+)?(?:bovina\\s+|bovino\\s+|bov\\s+)?(?:bife\\s+(?:de\\s+)?|steak\\s+)?picanha\\b"
+   ],
+   "nome_exclui": [
+    "suin"
+   ],
+   "categorias": [
+    "^acougue(?: > |$)",
+    "^carnes, aves e peixes(?: > |$)",
+    "^aves, carnes e peixes(?: > |$)"
+   ],
+   "categorias_proibidas": []
+  },
+  {
+   "termo": "contra filé",
+   "grupo": "Carnes",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "contra filé",
+    "contrafilé"
+   ],
+   "nome_inclui": [
+    "^(?:carne\\s+)?(?:bovina\\s+|bovino\\s+|bov\\s+)?(?:bife\\s+(?:de\\s+)?|steak\\s+)?contra\\s?file\\b"
+   ],
+   "nome_exclui": [
+    "suin"
+   ],
+   "categorias": [
+    "^acougue(?: > |$)",
+    "^carnes, aves e peixes(?: > |$)",
+    "^aves, carnes e peixes(?: > |$)"
+   ],
+   "categorias_proibidas": []
+  },
+  {
+   "termo": "queijo minas",
+   "grupo": "Frios e queijos",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "queijo minas"
+   ],
+   "nome_inclui": [
+    "^queijo\\s+(?:supernosso\\s+|abc\\s+)?minas\\b"
+   ],
+   "nome_exclui": [],
+   "categorias": [
+    "^frios e laticinios > queijos(?: > |$)",
+    "^frios e congelados > queijos(?: > |$)",
+    "^visualizar mais produtos"
+   ],
+   "categorias_proibidas": []
+  },
+  {
+   "termo": "queijo parmesão",
+   "grupo": "Frios e queijos",
+   "aceita_peso_variavel": true,
+   "consultas": [
+    "queijo parmesão"
+   ],
+   "nome_inclui": [
+    "^(?:queijo\\s+)?parmesao\\b"
+   ],
+   "nome_exclui": [
+    "ralad|\\bral\\b|vegano|castanha"
+   ],
+   "categorias": [
+    "^frios e laticinios > queijos(?: > |$)",
+    "^frios e congelados > queijos(?: > |$)",
+    "^visualizar mais produtos"
+   ],
+   "categorias_proibidas": []
+  }
+ ]
+}

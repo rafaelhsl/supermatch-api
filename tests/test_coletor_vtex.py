@@ -508,6 +508,55 @@ def teste_a_carga_diaria_coleta_a_lista_de_produtos_e_a_de_hortifruti_numa_colet
     assert "lista_hortifruti" not in (c.RAIZ / "api_supabase.py").read_text(encoding="utf-8")
 
 
+# ============================== carnes e queijos a peso (a lista própria, ainda FORA da carga diária) ==============================
+
+# Os tipos do plano que já têm termo na lista de 100 (o item embalado): ao ligar na carga, esses termos passam a aceitar peso variável (docs/carnes_e_frios.md).
+TERMOS_DE_CARNE_QUE_JA_ESTAO_NA_LISTA_DE_100 = {"frango congelado", "peito de frango", "carne moída", "linguiça", "bacon", "presunto", "queijo mussarela", "queijo prato"}
+
+
+def teste_lista_de_carnes_e_frios_do_repositorio():
+    from casos_carnes import CASOS, SUPER_ABC
+    teto, termos = c.carregar_lista(c.RAIZ / "dados" / "lista_carnes_e_frios.json")
+    nomes = [t["termo"] for t in termos]
+    assert teto == 100 and len(nomes) == len(set(nomes)) == 10 and set(CASOS) == set(nomes) == set(SUPER_ABC["entram"]) == set(SUPER_ABC["saem"]), (len(nomes), set(CASOS) ^ set(nomes))
+    for t in termos:
+        assert t["grupo"] in ("Carnes", "Frios e queijos") and t["aceita_peso_variavel"] is True and t["nome_inclui"] and t["consultas"] and t["categorias"], t["termo"]
+        for chave in ("categorias", "categorias_proibidas", "nome_exclui", "nome_inclui"):
+            for padrao in t.get(chave, []):
+                re.compile(padrao)
+    por_termo = {t["termo"]: t for t in termos}
+    for termo, caso in CASOS.items():
+        assert caso["entram"], f"{termo}: precisa de ao menos um caso que entra"
+        for nome, categoria in caso["entram"]:
+            assert c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": True}, por_termo[termo]), f"{termo}: deveria entrar: {nome} [{categoria}]"
+            assert c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": False}, por_termo[termo]), f"{termo}: o embalado também entra: {nome}"
+        for nome, categoria in caso["saem"]:
+            assert not c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": True}, por_termo[termo]), f"{termo}: deveria sair: {nome} [{categoria}]"
+    # o Super ABC não traz categoria (nem o campo peso_variavel): só o nome decide
+    for termo, nomes_do_abc in SUPER_ABC["entram"].items():
+        for nome in nomes_do_abc:
+            assert c.passa_no_filtro({"nome": nome, "preco_varejo": 5.0}, por_termo[termo]), f"Super ABC, {termo}: deveria entrar: {nome}"
+    for termo, nomes_do_abc in SUPER_ABC["saem"].items():
+        for nome in nomes_do_abc:
+            assert not c.passa_no_filtro({"nome": nome, "preco_varejo": 5.0}, por_termo[termo]), f"Super ABC, {termo}: deveria sair: {nome}"
+    # a mesma peça de porco e a carne de sol não são o corte bovino, e a peça premium e a congelada entram (a faixa é da chave de equivalência, não da lista)
+    assert not c.passa_no_filtro({"nome": "Picanha Suína Embalagem 400g", "categoria": "Açougue > Carne Suína", "peso_variavel": True}, por_termo["picanha"])
+    assert c.passa_no_filtro({"nome": "Picanha Angus Cong 1Kg", "categoria": "Aves, Carnes e Peixes > Carne Bovina", "peso_variavel": True}, por_termo["picanha"])
+    assert c.passa_no_filtro({"nome": "Contra Filé Bovino Carapreta Congelado 1Kg", "categoria": "Aves, Carnes e Peixes > Carne Bovina", "peso_variavel": True}, por_termo["contra filé"])
+
+
+def teste_a_lista_de_carnes_e_frios_ainda_nao_entra_na_carga():
+    """Nada de carne a peso entra na carga antes do OK do dono (e da equivalência por corte, forma, estado, tempero e faixa): a lista existe, mas ninguém a lê."""
+    _, carnes = c.carregar_lista(c.RAIZ / "dados" / "lista_carnes_e_frios.json")
+    _, da_carga = c.carregar_lista_da_carga()
+    assert len(da_carga) == 128 and not {t["termo"] for t in carnes} & {t["termo"] for t in da_carga}      # nenhum termo dela está na carga...
+    assert not {t["termo"] for t in carnes} & {t["termo"] for t in c.carregar_lista()[1]}                  # ...e nenhum repete um da lista de 100 (poderia entrar sem erro)
+    leitores = [p.name for p in c.RAIZ.glob("*.py") if "lista_carnes_e_frios" in p.read_text(encoding="utf-8")]
+    assert leitores == [], f"alguém lê a lista de carnes antes da hora: {leitores}"
+    ja_existem = {t["termo"] for t in c.carregar_lista()[1]}
+    assert TERMOS_DE_CARNE_QUE_JA_ESTAO_NA_LISTA_DE_100 <= ja_existem, TERMOS_DE_CARNE_QUE_JA_ESTAO_NA_LISTA_DE_100 - ja_existem
+
+
 def teste_listas_com_termo_repetido_ou_teto_diferente_nao_sobem_para_a_carga():
     import tempfile
     padrao = {"teto_por_termo": 100, "termos": [{"termo": "tomate"}, {"termo": "arroz"}]}
