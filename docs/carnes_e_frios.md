@@ -1,6 +1,6 @@
 # Carnes, aves, peixes, frios e queijos vendidos a peso
 
-> **Estado (26/11/2026): reconhecimento feito nos quatro mercados e as etapas 1 (lista e filtros) e 2 (equivalência) prontas para os cortes bovinos e os queijos minas e parmesão; nada disso entra na carga.** **Decidido em 26/11:** o premium entra, **separado do comum**, e o congelado entra, **separado do fresco**. A carga diária continua descartando tudo o que é vendido por quilo fora do hortifrúti, e mantém só o que vem **embalado** (as listas de produtos têm termos como "carne moída", "queijo mussarela", "presunto", "bacon", mas só com pacote de peso fixo). Esta página registra o que os mercados vendem a peso e o plano para trazer isso, nos mesmos moldes do [hortifrúti](hortifruti.md). O Super ABC foi reconhecido em 26/11/2026, pela API da loja (veja a tabela).
+> **Estado (26/11/2026): feito e na carga diária.** Reconhecimento nos quatro mercados, lista e filtros (etapa 1), equivalência (etapa 2) e a ligação na carga (etapa 5) para os cortes bovinos e os queijos minas e parmesão; os oito tipos que já tinham termo na lista de 100 (frango congelado, peito de frango, carne moída, linguiça, bacon, presunto, queijo mussarela, queijo prato) passaram a aceitar também o item por quilo. **Decidido em 26/11:** o premium entra, **separado do comum**, e o congelado entra, **separado do fresco**. Até 26/11 a carga descartava tudo o que é vendido por quilo fora do hortifrúti e mantinha só o que vem **embalado**. Esta página registra o que os mercados vendem a peso, o plano e o que foi feito, nos mesmos moldes do [hortifrúti](hortifruti.md). O Super ABC foi reconhecido em 26/11/2026, pela API da loja (veja a tabela).
 
 ## Por que isso é o próximo passo natural
 
@@ -38,13 +38,13 @@ Outros pontos que a coleta mostrou:
 - **Frango congelado a R$ 6,99 e R$ 8,99 o quilo** (fígado e coxa com sobrecoxa do Apoio) ao lado de "frango caipira" a R$ 23,99 (Supernosso): tipos e estados diferentes, que também não podem se juntar.
 - Boa parte dessas categorias é **embalado de peso fixo** (99 itens no Apoio, 338 no Atacadão e 309 no Supernosso nesse reconhecimento), que os termos de hoje só recolhem em parte e que não é problema desta família.
 
-## Plano (nos moldes do hortifrúti; nada entra na carga antes da decisão final)
+## Plano (nos moldes do hortifrúti)
 
 1. **Lista e filtros (fora da carga). Feito em 26/11/2026** ([veja a etapa 1](#etapa-1-a-lista-e-os-filtros-feita-em-26112026-fora-da-carga)). Um arquivo próprio (`dados/lista_carnes_e_frios.json`) com os termos novos, filtro por categoria do mercado e por nome, casos reais de "entra" e "sai" e testes, como a [lista do hortifrúti](hortifruti.md). O coletor já sabe ler (`aceita_peso_variavel`). Os tipos que já têm termo na lista de 100 não repetem aqui.
 2. **Equivalência. Feito em 26/11/2026** ([veja a etapa 2](#etapa-2-a-equivalência-feita-em-26112026-fora-da-carga)). Uma família, como a do hortifrúti, por **corte, forma, estado, tempero e faixa de qualidade**, com o preço por quilo valendo "1 kg". Itens que o nome não deixa classificar ficam sem chave (só no modo exato).
 3. **Site:** quase nada: já mostra "/kg", conta a lista em quilos e esconde o peso da porção. Talvez um rótulo de estado ("congelado") quando for útil.
 4. **Super ABC (reconhecido em 26/11):** tem corte a peso, e entra como os outros. Sem categoria, o filtro dele é só por nome, e o nome precisa tirar o ruído (melão, repolho, pão de queijo, sanduíche, patê). A API da loja já traz `unidade = kg` e o preço do quilo (`coletor_vip.py`).
-5. **Ligar na carga**, com a mesma cautela (OK explícito; uma coleta só com as outras listas, porque a gravação apaga o resto do mercado). Custo estimado: ~30 termos a mais na coleta por API (poucos segundos) e, se o Super ABC participar, ~30 buscas a mais do robô (as 28 do hortifrúti somaram uns 2 minutos à carga).
+5. **Ligar na carga. Feito em 26/11/2026** ([veja a etapa 5](#etapa-5-ligar-na-carga-feita-em-26112026)), com a mesma cautela (OK explícito; uma coleta só com as outras listas, porque a gravação apaga o resto do mercado).
 
 ## Etapa 1: a lista e os filtros (feita em 26/11/2026, fora da carga)
 
@@ -90,6 +90,23 @@ A família `carnes_a_peso` ("cortes de carne e queijos a peso") de [`equivalenci
 - **Item por quilo só entra numa família que lê a unidade.** Isso protege a etapa 5: quando o peso variável for ligado nos termos que já existem (linguiça, bacon, presunto...), o item por quilo deles não pode ser chaveado pelo peso do nome. Até lá eles ficam sem chave (só no modo exato).
 - **Resultado na lista de hoje:** os 192 itens ganham chave, em 68 chaves; 20 delas têm dois mercados ou mais. Entre os 2.620 itens reais que usei de teste, só 194 mudaram de chave (de "sem chave" para uma chave nova); as de todos os outros ficaram iguais.
 - **Testes:** `tests/test_equivalencia_carnes.py` (111 verificações, com nomes reais e a unidade de cada um: o quilo, o embalado, o premium, o congelado, a forma, cada dimensão do queijo, o rótulo e o que fica sem chave), `tests/test_busca_e_comparador.py` (a trava do agrupamento exato) e os casos de cobertura em `tests/casos_equivalencia_novos.py`. mais de 30 mutações das regras, todas pegas.
+
+## Etapa 5: ligar na carga (feita em 26/11/2026)
+
+Com o OK do dono ("teste a gravação e, se tudo funcionar, pode dar a carga real"), a carga diária passou a coletar **três listas numa coleta só**: os 100 termos de prateleira, os 28 de hortifrúti e os **10 de carnes e queijos a peso** (`coletor_vtex.carregar_lista_da_carga`, 138 termos). Duas mudanças:
+
+1. **A lista de carnes entra na carga** (`LISTA_CARNES`, no fim da coleta). Termo repetido ou teto por termo diferente entre quaisquer duas das três listas continua sendo recusado, e um teste trava que só o coletor abre o arquivo.
+2. **Os oito termos da lista de 100 que também vendem a peso passam a aceitar peso variável** (`aceita_peso_variavel`): frango congelado, peito de frango, carne moída, linguiça, bacon, presunto, queijo mussarela e queijo prato. O item **embalado** deles segue igual, com a chave de sempre. O item **por quilo** entra sem chave de equivalência (a regra da etapa 2: item por quilo só vira chave numa família que lê a unidade), e por isso só aparece no modo "produto exato"; nunca se junta ao embalado (o agrupamento separa "por quilo" de "por pacote").
+
+**Como foi testado, antes de gravar:**
+
+- Leitura (só leitura, sem banco) dos 18 termos afetados nos quatro mercados: 657 linhas, 283 por quilo, 0 erros. O preço do quilo ficou plausível em todos os termos (mínimo, mediana e máximo conferidos termo a termo e mercado a mercado; os únicos abaixo de R$ 8 são o fígado e a coxa com sobrecoxa de frango congelados). Nenhum item por quilo dos oito termos antigos ganhou chave; os dez termos novos ficaram 100% com chave (194 itens, 67 chaves, 19 delas em dois mercados ou mais, e nenhum produto em dois termos).
+- Carga completa **sem gravar** no GitHub ([run 45827747085](https://github.com/rafaelhsl/supermatch-api/actions/runs/45827747085)): sucesso, **0 termos com falha de 138** nos quatro mercados, 0 repetições do coletor e 0 avisos. Itens: Apoio 1.940 (+43 sobre a carga das 07:30 do mesmo dia, 1.897), Atacadão 2.327 (+48), Supernosso 2.743 (+139) e Super ABC 2.581 (+96): **+326 itens**, como estimado. Tempo: 20 minutos, quase todos do Super ABC (a loja dele limita o ritmo; a de 25/11 levou 17).
+- Os testes do repositório (Python 3.11, Python do Render, Node e navegador) passaram no PR.
+
+**O que os mercados não vendem não é falha:** o Apoio não tem patinho, acém, coxão mole nem alcatra (0 itens), o Supernosso não tem coxão mole, o Atacadão não tem patinho, alcatra nem músculo (as buscas dele trazem carne suína, carne moída e desinfetante "Pinho", que o filtro descarta) e o Super ABC não tem coxão mole. O coxão mole só existe no Atacadão (1 item), então não compara.
+
+**Limites que seguem:** o item por quilo dos oito termos antigos (presunto, queijo mussarela e prato, frango, bacon, carne moída) só compara no modo exato, por nome; uma família de equivalência para eles é um passo à parte. As duas pontas da lista de carnes continuam as da etapa 2 (premium e congelado só pelo que o nome diz).
 
 ## O que foi decidido
 

@@ -880,6 +880,7 @@
   {
    "termo": "queijo mussarela",
    "grupo": "Laticínios e frios",
+   "aceita_peso_variavel": true,
    "nome_inclui": [
     "^queijo(?=.*(?:mussarela|mucarela))|^(?:mussarela|mucarela)"
    ],
@@ -898,6 +899,7 @@
   {
    "termo": "queijo prato",
    "grupo": "Laticínios e frios",
+   "aceita_peso_variavel": true,
    "nome_inclui": [
     "^queijo(?=.*\\bprato\\b)"
    ],
@@ -913,6 +915,7 @@
   {
    "termo": "presunto",
    "grupo": "Laticínios e frios",
+   "aceita_peso_variavel": true,
    "nome_inclui": [
     "^presunto"
    ],
@@ -947,6 +950,7 @@
   {
    "termo": "frango congelado",
    "grupo": "Carnes e congelados",
+   "aceita_peso_variavel": true,
    "nome_inclui": [
     "^(frango (inteiro|a passarinho|em pedacos|congelado|caipira)|coxa|sobrecoxa|asa|meio da asa|coxinha da asa|passarinho|figado de frango|moela)"
    ],
@@ -964,6 +968,7 @@
   {
    "termo": "peito de frango",
    "grupo": "Carnes e congelados",
+   "aceita_peso_variavel": true,
    "nome_inclui": [
     "^(file|filezinho|peito|file de peito|peito de frango)(?=.*(peito|frango))"
    ],
@@ -981,6 +986,7 @@
   {
    "termo": "carne moída",
    "grupo": "Carnes e congelados",
+   "aceita_peso_variavel": true,
    "nome_inclui": [
     "^carne (bovina |suina )?moida"
    ],
@@ -998,6 +1004,7 @@
   {
    "termo": "linguiça",
    "grupo": "Carnes e congelados",
+   "aceita_peso_variavel": true,
    "nome_inclui": [
     "^linguica"
    ],
@@ -1057,6 +1064,7 @@
   {
    "termo": "bacon",
    "grupo": "Carnes e congelados",
+   "aceita_peso_variavel": true,
    "nome_inclui": [
     "^bacon"
    ],

@@ -9,12 +9,12 @@ O Super ABC trocou de site em novembro de 2026 e é coletado por `coletor_vip.py
 ## Como rodar
 
 ```
-python coletor_vtex.py                                  # os 128 termos da carga (100 de produtos + 28 de hortifrúti), os 3 mercados
+python coletor_vtex.py                                  # os 138 termos da carga (100 de produtos + 28 de hortifrúti + 10 de carnes), os 3 mercados
 python coletor_vtex.py --termos "arroz,óleo"            # só alguns termos
 python coletor_vtex.py --mercados "Atacadao"            # só um mercado
 python coletor_vtex.py --saida coleta.json              # guarda as linhas coletadas
 python tests/test_coletor_vtex.py                       # testes, sem rede
-python coletor_vip.py                                   # o Super ABC, nos mesmos 128 termos
+python coletor_vip.py                                   # o Super ABC, nos mesmos 138 termos
 python coletor_vip.py --termos "arroz,óleo"             # só alguns termos
 python tests/test_coletor_vip.py                        # testes do Super ABC, sem rede
 ```
@@ -38,7 +38,7 @@ Regras comuns:
 - **EAN** só vale com 8, 12, 13 ou 14 dígitos e sem repetição óbvia. Códigos internos de marca própria (como "8200") viram vazio.
 - **Item por quilo do Atacadão (corrigido em 26/11/2026).** Num item por quilo com multiplicador menor que 1 (tomate de 150 g, queijo de 400 g), o `price` do GraphQL passou a ser o da **porção mínima** (R$ 2,68) e o `listPrice` o do quilo (R$ 17,90); até 24/11 o `price` era o do quilo. O banco chegou a guardar "tomate R$ 2,68 o quilo" (a carga de 25/11 gravou assim). `preco_do_quilo_do_atacadao` confere um contra o outro: `price` = `listPrice` × multiplicador vale o `listPrice`; abaixo disso (porção em promoção) vale `price` ÷ multiplicador; acima disso (o `price` já é o do quilo) ou sem `listPrice`, vale o `price`. Com multiplicador 1 ou maior os dois sempre foram o quilo.
 - **Atacado**: guarda a primeira faixa acima de 1 unidade, se for mais barata que o varejo. Sem faixa, `preco_atacado = preco_varejo` e `quantidade_atacado = 1`, como no banco hoje.
-- **Peso variável** (vendido por kg ou grama: queijo fatiado, carne, hortifruti) é descartado, a não ser no termo que diz `"aceita_peso_variavel": true`. Só os termos de [`dados/lista_hortifruti.json`](../dados/lista_hortifruti.json) dizem isso, e essa lista **não é lida pela carga diária** (etapa 1 do hortifrúti: veja [`hortifruti.md`](hortifruti.md)). Cada linha traz `unidade` (`kg` quer dizer que o preço é por quilo) e `multiplicador`; a gravação no banco ignora os dois.
+- **Peso variável** (vendido por kg ou grama: queijo fatiado, carne, hortifruti) é descartado, a não ser no termo que diz `"aceita_peso_variavel": true`. Dizem isso os termos de [`dados/lista_hortifruti.json`](../dados/lista_hortifruti.json) ([`hortifruti.md`](hortifruti.md)), os de [`dados/lista_carnes_e_frios.json`](../dados/lista_carnes_e_frios.json) ([`carnes_e_frios.md`](carnes_e_frios.md)) e oito termos da lista de 100 que também vendem a peso (frango congelado, peito de frango, carne moída, linguiça, bacon, presunto, queijo mussarela e queijo prato). Cada linha traz `unidade` (`kg` quer dizer que o preço é por quilo) e `multiplicador`; o banco guarda a `unidade` (`docs/sql/coluna_unidade.sql`) e não guarda o `multiplicador`.
 - Falha de rede ou erro 429/5xx: repete até 4 vezes (o 403, não: é bloqueio). Um termo que falha mesmo assim vira erro daquele termo e a coleta segue; depois de 6 termos seguidos com erro o mercado é dado como fora do ar e os que faltam não são tentados, e no fim há uma segunda rodada, depois de 60 s, com o que não deu certo ([`carga_diaria.md`](carga_diaria.md#quando-um-mercado-cai-no-meio-da-carga)). Erro do GraphQL do Atacadão (já apareceu "Cannot read properties of undefined (reading 'price')" e passou na chamada seguinte): repete até 3 vezes.
 - Um termo que falha em um mercado vira erro daquele par; os outros termos continuam. O programa termina com código 1 se houve erro.
 
@@ -117,7 +117,7 @@ Executada no GitHub em 05/11/2026 ([run 42007495508](https://github.com/rafaelhs
 - **Filtro por nome é conservador.** Produto com a marca antes do tipo ("Camil Arroz…") não passa nos alimentos. Na dúvida, não entra.
 - **Cobertura varia por mercado.** Algumas lojas simplesmente não têm o produto em estoque na região (por exemplo, ovos no Atacadão, papinha no Apoio e no Atacadão, ração no Atacadão). O relatório de cada execução mostra onde.
 - **Termos que se sobrepõem**: o mesmo produto pode aparecer em dois termos (por exemplo, "Leite em Pó Integral" em "leite integral" e "leite em pó", embora o filtro tente separar). Na carga, a linha vale uma vez por mercado.
-- **Hortifrúti** entra na carga diária desde 18/11/2026, com a própria lista (`dados/lista_hortifruti.json`, 28 termos) coletada **junto** com a de 100 (`carregar_lista_da_carga`): é preciso o campo `unidade`, a equivalência e o "/kg" no site, e as três existem. O resto do **peso variável** (queijo e frios a peso, carne moída, frango) continua de fora: veja [`hortifruti.md`](hortifruti.md).
+- **Hortifrúti** entra na carga diária desde 18/11/2026, com a própria lista (`dados/lista_hortifruti.json`, 28 termos) coletada **junto** com a de 100 (`carregar_lista_da_carga`): é preciso o campo `unidade`, a equivalência e o "/kg" no site, e as três existem. Os **cortes de carne e queijos a peso** entram desde 26/11/2026, com a própria lista (10 termos) e com o peso ligado em oito termos da lista de 100: veja [`carnes_e_frios.md`](carnes_e_frios.md).
 - O catálogo do Apoio muda de região para região (canal de vendas); o coletor usa o de Betim, como a carga diária.
 - **O levantamento de entrega por cidade** (`levantar_entrega.py`) também deixou o robô antigo: para o Super ABC ele descobre a cidade do CEP e procura, na lista de unidades da loja (`.../loja/centros_distribuicoes/retiradas`, com cidade e estado de cada uma), uma unidade ali; achando, busca "arroz" nela. Refeito em 25/11/2026, deu a mesma tabela de antes (só Belo Horizonte e Betim têm unidade entre as 14 cidades). O arquivo do robô (`Scraper_SuperABC.py`) foi apagado.
 

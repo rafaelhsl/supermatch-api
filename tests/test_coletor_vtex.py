@@ -488,29 +488,36 @@ def teste_lista_de_hortifruti_do_repositorio():
             assert not c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": True}, por_termo[termo]), f"{termo}: deveria sair: {nome} [{categoria}]"
 
 
-def teste_a_carga_diaria_coleta_a_lista_de_produtos_e_a_de_hortifruti_numa_coleta_so():
-    """A gravação apaga os produtos antigos do mercado: uma carga que usasse SÓ a lista de hortifrúti (28 termos) apagaria os outros ~2.000
-    produtos de cada mercado, e uma que usasse só a de produtos apagaria o hortifrúti. Por isso as duas vão juntas, por um caminho só."""
+def teste_a_carga_diaria_coleta_as_tres_listas_numa_coleta_so():
+    """A gravação apaga os produtos antigos do mercado: uma carga que usasse SÓ uma das listas (a de hortifrúti tem 28 termos, a de carnes 10)
+    apagaria os outros ~2.000 produtos de cada mercado, e uma que não usasse uma delas apagaria o que ela trouxe. Por isso as três vão juntas, por um caminho só."""
     teto, padrao = c.carregar_lista()
-    assert not [t["termo"] for t in padrao if t.get("aceita_peso_variavel") or t.get("grupo") == "Hortifrúti"], "a lista de produtos não tem hortifrúti"
-    assert c.LISTA_PADRAO.name == "lista_de_produtos.json" and c.LISTA_HORTIFRUTI.name == "lista_hortifruti.json"
+    assert not [t["termo"] for t in padrao if t.get("grupo") == "Hortifrúti"], "a lista de produtos não tem hortifrúti"
+    # só os oito tipos de carne e frios que também se vendem a peso aceitam peso variável na lista de produtos (etapa 5 dos cortes a peso)
+    assert {t["termo"] for t in padrao if t.get("aceita_peso_variavel")} == TERMOS_DE_CARNE_QUE_JA_ESTAO_NA_LISTA_DE_100
+    assert c.LISTA_PADRAO.name == "lista_de_produtos.json" and c.LISTA_HORTIFRUTI.name == "lista_hortifruti.json" and c.LISTA_CARNES.name == "lista_carnes_e_frios.json"
     _, hortifruti = c.carregar_lista(c.LISTA_HORTIFRUTI)
     assert hortifruti and all(t.get("aceita_peso_variavel") and t.get("grupo") == "Hortifrúti" for t in hortifruti)
-    assert not {t["termo"] for t in hortifruti} & {t["termo"] for t in padrao}
+    _, carnes = c.carregar_lista(c.LISTA_CARNES)
+    assert len(carnes) == 10 and all(t.get("aceita_peso_variavel") for t in carnes)
+    nomes = [t["termo"] for t in padrao + hortifruti + carnes]
+    assert len(nomes) == len(set(nomes)), "nenhum termo se repete entre as três listas"
 
     teto_da_carga, termos = c.carregar_lista_da_carga()
-    assert teto_da_carga == teto == 100 and len(termos) == len(padrao) + len(hortifruti) == 128
-    assert [t["termo"] for t in termos] == [t["termo"] for t in padrao] + [t["termo"] for t in hortifruti]       # a de produtos primeiro: o repetido fica com ela
+    assert teto_da_carga == teto == 100 and len(termos) == len(padrao) + len(hortifruti) + len(carnes) == 138
+    assert [t["termo"] for t in termos] == nomes                                    # a de produtos primeiro, depois a de hortifrúti, depois a de carnes
 
-    # a carga lê a lista pelo caminho único; nada mais lê um arquivo de lista (o robô e a API usam o que a carga lhes entrega)
+    # a carga lê as listas pelo caminho único; nada mais lê um arquivo de lista (o robô e a API usam o que a carga lhes entrega)
     carga = (c.RAIZ / "alimentar_banco.py").read_text(encoding="utf-8")
-    assert "carregar_lista_da_carga()" in carga and "carregar_lista(" not in carga and "LISTA_HORTIFRUTI" not in carga and "LISTA_PADRAO" not in carga
+    assert "carregar_lista_da_carga()" in carga and "carregar_lista(" not in carga
+    assert not [n for n in ("LISTA_HORTIFRUTI", "LISTA_PADRAO", "LISTA_CARNES") if n in carga]
     assert "lista_hortifruti" not in (c.RAIZ / "api_supabase.py").read_text(encoding="utf-8")
+    assert "lista_carnes_e_frios" not in (c.RAIZ / "api_supabase.py").read_text(encoding="utf-8")
 
 
-# ============================== carnes e queijos a peso (a lista própria, ainda FORA da carga diária) ==============================
+# ============================== carnes e queijos a peso (a lista própria, na carga diária desde a etapa 5) ==============================
 
-# Os tipos do plano que já têm termo na lista de 100 (o item embalado): ao ligar na carga, esses termos passam a aceitar peso variável (docs/carnes_e_frios.md).
+# Os tipos do plano que já tinham termo na lista de 100 (o item embalado): na etapa 5 esses termos passaram a aceitar peso variável (docs/carnes_e_frios.md).
 TERMOS_DE_CARNE_QUE_JA_ESTAO_NA_LISTA_DE_100 = {"frango congelado", "peito de frango", "carne moída", "linguiça", "bacon", "presunto", "queijo mussarela", "queijo prato"}
 
 
@@ -554,15 +561,16 @@ def teste_bacon_muçarela_e_frango_caipira_da_lista_de_100():
 
     def passa(termo, nome, categoria="", por_quilo=False, aceitando_peso=False):
         t = copy.deepcopy(por[termo])
-        t["aceita_peso_variavel"] = aceitando_peso                    # True é o que a etapa 5 dos cortes a peso vai ligar nesses termos
+        t["aceita_peso_variavel"] = aceitando_peso                    # True é o que a lista traz hoje (etapa 5); False mostra o que o termo fazia antes
         return c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": por_quilo}, t)
 
     apoio = "Açougue > Salsichas e Linguiças"
     for nome in ("Bacon de Cubos  Adeel 1Kg", "Bacon em fatias 250g Perdigão", "Bacon em fatias 250g Sadia Na Receita", "Bacon Em Fatias Sadia Na Receita 750G"):
         assert passa("bacon", nome, apoio), f"bacon do Apoio devia entrar: {nome}"
     for nome in ("Bacon Perdigão 1Kg", "Bacon Inteiro Defumado Sadia 500g", "Bacon Defumado Rezende Manta 1Kg", "Bacon Seara Manta Peca 1Kg"):
-        assert not passa("bacon", nome, apoio, por_quilo=True), f"a peso, o bacon continua fora da carga de hoje: {nome}"
-        assert passa("bacon", nome, apoio, por_quilo=True, aceitando_peso=True), f"bacon do Apoio por quilo devia entrar na etapa 5: {nome}"
+        assert not passa("bacon", nome, apoio, por_quilo=True), f"sem aceitar peso, o bacon por quilo fica fora: {nome}"
+        assert passa("bacon", nome, apoio, por_quilo=True, aceitando_peso=True), f"bacon do Apoio por quilo devia entrar: {nome}"
+        assert c.passa_no_filtro({"nome": nome, "categoria": apoio, "peso_variavel": True}, por["bacon"]), f"a lista de verdade aceita o bacon por quilo: {nome}"
     assert not passa("bacon", "Linguiça Calabresa Perdigão 800g", apoio) and not passa("bacon", "Bacon Defumado Sadia", "Mercearia > Chips e batatas palha")  # a categoria nova não abre a porta ao resto
     assert not passa("bacon", "Bacon Defumado Sadia", "Açougue > Peixes")           # só a de salsichas e linguiças do Açougue, não o Açougue inteiro
     assert passa("bacon", "Bacon Defumado Perdigão Preço por quilo na peça", "Carnes, aves e peixes > Secas, salgadas e defumadas > Bacon", True, True)   # os de antes seguem
@@ -583,14 +591,18 @@ def teste_bacon_muçarela_e_frango_caipira_da_lista_de_100():
     assert passa("frango congelado", "Frango Inteiro Seara Com Miúdos Congelado 2.5Kg", por_quilo=True, aceitando_peso=True)       # o de antes segue
 
 
-def teste_a_lista_de_carnes_e_frios_ainda_nao_entra_na_carga():
-    """Nada de carne a peso entra na carga antes do OK do dono (e da equivalência por corte, forma, estado, tempero e faixa): a lista existe, mas ninguém a lê."""
+def teste_a_lista_de_carnes_e_frios_esta_na_carga_e_nao_repete_termo():
+    """Etapa 5 (26/11/2026): a lista de carnes e queijos a peso entra na carga, depois da equivalência por corte, forma, estado, tempero e faixa (etapa 2).
+    Os dez termos dela vêm no fim da coleta, e nenhum repete um termo da lista de 100 (o termo é a chave da coleta: um repetido derrubaria o outro)."""
     _, carnes = c.carregar_lista(c.RAIZ / "dados" / "lista_carnes_e_frios.json")
     _, da_carga = c.carregar_lista_da_carga()
-    assert len(da_carga) == 128 and not {t["termo"] for t in carnes} & {t["termo"] for t in da_carga}      # nenhum termo dela está na carga...
-    assert not {t["termo"] for t in carnes} & {t["termo"] for t in c.carregar_lista()[1]}                  # ...e nenhum repete um da lista de 100 (poderia entrar sem erro)
-    leitores = [p.name for p in c.RAIZ.glob("*.py") if "lista_carnes_e_frios" in p.read_text(encoding="utf-8")]
-    assert leitores == [], f"alguém lê a lista de carnes antes da hora: {leitores}"
+    assert len(da_carga) == 138 and [t["termo"] for t in da_carga[-len(carnes):]] == [t["termo"] for t in carnes]
+    assert not {t["termo"] for t in carnes} & {t["termo"] for t in c.carregar_lista()[1]}                  # nenhum repete um da lista de 100...
+    assert not {t["termo"] for t in carnes} & {t["termo"] for t in c.carregar_lista(c.LISTA_HORTIFRUTI)[1]}   # ...nem um do hortifrúti
+    # só o coletor abre o arquivo (um nome entre aspas ou a constante); a carga, a API e o coletor do Super ABC usam o que ele entrega pelo caminho único
+    abre = re.compile(r"""["']lista_carnes_e_frios\.json["']|LISTA_CARNES""")
+    leitores = sorted(p.name for p in c.RAIZ.glob("*.py") if abre.search(p.read_text(encoding="utf-8")))
+    assert leitores == ["coletor_vtex.py"], leitores
     ja_existem = {t["termo"] for t in c.carregar_lista()[1]}
     assert TERMOS_DE_CARNE_QUE_JA_ESTAO_NA_LISTA_DE_100 <= ja_existem, TERMOS_DE_CARNE_QUE_JA_ESTAO_NA_LISTA_DE_100 - ja_existem
 
@@ -599,25 +611,38 @@ def teste_listas_com_termo_repetido_ou_teto_diferente_nao_sobem_para_a_carga():
     import tempfile
     padrao = {"teto_por_termo": 100, "termos": [{"termo": "tomate"}, {"termo": "arroz"}]}
     hortifruti = {"teto_por_termo": 100, "termos": [{"termo": "Tomaté"}]}                    # o mesmo termo, só mudam o acento e a caixa
+    carnes = {"teto_por_termo": 100, "termos": [{"termo": "picanha"}]}
+
+    def recusa(trecho, ja_disse):
+        try:
+            c.carregar_lista_da_carga()
+        except ValueError as erro:
+            assert trecho in str(erro), str(erro)
+        else:
+            raise AssertionError(ja_disse)
+
     with tempfile.TemporaryDirectory() as pasta:
-        a, b = Path(pasta) / "a.json", Path(pasta) / "b.json"
+        a, b, d = Path(pasta) / "a.json", Path(pasta) / "b.json", Path(pasta) / "d.json"
         a.write_text(json.dumps(padrao), encoding="utf-8")
         b.write_text(json.dumps(hortifruti), encoding="utf-8")
-        with mock.patch.object(c, "LISTA_PADRAO", a), mock.patch.object(c, "LISTA_HORTIFRUTI", b):
-            try:
-                c.carregar_lista_da_carga()
-            except ValueError as erro:
-                assert "repetidos" in str(erro)
-            else:
-                raise AssertionError("termo repetido entre as listas devia ser recusado")
+        d.write_text(json.dumps(carnes), encoding="utf-8")
+        with mock.patch.object(c, "LISTA_PADRAO", a), mock.patch.object(c, "LISTA_HORTIFRUTI", b), mock.patch.object(c, "LISTA_CARNES", d):
+            recusa("repetidos", "termo repetido entre as listas devia ser recusado")
             hortifruti.update(termos=[{"termo": "banana"}], teto_por_termo=50)
             b.write_text(json.dumps(hortifruti), encoding="utf-8")
-            try:
-                c.carregar_lista_da_carga()
-            except ValueError as erro:
-                assert "teto" in str(erro)
-            else:
-                raise AssertionError("teto diferente entre as listas devia ser recusado")
+            recusa("teto", "teto diferente entre as listas devia ser recusado")
+            hortifruti.update(teto_por_termo=100)
+            b.write_text(json.dumps(hortifruti), encoding="utf-8")
+            assert [t["termo"] for t in c.carregar_lista_da_carga()[1]] == ["tomate", "arroz", "banana", "picanha"]     # sem conflito, as três vão juntas, nesta ordem
+            carnes.update(termos=[{"termo": "BANANA"}])                                         # a lista de carnes repete um termo do hortifrúti
+            d.write_text(json.dumps(carnes), encoding="utf-8")
+            recusa("repetidos", "termo da lista de carnes repetido do hortifrúti devia ser recusado")
+            carnes.update(termos=[{"termo": "arroz"}])                                          # ...ou da lista de produtos
+            d.write_text(json.dumps(carnes), encoding="utf-8")
+            recusa("repetidos", "termo da lista de carnes repetido da lista de produtos devia ser recusado")
+            carnes.update(termos=[{"termo": "picanha"}], teto_por_termo=80)
+            d.write_text(json.dumps(carnes), encoding="utf-8")
+            recusa("teto", "teto diferente na lista de carnes devia ser recusado")
 
 
 def teste_a_linha_de_comando_usa_a_lista_da_carga_e_aceita_uma_so():

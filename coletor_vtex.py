@@ -33,6 +33,7 @@ from busca import sem_acento
 RAIZ = Path(__file__).resolve().parent
 LISTA_PADRAO = RAIZ / "dados" / "lista_de_produtos.json"
 LISTA_HORTIFRUTI = RAIZ / "dados" / "lista_hortifruti.json"      # frutas, verduras e legumes (docs/hortifruti.md); entra na carga junto com a padrão
+LISTA_CARNES = RAIZ / "dados" / "lista_carnes_e_frios.json"      # cortes de carne e queijos a peso (docs/carnes_e_frios.md); entra na carga junto com as outras duas
 
 MERCADOS = {
     "Apoio Entrega": {"base": "https://www.apoioentrega.com", "canal": "15", "uf": "MG"},
@@ -120,7 +121,7 @@ def numero(valor):
 
 
 def vendido_por_peso(unidade_de_medida, marca_de_peso_variavel=""):
-    """Produto de peso variável (queijo fatiado, carne moída, hortifruti): o preço é por kg. Só os termos do hortifrúti o aceitam (`aceita_peso_variavel`)."""
+    """Produto de peso variável (queijo fatiado, carne moída, hortifruti): o preço é por kg. Só os termos que o aceitam (`aceita_peso_variavel`) o levam."""
     return str(unidade_de_medida or "").strip().lower() in ("kg", "g") or str(marca_de_peso_variavel or "").strip().lower() in ("yes", "sim", "true")
 
 
@@ -199,7 +200,7 @@ def linha_do_catalogo(mercado, produto, item, oferta, termo):
         "termo": termo,
         "peso_variavel": vendido_por_peso(item.get("measurementUnit"), (produto.get("Peso variável") or [""])[0]),
         # Como o mercado vende: "kg" = o PREÇO É POR QUILO (e o multiplicador é de quanto em quanto se compra: 0.5 = meio quilo);
-        # "un" = por unidade ou por pacote (o peso, se houver, está no nome). Só o hortifrúti usa (docs/hortifruti.md); a gravação ignora.
+        # "un" = por unidade ou por pacote (o peso, se houver, está no nome). Só o hortifrúti e as carnes e queijos a peso usam (docs/hortifruti.md, docs/carnes_e_frios.md).
         "unidade": unidade_normalizada(item.get("measurementUnit")),
         "multiplicador": numero(item.get("unitMultiplier")) or None,
     }
@@ -394,20 +395,22 @@ def carregar_lista(caminho=LISTA_PADRAO):
 
 
 def carregar_lista_da_carga():
-    """(teto, termos) do que a carga diária coleta: a lista de produtos de prateleira E a de hortifrúti, na MESMA coleta.
+    """(teto, termos) do que a carga diária coleta: a lista de produtos de prateleira, a de hortifrúti e a de carnes e queijos a peso, na MESMA coleta.
 
     Tem de ser uma coleta só: a gravação apaga os produtos antigos do mercado, então uma carga que usasse só uma das listas
-    apagaria os produtos da outra. Os nomes dos termos não podem se repetir entre as listas (o termo é a chave da coleta).
+    apagaria os produtos das outras. Os nomes dos termos não podem se repetir entre as listas (o termo é a chave da coleta).
     """
     teto, termos = carregar_lista(LISTA_PADRAO)
-    teto_hortifruti, termos_hortifruti = carregar_lista(LISTA_HORTIFRUTI)
-    if teto_hortifruti != teto:
-        raise ValueError(f"o teto por termo difere entre as listas: {teto} e {teto_hortifruti}")
-    nomes = {sem_acento(t["termo"]) for t in termos}
-    repetidos = [t["termo"] for t in termos_hortifruti if sem_acento(t["termo"]) in nomes]
-    if repetidos:
-        raise ValueError(f"termos repetidos entre a lista de produtos e a de hortifrúti: {repetidos}")
-    return teto, termos + termos_hortifruti
+    for caminho in (LISTA_HORTIFRUTI, LISTA_CARNES):
+        teto_da_lista, da_lista = carregar_lista(caminho)
+        if teto_da_lista != teto:
+            raise ValueError(f"o teto por termo difere entre as listas: {teto} e {teto_da_lista}")
+        nomes = {sem_acento(t["termo"]) for t in termos}
+        repetidos = [t["termo"] for t in da_lista if sem_acento(t["termo"]) in nomes]
+        if repetidos:
+            raise ValueError(f"termos repetidos entre as listas da carga (produtos, hortifrúti e carnes): {repetidos}")
+        termos = termos + da_lista
+    return teto, termos
 
 
 def sem_atacado_se_por_quilo(linha):
@@ -436,8 +439,9 @@ def passa_no_filtro(linha, termo):
     `categorias`: ao menos uma precisa casar com o caminho da categoria do produto, como "mercearia > graos > arroz".
     `categorias_proibidas`: se alguma casar com o caminho, o produto sai (xampu que cita "óleo", gelatina capilar...).
     `nome_inclui`: ao menos uma precisa casar com o nome. `nome_exclui`: se alguma casar com o nome, o produto sai.
-    `aceita_peso_variavel`: o produto vendido a peso (queijo, carne, hortifrúti) só entra no termo que diz aceitá-lo; hoje só os
-    termos de dados/lista_hortifruti.json.
+    `aceita_peso_variavel`: o produto vendido a peso (queijo, carne, hortifrúti) só entra no termo que diz aceitá-lo: os de
+    dados/lista_hortifruti.json, os de dados/lista_carnes_e_frios.json e os oito de dados/lista_de_produtos.json que também vendem a peso
+    (frango congelado, peito de frango, carne moída, linguiça, bacon, presunto, queijo mussarela e queijo prato).
     """
     if linha.get("peso_variavel") and not termo.get("aceita_peso_variavel"):
         return False
@@ -539,7 +543,7 @@ def principal(argv=None):
     parser = argparse.ArgumentParser(description="Relatório do coletor por API (só leitura, não grava em banco).")
     parser.add_argument("--termos", help="só estes termos da lista, separados por vírgula (padrão: todos)")
     parser.add_argument("--mercados", help="só estes mercados, separados por vírgula (padrão: os três)")
-    parser.add_argument("--lista", help="um arquivo de lista só (padrão: o que a carga diária coleta, a lista de produtos mais a de hortifrúti)")
+    parser.add_argument("--lista", help="um arquivo de lista só (padrão: o que a carga diária coleta, as listas de produtos, de hortifrúti e de carnes e queijos a peso)")
     parser.add_argument("--saida", help="grava as linhas coletadas neste arquivo JSON")
     args = parser.parse_args(argv)
 

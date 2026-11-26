@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       termos:
-        description: 'Só estes termos da lista (separados por vírgula). Vazio = todos os 128.'
+        description: 'Só estes termos da lista (separados por vírgula). Vazio = todos os 138.'
         required: false
         default: ''
 

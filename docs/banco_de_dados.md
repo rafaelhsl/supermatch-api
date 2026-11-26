@@ -141,8 +141,9 @@ catálogo crescer a ponto de não caber em memória).
 [`alimentar_banco.py`](../alimentar_banco.py), disparado diariamente pelo workflow
 [`.github/workflows/main.yml`](../.github/workflows/main.yml):
 
-1. Lê a lista de 128 produtos: os 100 de prateleira ([`dados/lista_de_produtos.json`](../dados/lista_de_produtos.json)) e os 28 de
-   hortifrúti ([`dados/lista_hortifruti.json`](../dados/lista_hortifruti.json)), numa coleta só (até 100 por termo e
+1. Lê a lista de 138 produtos: os 100 de prateleira ([`dados/lista_de_produtos.json`](../dados/lista_de_produtos.json)), os 28 de
+   hortifrúti ([`dados/lista_hortifruti.json`](../dados/lista_hortifruti.json)) e os 10 de carnes e queijos a peso
+   ([`dados/lista_carnes_e_frios.json`](../dados/lista_carnes_e_frios.json)), numa coleta só (até 100 por termo e
    mercado). Os quatro mercados são coletados pela API pública
    ([`coletor_por_api.md`](coletor_por_api.md)), em paralelo, na região de Betim (CEP fixo `32607600`; no Super ABC, a unidade de Betim, conferida a cada
    carga). Até 24/11/2026 o **Super ABC** era coletado por robô; o site dele mudou e hoje ele tem API como os outros (os robôs de navegador só

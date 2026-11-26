@@ -29,7 +29,7 @@ on:
           - nao
         default: sim
       coleta:
-        description: 'Como coletar: "api" (padrão: API pública dos quatro mercados, 128 termos) ou "robos" (modo antigo: robôs de navegador para Apoio, Atacadão e Supernosso e API para o Super ABC, 11 itens, tudo ou nada)'
+        description: 'Como coletar: "api" (padrão: API pública dos quatro mercados, 138 termos) ou "robos" (modo antigo: robôs de navegador para Apoio, Atacadão e Supernosso e API para o Super ABC, 11 itens, tudo ou nada)'
         type: choice
         options:
           - api

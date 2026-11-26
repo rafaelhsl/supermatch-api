@@ -1,7 +1,7 @@
 {
  "versao": 1,
  "teto_por_termo": 100,
- "observacao": "Carnes e queijos vendidos a peso (docs/carnes_e_frios.md, etapa 1). NÃO é lida pela carga diária: só entra em coletor_vtex.carregar_lista_da_carga depois do OK explícito do dono. Os tipos que já têm termo em lista_de_produtos.json (frango congelado, peito de frango, carne moída, linguiça, bacon, presunto, queijo mussarela, queijo prato) não estão aqui. Premium e congelado entram e são separados pela chave de equivalência, não pela lista. Gerada por um script; mexa nas regras no script e não aqui.",
+ "observacao": "Carnes e queijos vendidos a peso (docs/carnes_e_frios.md). A carga diária coleta esta lista JUNTO com dados/lista_de_produtos.json e dados/lista_hortifruti.json (coletor_vtex.carregar_lista_da_carga), numa coleta só. Os tipos que já têm termo em lista_de_produtos.json (frango congelado, peito de frango, carne moída, linguiça, bacon, presunto, queijo mussarela, queijo prato) não estão aqui: lá, eles aceitam peso variável. Premium e congelado entram e são separados pela chave de equivalência, não pela lista. Gerada por um script; mexa nas regras no script e não aqui.",
  "termos": [
   {
    "termo": "patinho",

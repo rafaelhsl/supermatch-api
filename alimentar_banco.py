@@ -1,8 +1,9 @@
 """Carga diária: coleta os mercados e grava o banco de produtos e o histórico de preços.
 
-Os quatro mercados são coletados pela API pública, com os 128 termos de dados/lista_de_produtos.json (100, de prateleira) e de
-dados/lista_hortifruti.json (28, frutas, verduras e legumes: o preço é por quilo, docs/hortifruti.md), numa coleta só: Apoio Entrega,
-Atacadão e Supernosso por coletor_vtex.py e o Super ABC, desde o site novo dele (25/11/2026), por coletor_vip.py (docs/coletor_por_api.md).
+Os quatro mercados são coletados pela API pública, com os 138 termos de dados/lista_de_produtos.json (100, de prateleira), de
+dados/lista_hortifruti.json (28, frutas, verduras e legumes: o preço é por quilo, docs/hortifruti.md) e de dados/lista_carnes_e_frios.json
+(10, cortes de carne e queijos a peso, docs/carnes_e_frios.md), numa coleta só: Apoio Entrega, Atacadão e Supernosso por coletor_vtex.py e o
+Super ABC, desde o site novo dele (25/11/2026), por coletor_vip.py (docs/coletor_por_api.md).
 
 Quando uma parte da coleta falha, a carga não perde tudo nem grava dado duvidoso:
 - falharam poucos termos (até 10%): grava o que veio, mantém as linhas antigas dos termos que falharam e registra a coleta como
