@@ -460,7 +460,8 @@ def teste_a_carga_coleta_o_super_abc_pela_api_com_os_quatro_mercados():
 def teste_a_coleta_do_super_abc_aplica_o_filtro_do_termo_pelo_nome():
     catalogo = {
         "arroz": [produto(1, "Arroz Tipo 1 Camil 5 Kg", "18.90"), produto(2, "Esmalte Risqué Grão Arroz", "7.99"), produto(3, "Arroz Codil 2 Kg", "7.98", disponivel=False),
-                  produto(4, "Arroz Parboilizado Prato Fino 5kg", "26.90"), produto(1, "Arroz Tipo 1 Camil 5 Kg", "18.90")],
+                  produto(4, "Arroz Parboilizado Prato Fino 5kg", "26.90"), produto(1, "Arroz Tipo 1 Camil 5 Kg", "18.90"),
+                  produto(5, "Arroz Agulhinha a Granel Kg", "6.00", sigla="KG", porcao=1.0, ean="")],
         "banana": [produto(10, "Banana Prata 1,2 Kg (5 A 6 Unidades)", "9.59", sigla="KG", porcao=1.2, ean=""), produto(11, "Chips de Banana 100g", "6.00"),
                    produto(12, "Banana Nanica 300g", "1.50", sigla="KG", porcao=0.3, ean="")],
         "queijo mussarela": [produto(20, "Queijo Mussarela Fatiado Itambé 150g", "9.90"), produto(21, "Queijo Mussarela Mutumilk Kg Ped", "43.90", sigla="KG")],
@@ -474,12 +475,14 @@ def teste_a_coleta_do_super_abc_aplica_o_filtro_do_termo_pelo_nome():
     por_termo = {}
     for linha in coleta.produtos:
         por_termo.setdefault(linha["termo"], []).append(linha)
-    assert sorted(l["id_origem"] for l in por_termo["arroz"]) == ["1", "4"]       # o esmalte (nome), o indisponível e o repetido ficam de fora
+    assert sorted(l["id_origem"] for l in por_termo["arroz"]) == ["1", "4"]       # o esmalte (nome), o indisponível, o repetido e o a granel (por quilo) ficam de fora
     assert sorted(l["id_origem"] for l in por_termo["banana"]) == ["10", "12"]     # hortifrúti aceita o item a peso; o chips sai pelo nome
-    assert [l["id_origem"] for l in por_termo["queijo mussarela"]] == ["20"]       # termo de prateleira não aceita o item vendido a peso
+    assert sorted(l["id_origem"] for l in por_termo["queijo mussarela"]) == ["20", "21"]       # o queijo mussarela aceita o item a peso (etapa 5 dos cortes); o arroz, não
     assert coleta.termos_falhos == [] and ab.avaliar_coleta(coleta.produtos, coleta.termos_total, coleta.termos_falhos, coleta.tolerancia) == "ok"
     banana = {l["id_origem"]: l for l in por_termo["banana"]}
     assert banana["10"]["preco_varejo"] == 7.99 and banana["12"]["preco_varejo"] == 5.0 and banana["12"]["unidade"] == "kg"
+    queijo = {l["id_origem"]: l for l in por_termo["queijo mussarela"]}
+    assert queijo["21"]["unidade"] == "kg" and queijo["21"]["preco_varejo"] == 43.9 and queijo["20"]["unidade"] == "un"
     assert all(l["supermercado"] == "Super ABC" and l["uf_cobertura"] == "MG" for l in coleta.produtos)
 
 

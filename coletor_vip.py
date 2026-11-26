@@ -272,7 +272,7 @@ def principal(argv=None):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description="Relatório do coletor do Super ABC (só leitura, não grava em banco).")
     parser.add_argument("--termos", help="só estes termos da lista, separados por vírgula (padrão: todos)")
-    parser.add_argument("--lista", help="um arquivo de lista só (padrão: o que a carga diária coleta, a lista de produtos mais a de hortifrúti)")
+    parser.add_argument("--lista", help="um arquivo de lista só (padrão: o que a carga diária coleta, as listas de produtos, de hortifrúti e de carnes e queijos a peso)")
     parser.add_argument("--saida", help="grava as linhas coletadas neste arquivo JSON")
     args = parser.parse_args(argv)
 
