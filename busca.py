@@ -21,9 +21,10 @@ MINIMO_DE_PRINCIPAIS = 3
 LIMITE_DE_RESULTADOS = 400        # a busca de "a" casava 6,6 mil produtos e o agrupamento levava 24 s
 TAMANHO_MINIMO_PARA_PREFIXO = 4   # "arro" acha "arroz"; "sal" não acha "salsicha"
 # A mesma palavra escrita de dois jeitos nos nomes dos mercados: a busca trata as duas como uma só ("maisena" acha o biscoito
-# "Maizena" e vice-versa; no catálogo de 12/11/2026, 16 nomes diziam "maizena" e 5, "maisena"). Vale SÓ para a busca: `sem_acento` é
-# usada também pelas chaves do histórico de preços e pelas regras de equivalência, e mudá-la mexeria nelas.
-GRAFIAS_IGUAIS = (("maizena", "maisena"),)
+# "Maizena" e vice-versa; no catálogo de 12/11/2026, 16 nomes diziam "maizena" e 5, "maisena"; e a "Muçarela" ("mucarela", sem acento) é a mesma "Mussarela":
+# em 26/11/2026, 35 nomes distintos diziam "muçarela" e 68, "mussarela"). Vale SÓ para a busca: `sem_acento` é usada também pelas chaves do histórico de preços
+# e pelas regras de equivalência, e mudá-la mexeria nelas.
+GRAFIAS_IGUAIS = (("maizena", "maisena"), ("mucarela", "mussarela"))
 
 Entrada = namedtuple("Entrada", "nome palavras_do_nome palavras_do_termo produto")
 # produtos: o que volta; so_citam_por_mercado: {mercado: quantos} dos que só citam a palavra (escondidos ou não);

@@ -545,6 +545,44 @@ def teste_lista_de_carnes_e_frios_do_repositorio():
     assert c.passa_no_filtro({"nome": "Contra Filé Bovino Carapreta Congelado 1Kg", "categoria": "Aves, Carnes e Peixes > Carne Bovina", "peso_variavel": True}, por_termo["contra filé"])
 
 
+def teste_bacon_muçarela_e_frango_caipira_da_lista_de_100():
+    """Três lacunas que o teste dos nomes reais por quilo achou em 26/11/2026 nos termos de hoje (e que também valiam para o embalado):
+    o bacon do Apoio nunca entrava (faltava a categoria dele), a grafia "Muçarela" não casava com `queijo mussarela` e o frango caipira cortado, com `frango congelado`."""
+    import copy
+    _, termos = c.carregar_lista()
+    por = {t["termo"]: t for t in termos}
+
+    def passa(termo, nome, categoria="", por_quilo=False, aceitando_peso=False):
+        t = copy.deepcopy(por[termo])
+        t["aceita_peso_variavel"] = aceitando_peso                    # True é o que a etapa 5 dos cortes a peso vai ligar nesses termos
+        return c.passa_no_filtro({"nome": nome, "categoria": categoria, "peso_variavel": por_quilo}, t)
+
+    apoio = "Açougue > Salsichas e Linguiças"
+    for nome in ("Bacon de Cubos  Adeel 1Kg", "Bacon em fatias 250g Perdigão", "Bacon em fatias 250g Sadia Na Receita", "Bacon Em Fatias Sadia Na Receita 750G"):
+        assert passa("bacon", nome, apoio), f"bacon do Apoio devia entrar: {nome}"
+    for nome in ("Bacon Perdigão 1Kg", "Bacon Inteiro Defumado Sadia 500g", "Bacon Defumado Rezende Manta 1Kg", "Bacon Seara Manta Peca 1Kg"):
+        assert not passa("bacon", nome, apoio, por_quilo=True), f"a peso, o bacon continua fora da carga de hoje: {nome}"
+        assert passa("bacon", nome, apoio, por_quilo=True, aceitando_peso=True), f"bacon do Apoio por quilo devia entrar na etapa 5: {nome}"
+    assert not passa("bacon", "Linguiça Calabresa Perdigão 800g", apoio) and not passa("bacon", "Bacon Defumado Sadia", "Mercearia > Chips e batatas palha")  # a categoria nova não abre a porta ao resto
+    assert not passa("bacon", "Bacon Defumado Sadia", "Açougue > Peixes")           # só a de salsichas e linguiças do Açougue, não o Açougue inteiro
+    assert passa("bacon", "Bacon Defumado Perdigão Preço por quilo na peça", "Carnes, aves e peixes > Secas, salgadas e defumadas > Bacon", True, True)   # os de antes seguem
+
+    mussarela = por["queijo mussarela"]
+    assert "muçarela" in mussarela["consultas"] and "mussarela" in mussarela["consultas"], "as duas grafias são buscadas: o buscador de cada loja acha uma coisa para cada"
+    for nome in ("Queijo Muçarela Fatiado Itambé 150g", "Muçarela Apreço Fatiada 150g", "MUCARELA ITAMBE 150G-FAT ZERO LACT", "Queijo Muçarela Porto Alegre Fatiado 300g", "Queijo Mussarela Alegrete Recheado C/ Requeijão 1Kg"):
+        assert passa("queijo mussarela", nome), f"deveria entrar: {nome}"
+    for nome in ("Queijo Muçarela Supernosso Peça 1Kg", "Mucarela Nacon Tranc 1Kg", "Queijo Muçarela Palito Sibele 400 G", "Queijo Muçarela Mutumilk Peça 4 Kg"):
+        assert not passa("queijo mussarela", nome, por_quilo=True) and passa("queijo mussarela", nome, por_quilo=True, aceitando_peso=True), nome
+    for nome in ("Queijo Muçarela Vegano de Castanha de Caju Fatiado Vida Veg 150g", "Queijo Vegano Mussarela Vida Veg 150g", "Pizza Supernosso Muçarela Congelada 450g", "Pão de Queijo Forno de Minas Pacote 1kg"):
+        assert not passa("queijo mussarela", nome), f"deveria sair: {nome}"
+
+    for nome in ("Frango Caipira Congelado Nhô Bento Cortado 2Kg", "Frango Caipira Nhô Bento Cortado 2,500 Kg"):
+        assert not passa("frango congelado", nome, por_quilo=True) and passa("frango congelado", nome, por_quilo=True, aceitando_peso=True), nome
+    for nome in ("Frango Defumado Seara Gourmet 1Kg", "Frango Cozido Resfriado E Defumado Sem Miúdos Perdigão 1Kg", "Coxinha De Frango Super Nosso Coquetel 400g", "Pate De Frango Abc (pote Com Aproximadamente 300g)"):
+        assert not passa("frango congelado", nome, por_quilo=True, aceitando_peso=True), f"deveria sair: {nome}"
+    assert passa("frango congelado", "Frango Inteiro Seara Com Miúdos Congelado 2.5Kg", por_quilo=True, aceitando_peso=True)       # o de antes segue
+
+
 def teste_a_lista_de_carnes_e_frios_ainda_nao_entra_na_carga():
     """Nada de carne a peso entra na carga antes do OK do dono (e da equivalência por corte, forma, estado, tempero e faixa): a lista existe, mas ninguém a lê."""
     _, carnes = c.carregar_lista(c.RAIZ / "dados" / "lista_carnes_e_frios.json")

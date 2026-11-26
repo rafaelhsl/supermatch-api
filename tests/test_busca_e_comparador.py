@@ -128,6 +128,21 @@ def teste_o_teto_conta_a_parte():
     assert b.ocultos_so_citam == 0 and b.ocultos_pelo_limite == 7
 
 
+def teste_mucarela_e_mussarela_sao_a_mesma_palavra_na_busca():
+    """Nos mercados o queijo vem escrito dos dois jeitos (35 nomes "Muçarela" e 68 "Mussarela" em 26/11/2026)."""
+    catalogo = busca.indexar([
+        produto("Queijo Muçarela Fatiado Itambé 150g", "queijo mussarela", "Supernosso"), produto("Queijo Mussarela Cristaulat Peça 1Kg", "queijo mussarela", "Apoio Entrega"),
+        produto("Mucarela Nacon Tranc 1Kg", "queijo mussarela", "Supernosso"), produto("Muçarela Apreço Fatiada 150g", "queijo mussarela", "Apoio Entrega"),
+        produto("Pizza Mussarela Sadia 460g", "pizza"),
+    ])
+    todos = {"Queijo Muçarela Fatiado Itambé 150g", "Queijo Mussarela Cristaulat Peça 1Kg", "Mucarela Nacon Tranc 1Kg", "Muçarela Apreço Fatiada 150g"}
+    for digitado in ("mussarela", "muçarela", "mucarela", "MUÇARELA", "queijo muçarela", "queijo mussarela"):
+        assert set(nomes(busca.buscar_detalhado(catalogo, digitado).produtos)) >= (todos if "queijo" not in digitado else todos - {"Mucarela Nacon Tranc 1Kg", "Muçarela Apreço Fatiada 150g"}), digitado
+    assert nomes(busca.buscar_detalhado(catalogo, "mussarela").produtos) == nomes(busca.buscar_detalhado(catalogo, "muçarela").produtos)
+    # "Mussarela" de outro produto (a pizza) segue sendo outra coisa: a grafia só junta as duas escritas, não as palavras
+    assert "Pizza Mussarela Sadia 460g" not in nomes(busca.buscar_detalhado(catalogo, "queijo muçarela").produtos)
+
+
 def teste_maizena_e_maisena_sao_a_mesma_palavra_na_busca():
     """Nos mercados a mesma marca vem escrita dos dois jeitos (16 nomes "Maizena" e 5 "Maisena" no catálogo de 12/11/2026)."""
     catalogo = busca.indexar([
