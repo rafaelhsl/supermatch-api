@@ -1,6 +1,6 @@
 # Carnes, aves, peixes, frios e queijos vendidos a peso
 
-> **Estado (24/11/2026): reconhecimento feito (só leitura); nada disso entra na carga.** A carga diária continua descartando tudo o que é vendido por quilo fora do hortifrúti, e mantém só o que vem **embalado** (as listas de produtos têm termos como "carne moída", "queijo mussarela", "presunto", "bacon", mas só com pacote de peso fixo). Esta página registra o que os mercados vendem a peso e o plano para trazer isso, nos mesmos moldes do [hortifrúti](hortifruti.md). **O Super ABC (robô) ainda não foi reconhecido**: o site dele não abriu a lista de unidades durante o reconhecimento (veja o fim).
+> **Estado (26/11/2026): reconhecimento feito nos quatro mercados (só leitura); nada disso entra na carga.** **Decidido em 26/11:** o premium entra, **separado do comum**, e o congelado entra, **separado do fresco**. A carga diária continua descartando tudo o que é vendido por quilo fora do hortifrúti, e mantém só o que vem **embalado** (as listas de produtos têm termos como "carne moída", "queijo mussarela", "presunto", "bacon", mas só com pacote de peso fixo). Esta página registra o que os mercados vendem a peso e o plano para trazer isso, nos mesmos moldes do [hortifrúti](hortifruti.md). O Super ABC foi reconhecido em 26/11/2026, pela API da loja (veja a tabela).
 
 ## Por que isso é o próximo passo natural
 
@@ -15,8 +15,9 @@ Foram 38 buscas (cortes bovinos, aves, suínos, peixes, frios e queijos) em cada
 | Apoio Entrega | 60 | "Açougue" e "Frios e Laticínios"; quase tudo em peça de 1 kg; inclui congelados baratos |
 | Atacadão | 111 | "Carnes, aves e peixes" e "Frios e congelados"; o nome diz **"Preço por quilo na peça"** (110 dos 111); o múltiplo é o peso típico da peça (1,2 kg etc.) |
 | Supernosso | 182 | "Aves, Carnes e Peixes" e "Frios e Laticínios > Queijos" (98 queijos por quilo); linhas premium (Angus, Reserva, Carapreta) e produtos temperados |
+| Super ABC | 217 (de 532 itens distintos nas mesmas 38 buscas, só o que tem estoque em Betim) | **sem categoria**: só o nome diz o que é. Carne bovina e suína em porções de 0,4 a 1,6 kg ("Carne Suína Lombo Completo 500g"), com o preço do **quilo**; frios e queijos por quilo; muita linha "a pururuca" e "temperada". Traz **ruído** que só o nome tira (melão e repolho inteiros, pão de queijo e sanduíche "por quilo", patê) |
 
-Dos 33 tipos de produto que o nome permite reconhecer (picanha, contra filé, fraldinha, acém, músculo, costela, bacon, linguiça, presunto, mussarela, queijo prato, queijo minas, parmesão, peito de peru, salame, frango inteiro, tilápia...), **25 aparecem em dois ou mais mercados**. O terreno comparável existe.
+Dos 34 tipos de produto que o nome permite reconhecer (picanha, contra filé, fraldinha, acém, músculo, costela, bacon, linguiça, presunto, mussarela, queijo prato, queijo minas, parmesão, peito de peru, salame, frango inteiro, tilápia...), **31 aparecem em dois ou mais mercados, 22 em três ou mais e 13 nos quatro** (com o Super ABC; sem ele eram 25 de 33 em dois ou mais). Só coxão mole, coxão duro e tilápia aparecem em um mercado só. O terreno comparável existe.
 
 ## O cuidado que o hortifrúti não pedia: o "mesmo tipo" não é o mesmo produto
 
@@ -42,16 +43,17 @@ Outros pontos que a coleta mostrou:
 1. **Lista e filtros (fora da carga).** Um arquivo próprio (`dados/lista_carnes_e_frios.json`) com cerca de 30 termos por tipo de produto, filtro por categoria do mercado ("Açougue", "Carnes, aves e peixes", "Frios e Laticínios > Queijos"...) e por nome, casos reais de "entra" e "sai" e testes, como a [lista do hortifrúti](hortifruti.md). O coletor já sabe ler (`aceita_peso_variavel`).
 2. **Equivalência** (uma família, como a do hortifrúti) por **corte, forma, estado, tempero e faixa de qualidade**, com o preço por quilo valendo "1 kg". Itens que o nome não deixa classificar ficam sem chave (só no modo exato).
 3. **Site:** quase nada: já mostra "/kg", conta a lista em quilos e esconde o peso da porção. Talvez um rótulo de estado ("congelado") quando for útil.
-4. **Super ABC:** reconhecer pela API da loja (`coletor_vip.py`: o robô saiu em 25/11/2026; só embalado? há corte a peso?) e decidir se entra.
+4. **Super ABC (reconhecido em 26/11):** tem corte a peso, e entra como os outros. Sem categoria, o filtro dele é só por nome, e o nome precisa tirar o ruído (melão, repolho, pão de queijo, sanduíche, patê). A API da loja já traz `unidade = kg` e o preço do quilo (`coletor_vip.py`).
 5. **Ligar na carga**, com a mesma cautela (OK explícito; uma coleta só com as outras listas, porque a gravação apaga o resto do mercado). Custo estimado: ~30 termos a mais na coleta por API (poucos segundos) e, se o Super ABC participar, ~30 buscas a mais do robô (as 28 do hortifrúti somaram uns 2 minutos à carga).
 
-## O que precisa ser decidido
+## O que foi decidido
 
 - **Escopo da primeira rodada.** Sugestão: frango (inteiro, peito, coxa e sobrecoxa), carne moída, os cortes populares (patinho, acém, coxão mole, músculo, alcatra, fraldinha, picanha, contra filé), linguiça, bacon, presunto, mussarela, queijo prato, queijo minas e parmesão. Peixe, cordeiro, cortes premium e salame ficam para depois.
-- **O premium entra?** Sugestão: entra, mas **separado por chave** (faixa "premium"), para nunca disputar o "mais barato" com o comum.
-- **Congelado entra?** Sugestão: entra, também separado por chave.
+- **O premium entra? Sim (decidido em 26/11/2026), separado do comum** por chave (faixa "premium"), para nunca disputar o "mais barato" com o comum.
+- **Congelado entra? Sim (decidido em 26/11/2026), separado do fresco**, também por chave.
+- **Escopo da primeira rodada:** a sugestão acima segue como ponto de partida (o usuário respondeu só sobre premium e congelado), e cresce depois.
 
 ## Limites do reconhecimento
 
 - Foi **uma coleta de um dia** e a classificação por tipo foi feita por expressões no nome, só para dimensionar; a regra de verdade nasce na etapa 2, com casos reais.
-- **Super ABC:** o robô falhou em todas as tentativas de abrir a lista de unidades durante o reconhecimento (as 6 primeiras buscas, de manhã cedo; o site respondia, mas o botão de unidades não ficou visível). É o mesmo erro intermitente de sempre (veja [`robos.md`](robos.md)); o reconhecimento do ABC fica para repetir em outro horário.
+- **Super ABC:** o reconhecimento de 26/11 foi pela API da loja (unidade de Betim, só o que tem estoque), com as mesmas 38 buscas; o robô antigo, que falhou em todas as tentativas de 24/11, saiu da carga em 25/11. Como os outros, é uma coleta de um dia.
