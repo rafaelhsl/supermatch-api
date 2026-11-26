@@ -297,6 +297,30 @@ def preco_e_atacado_do_no(no):
     return round(varejo, 2), round(varejo, 2), 1
 
 
+def preco_do_quilo_do_atacadao(no, preco):
+    """O preço do QUILO de um item por quilo do Atacadão (`preco` é o varejo que `preco_e_atacado_do_no` tirou do `price`).
+
+    Até 24/11/2026 o `price` do GraphQL era sempre o do quilo. Em 26/11 se viu que, num item por quilo com `unitMultiplier` menor que 1, o `price` passou a ser o
+    da porção mínima de compra (150 g de tomate: R$ 2,68) e o `listPrice` é o do quilo (R$ 17,90); com multiplicador 1 ou maior os dois são o do quilo. O banco
+    chegou a guardar "tomate R$ 2,68 o quilo". Por isso, nesses itens:
+    - `price` = `listPrice` x multiplicador (sem promoção): vale o `listPrice`;
+    - `price` abaixo disso (a porção em promoção): vale `price` / multiplicador;
+    - `price` acima disso (o `price` já é o do quilo, como era antes), ou sem `listPrice` para conferir: vale o `price`, como sempre valeu.
+    """
+    if unidade_normalizada(no.get("measurementUnit")) != "kg":
+        return preco
+    fator = min(numero(no.get("unitMultiplier")) or 1.0, 1.0)
+    ofertas = [o for o in (no.get("offers") or {}).get("offers") or [] if numero(o.get("price")) > 0]
+    lista = numero(min(ofertas, key=lambda o: int(numero(o.get("minQuantity")) or 1)).get("listPrice")) if ofertas else 0.0
+    if lista <= 0:
+        return preco
+    if abs(preco - lista * fator) <= 0.011:
+        return round(lista, 2)
+    if preco < lista * fator:
+        return round(preco / fator, 2)
+    return preco
+
+
 def eans_do_atacadao(http, ids_de_produto):
     """productId -> EAN, buscando até 50 produtos por chamada no catálogo.
 
@@ -338,6 +362,9 @@ def baixar_atacadao(http, consulta):
         if not precos:
             continue
         varejo, atacado, minimo = precos
+        por_quilo = preco_do_quilo_do_atacadao(no, varejo)
+        if por_quilo != varejo:
+            varejo, atacado, minimo = por_quilo, por_quilo, 1      # item por quilo não leva faixa de atacado
         produto_id = str((no.get("isVariantOf") or {}).get("productGroupID") or no.get("id"))
         trilha = [str(n.get("name", "")).strip() for n in ((no.get("breadcrumbList") or {}).get("itemListElement") or [])]
         # o último nível da trilha é o próprio produto; a categoria é o que vem antes
