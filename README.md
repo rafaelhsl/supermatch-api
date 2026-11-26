@@ -24,7 +24,7 @@ Super ABC (API pública da loja, VIP Commerce)          ─┘   (GitHub Actions
                                                              07:30 de Brasília)  histórico)                      1 arquivo HTML)
 ```
 
-- **Coleta** ([`coletor_vtex.py`](coletor_vtex.py) e [`coletor_vip.py`](coletor_vip.py), o do Super ABC): 128 termos (100 de prateleira e 28 de hortifrúti), até 100 produtos por termo e mercado, cerca de 8 mil produtos por dia. Falha de um mercado não apaga os dados dele: ficam os do dia anterior ([`docs/carga_diaria.md`](docs/carga_diaria.md), [`docs/robos.md`](docs/robos.md)).
+- **Coleta** ([`coletor_vtex.py`](coletor_vtex.py) e [`coletor_vip.py`](coletor_vip.py), o do Super ABC): 138 termos (100 de prateleira, 28 de hortifrúti e 10 de carnes e queijos a peso), até 100 produtos por termo e mercado, cerca de 8 mil produtos por dia. Falha de um mercado não apaga os dados dele: ficam os do dia anterior ([`docs/carga_diaria.md`](docs/carga_diaria.md), [`docs/robos.md`](docs/robos.md)).
 - **Banco** (Supabase): a foto do dia (`produtos`) e o histórico de preços desde 04/11/2026 ([`docs/banco_de_dados.md`](docs/banco_de_dados.md), [`docs/historico_de_precos.md`](docs/historico_de_precos.md)).
 - **API** ([`api_supabase.py`](api_supabase.py)): busca no catálogo em memória, agrupa o mesmo produto de mercados diferentes ([`Comparador_inteligente.py`](Comparador_inteligente.py)) e calcula as famílias de equivalência ([`equivalencia.py`](equivalencia.py)). `GET /comparar?cep=&item=` e `GET /saude`.
 - **Site** ([`site/index.html`](site/index.html)): um arquivo só, sem biblioteca e sem etapa de montagem. As regras do navegador estão em blocos puros, testados em Node ([`docs/site.md`](docs/site.md)).
