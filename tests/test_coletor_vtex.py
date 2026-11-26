@@ -193,6 +193,61 @@ def teste_atacadao_graphql_e_ean():
     assert len([ch for ch in http.chamadas if "graphql" in ch[1]]) == 1                       # totalCount alcançado: não pede mais páginas
 
 
+def no_por_quilo(nome, preco, lista, multiplicador, unidade="kg", id_produto=500):
+    no = no_graphql(id_produto, nome, [(1, preco)], unidade=unidade, categorias=("Hortifrúti", "Legumes"))
+    no["unitMultiplier"] = multiplicador
+    if lista is not None:
+        no["offers"]["offers"][0]["listPrice"] = lista
+    return no
+
+
+def teste_atacadao_por_quilo_com_o_price_da_porcao():
+    # desde 26/11/2026 o `price` de um item por quilo com multiplicador menor que 1 é o da porção mínima (150 g: R$ 2,68) e o `listPrice` é o do quilo (R$ 17,90).
+    # O banco chegou a guardar "tomate R$ 2,68 o quilo" (dados reais de 26/11: Tomate Italiano Quilo, Cebola Roxa Quilo, Queijo Minas Padrão Porto Alegre...).
+    f = c.preco_do_quilo_do_atacadao
+    assert f(no_por_quilo("Tomate Italiano Quilo", 2.68, 17.9, 0.15), 2.68) == 17.9                    # vale o listPrice (2.68 / 0.15 daria 17.87)
+    assert f(no_por_quilo("Cebola Roxa Quilo", 1.78, 11.9, 0.15), 1.78) == 11.9
+    assert f(no_por_quilo("Queijo Minas Padrão Porto Alegre", 13.99, 34.99, 0.4), 13.99) == 34.99
+    assert f(no_por_quilo("Alho a granel Quilo", 1.19, 11.9, 0.1), 1.19) == 11.9
+    # a porção em promoção: o price fica abaixo de listPrice x multiplicador, e o quilo é o price / multiplicador
+    assert f(no_por_quilo("Tomate em promoção", 2.0, 17.9, 0.15), 2.0) == 13.33
+    # multiplicador 1 ou maior: o price já é o do quilo
+    assert f(no_por_quilo("Melancia Baby Quilo", 5.99, 5.99, 1.5), 5.99) == 5.99
+    assert f(no_por_quilo("Repolho Roxo Quilo", 4.99, 4.99, 1), 4.99) == 4.99
+    assert f(no_por_quilo("Acém Porcionado", 39.9, 39.9, 1.2), 39.9) == 39.9
+    # o comportamento antigo (até 24/11: price = quilo, mesmo com multiplicador < 1) continua certo se a loja voltar a ele, com ou sem promoção
+    assert f(no_por_quilo("Tomate (como era)", 17.9, 17.9, 0.15), 17.9) == 17.9
+    assert f(no_por_quilo("Tomate (como era, em promoção)", 14.9, 17.9, 0.15), 14.9) == 14.9
+    # sem listPrice para conferir, ou sem multiplicador: o price, como sempre valeu
+    assert f(no_por_quilo("Tomate sem listPrice", 2.68, None, 0.15), 2.68) == 2.68
+    assert f(no_por_quilo("Tomate sem multiplicador", 17.9, 17.9, None), 17.9) == 17.9
+    # o que não é por quilo não é mexido, nem com multiplicador menor que 1
+    assert f(no_por_quilo("Arroz 5kg", 22.5, 40.0, 0.15, unidade="un"), 22.5) == 22.5
+    # com faixas, vale o listPrice da faixa de 1 unidade
+    com_faixas = no_graphql(501, "Queijo Minas com faixa", [(6, 11.0), (1, 13.99)], unidade="kg")
+    com_faixas["unitMultiplier"] = 0.4
+    for oferta in com_faixas["offers"]["offers"]:
+        oferta["listPrice"] = 34.99 if oferta["minQuantity"] == 1 else 27.5
+    assert f(com_faixas, 13.99) == 34.99
+
+
+def teste_atacadao_baixa_o_item_por_quilo_com_o_preco_do_quilo():
+    nos = [no_por_quilo("Tomate Italiano Quilo", 2.68, 17.9, 0.15, id_produto=700), no_por_quilo("Melancia Baby Quilo", 5.99, 5.99, 1.5, id_produto=800)]
+    nos[0]["offers"]["offers"].append({"price": 2.0, "listPrice": 12.0, "minQuantity": 10})        # faixa de atacado: item por quilo não leva
+
+    def resposta(url, corpo):
+        if "graphql" in url:
+            return {"data": {"search": {"products": {"pageInfo": {"totalCount": len(nos)}, "edges": [{"node": n} for n in nos]}}}}
+        return []
+
+    linhas = {l["nome"]: l for l in c.baixar_atacadao(HttpFalso(resposta), "tomate")}
+    tomate = linhas["Tomate Italiano Quilo"]
+    assert (tomate["preco_varejo"], tomate["preco_atacado"], tomate["quantidade_atacado"]) == (17.9, 17.9, 1)
+    assert tomate["unidade"] == "kg" and tomate["multiplicador"] == 0.15 and tomate["peso_variavel"] is True
+    melancia = linhas["Melancia Baby Quilo"]
+    assert (melancia["preco_varejo"], melancia["multiplicador"]) == (5.99, 1.5)
+
+
 def teste_ean_do_atacadao_divide_o_lote_e_segue_sem_ean():
     ids = [str(1000 + i) for i in range(8)]
     chamadas = []
