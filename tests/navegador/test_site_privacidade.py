@@ -75,12 +75,12 @@ async def rodar():
             texto = limpo(await pg.locator("#janelaPrivacidade").inner_text())
             for trecho in ("não tem cadastro, anúncios nem rastreadores", "não usa cookies", "BrasilAPI e ViaCEP", "5 primeiros dígitos do CEP", "guardados por 7 dias", "Netlify", "Render"):
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")
-            for trecho in ("Quem responde por isto", "O Supermatch é mantido por Rafael Lima"):
+            for trecho in ("Quem responde por isto", "A Econolista é mantida por Rafael Lima"):
                 confere(trecho in texto, f"o aviso diz: «{trecho}»")
             email = pg.locator("#contatoEmail")
             confere(limpo(await email.inner_text()) == "rafaelhsts@gmail.com", f"o e-mail do responsável aparece escrito: «{limpo(await email.inner_text())}»")
             href = await email.get_attribute("href")
-            confere(href == "mailto:rafaelhsts@gmail.com?subject=Supermatch%3A%20privacidade", f"o link abre o e-mail com assunto: {href}")
+            confere(href == "mailto:rafaelhsts@gmail.com?subject=Econolista%3A%20privacidade", f"o link abre o e-mail com assunto: {href}")
             dentro = await email.evaluate("(e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth && r.height > 0; }")
             confere(dentro, f"o e-mail cabe na tela de {vp['width']} px")
             await pg.locator("#fecharPrivacidade").evaluate("(e) => e.click()")

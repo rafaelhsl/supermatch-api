@@ -8,9 +8,9 @@ O site mostra um aviso de privacidade (rodapé "Privacidade e seus dados" e link
 |---|---|---|
 | localStorage do navegador (chaves `sm_...`) | CEP, cidade, lista de compras, modo de busca | a pessoa não digita de novo. Não há cookies, `sessionStorage` nem IndexedDB |
 | BrasilAPI e ViaCEP (do navegador) | o CEP | descobrir a cidade (e saber se atendemos) |
-| API do Supermatch, no Render (do navegador) | o CEP e o termo buscado, a cada busca e a cada atualização da lista | calcular os preços |
+| API da Econolista, no Render (do navegador) | o CEP e o termo buscado, a cada busca e a cada atualização da lista | calcular os preços |
 | ViaCEP (da API) | os 8 dígitos do CEP | saber o estado (UF) |
-| API do Supermatch, no Render (do navegador), ao abrir o gráfico de preços | a chave do produto (e o mercado), **sem CEP** | desenhar a evolução do preço (`/historico`). O pedido entra no log da API, com os 7 dias do Render |
+| API da Econolista, no Render (do navegador), ao abrir o gráfico de preços | a chave do produto (e o mercado), **sem CEP** | desenhar a evolução do preço (`/historico`). O pedido entra no log da API, com os 7 dias do Render |
 | Netlify (as letras, em `fonts/`, junto com o site) | o IP, como em qualquer pedido ao site | as letras do site. **Desde 23/11/2026 não vêm mais do Google Fonts** |
 | Netlify e Render | registros técnicos de acesso (IP e o que o provedor guarda) | são os provedores de hospedagem |
 
@@ -41,7 +41,7 @@ Apaga todas as chaves `sm_...` do navegador e as da versão anterior do site (`u
 | "Quando você abre o histórico de preços de um produto, a API recebe só qual é o produto, sem CEP" | `tests/navegador/test_site_historico.py`: o pedido a `/historico` só tem o parâmetro `chaves` e não contém o CEP guardado |
 | "Apagar meus dados" apaga tudo | `tests/navegador/test_site_privacidade.py`: com `sm_*`, `user_*` e uma chave de outro site guardadas, sobra só a de fora |
 | o aviso abre do rodapé e da janela do CEP, cabe em 320 px, Esc fecha e o foco volta | o mesmo teste de navegador |
-| "O Supermatch é mantido por Rafael Lima" e o e-mail para dúvidas | `tests/test_privacidade.js` (o texto, o link e o `mailto`) e o teste de navegador (o e-mail aparece escrito, o link abre o e-mail com assunto e cabe em 320 px) |
+| "A Econolista é mantida por Rafael Lima" e o e-mail para dúvidas | `tests/test_privacidade.js` (o texto, o link e o `mailto`) e o teste de navegador (o e-mail aparece escrito, o link abre o e-mail com assunto e cabe em 320 px) |
 
 ## Quem responde
 

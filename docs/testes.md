@@ -28,7 +28,7 @@ Cada arquivo termina com `ok: N …` ou `N verificações passaram` quando tudo 
 
 ### Testes de navegador
 
-Eles servem a pasta `site/` num endereço local (`http://127.0.0.1:porta`, como o Netlify a serve; `_comum.py`) e a abrem num Chromium sem janela, simulam o que a pessoa faz (digitar o CEP, buscar, adicionar à lista, abrir o cupom) no celular e no computador, e conferem o que aparece. A API do Supermatch e a de CEP são de mentira: o próprio teste responde no lugar delas, então nada sai para a rede e o resultado é sempre o mesmo.
+Eles servem a pasta `site/` num endereço local (`http://127.0.0.1:porta`, como o Netlify a serve; `_comum.py`) e a abrem num Chromium sem janela, simulam o que a pessoa faz (digitar o CEP, buscar, adicionar à lista, abrir o cupom) no celular e no computador, e conferem o que aparece. A API da Econolista e a de CEP são de mentira: o próprio teste responde no lugar delas, então nada sai para a rede e o resultado é sempre o mesmo.
 
 Na primeira vez, instale o Chromium do Playwright (o `pip install -r requirements.txt` já traz o Playwright):
 

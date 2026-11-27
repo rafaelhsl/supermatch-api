@@ -1,6 +1,6 @@
 """Entrega por cidade no site: só os mercados que entregam na cidade do CEP aparecem (barracas, pílulas, cupom e aviso).
 
-Teste de ponta a ponta no navegador, com a API do Supermatch e a de CEP (BrasilAPI) de mentira: nada sai para a rede.
+Teste de ponta a ponta no navegador, com a API da Econolista e a de CEP (BrasilAPI) de mentira: nada sai para a rede.
 O mapa de quem entrega onde é o do site (bloco @entrega de site/index.html); a lógica pura dele é conferida por tests/test_entrega.js.
 
 Rodar com:  python tests/navegador/test_site_entrega.py   (precisa do Playwright e do Chromium: veja docs/testes.md)

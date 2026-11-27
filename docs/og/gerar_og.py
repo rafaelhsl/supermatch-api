@@ -1,4 +1,4 @@
-"""Gera site/og.png (a imagem que aparece quando o link do Supermatch é compartilhado) a partir de docs/og/og.html.
+"""Gera site/og.png (a imagem que aparece quando o link da Econolista é compartilhado) a partir de docs/og/og.html.
 
 Rodar com:  python docs/og/gerar_og.py   (precisa do Playwright e do Chromium: veja docs/testes.md; as letras são as de site/fonts/, então não precisa de internet)
 Tira uma foto de 1200 x 630 px da página e grava site/og.png. Depois de mudar o texto ou as cores de og.html, rode de novo e confira a imagem.

@@ -36,7 +36,7 @@ def teste_todas_as_tags_estao_la_uma_vez_so():
                         "og:image:alt", "twitter:card"):
         assert meta(propriedade), f"falta (ou repete) a tag {propriedade}"
     assert canonico(), "falta (ou repete) o link canonical"
-    assert meta("og:type") == "website" and meta("og:locale") == "pt_BR" and meta("og:site_name") == "Supermatch"
+    assert meta("og:type") == "website" and meta("og:locale") == "pt_BR" and meta("og:site_name") == "Econolista"
     assert meta("twitter:card") == "summary_large_image"
     assert meta("og:image:type") == "image/png"
 
@@ -59,6 +59,8 @@ def teste_os_enderecos_sao_absolutos_e_de_um_endereco_so():
     origens = {urlparse(u).scheme + "://" + urlparse(u).netloc for u in urls.values()}
     assert len(origens) == 1, f"canonical, og:url e og:image têm de ser do mesmo endereço: {origens}"
     assert urls["canonical"] == urls["og:url"] and urlparse(urls["og:url"]).path in ("", "/")
+    assert urlparse(urls["og:url"]).netloc == "econolista.com.br", "o endereço do site é o domínio próprio (registrado em 27/11/2026), não o do Netlify"
+    assert urls["og:image"] == "https://econolista.com.br/og.png"
     assert not re.search(r"localhost|127\.0\.0\.1|file:", " ".join(urls.values()))
 
 
