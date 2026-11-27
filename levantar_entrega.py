@@ -258,7 +258,7 @@ def gerar_documento(tabela, resultados, amostras):
     linhas = [
         "# Entrega por cidade",
         "",
-        "Quais mercados entregam em cada uma das 14 cidades atendidas pelo Supermatch. Gerado por "
+        "Quais mercados entregam em cada uma das 14 cidades atendidas pela Econolista. Gerado por "
         "[`levantar_entrega.py`](../levantar_entrega.py), que informa CEPs reais de bairros diferentes em cada site "
         "e anota o que ele respondeu. Última sondagem: " + periodo + ". Os sites mudam: para atualizar, rode o script de novo.",
         "",

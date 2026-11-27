@@ -6,22 +6,22 @@
 <meta name="description" content="Monte sua lista de compras e veja em qual supermercado online ela sai mais barata.">
 <meta name="theme-color" content="#182848">
 <!-- Pré-visualização do link (WhatsApp, Instagram, Facebook, X, Telegram...). Os endereços têm de ser ABSOLUTOS: quem monta a prévia não roda o site.
-     Se o site mudar de endereço (um domínio próprio, por exemplo), troque os três abaixo (canonical, og:url e og:image); tests/test_og.py confere. -->
-<link rel="canonical" href="https://spontaneous-hamster-cd3133.netlify.app/">
+     Se o site mudar de endereço, troque os três abaixo (canonical, og:url e og:image); tests/test_og.py confere. -->
+<link rel="canonical" href="https://econolista.com.br/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
-<meta property="og:site_name" content="Supermatch">
-<meta property="og:title" content="Supermatch: onde a sua compra sai mais barata?">
+<meta property="og:site_name" content="Econolista">
+<meta property="og:title" content="Econolista: onde a sua compra sai mais barata?">
 <meta property="og:description" content="Monte a sua lista e compare o total em 4 supermercados online de Belo Horizonte e região: Atacadão, Supernosso, Super ABC e Apoio Entrega.">
-<meta property="og:url" content="https://spontaneous-hamster-cd3133.netlify.app/">
-<meta property="og:image" content="https://spontaneous-hamster-cd3133.netlify.app/og.png">
+<meta property="og:url" content="https://econolista.com.br/">
+<meta property="og:image" content="https://econolista.com.br/og.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Toldo listrado com as cores dos quatro mercados, o título “Onde a sua compra sai mais barata?” e a placa amarela “Mais barato”.">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 26'%3E%3Cpath d='M2 10Q2 2 8 2H22Q28 2 28 10Z' fill='%23ffd23f'/%3E%3Cpath d='M2 10h26' stroke='%23182848' stroke-width='2'/%3E%3Cpath d='M5 10v13M25 10v13' stroke='%23182848' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M8 2l-2 8M15 2v8M22 2l2 8' stroke='%23182848' stroke-width='1.6'/%3E%3C/svg%3E">
-<title>Supermatch: onde a sua compra sai mais barata?</title>
+<title>Econolista: onde a sua compra sai mais barata?</title>
 <!-- As letras vêm deste site (fonts/), não do Google: o Google não recebe o endereço IP de quem visita. Só as duas da primeira tela são pré-carregadas. -->
 <link rel="preload" href="fonts/unbounded-latin-v1.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/hanken-grotesk-latin-v1.woff2" as="font" type="font/woff2" crossorigin>
@@ -43,7 +43,7 @@
 @font-face { font-family: "Unbounded"; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/unbounded-latin-v1.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: "Unbounded"; font-style: normal; font-weight: 800; font-display: swap; src: url(fonts/unbounded-latin-v1.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 /* =====================================================================================
-   SUPERMATCH
+   ECONOLISTA
    Cada mercado é uma barraca de toldo listrado; a mais barata ganha a placa amarela. As barracas
    são as abas de um cupom fiscal com a lista de compras. Pensado primeiro para o celular: na tela
    pequena os resultados da busca vêm logo abaixo do campo e o cupom fica no fim, com uma barra
@@ -392,13 +392,13 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 </head>
 <body>
 
-<noscript><p style="margin:0;padding:14px 16px;background:#182848;color:#fff;text-align:center">O Supermatch precisa do JavaScript ligado no navegador para funcionar.</p></noscript>
+<noscript><p style="margin:0;padding:14px 16px;background:#182848;color:#fff;text-align:center">A Econolista precisa do JavaScript ligado no navegador para funcionar.</p></noscript>
 
 <div class="pagina">
   <header class="topo">
     <a class="marca" href="#">
       <svg width="30" height="26" viewBox="0 0 30 26" aria-hidden="true"><path d="M2 10 Q2 2 8 2 H22 Q28 2 28 10 Z" fill="#ffd23f"/><path d="M2 10h26" stroke="#182848" stroke-width="2"/><path d="M5 10v13M25 10v13" stroke="#182848" stroke-width="2" stroke-linecap="round"/><path d="M8 2l-2 8M15 2v8M22 2l2 8" stroke="#182848" stroke-width="1.6"/></svg>
-      Supermatch
+      Econolista
     </a>
     <button class="botao-cep" id="botaoCep" type="button"><small>Entrega em</small> <span id="cepTexto">informe seu CEP</span></button>
   </header>
@@ -434,7 +434,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 
   <aside class="cupom-area" id="cupom" aria-label="Sua lista"></aside>
 
-  <p class="rodape-pagina">O Supermatch compara os preços publicados nos sites dos mercados, coletados uma vez por dia. Promoções e estoque mudam: confira no site do mercado antes de finalizar a compra. <button type="button" class="link" id="abrirPrivacidade">Privacidade e seus dados</button></p>
+  <p class="rodape-pagina">A Econolista compara os preços publicados nos sites dos mercados, coletados uma vez por dia. Promoções e estoque mudam: confira no site do mercado antes de finalizar a compra. <button type="button" class="link" id="abrirPrivacidade">Privacidade e seus dados</button></p>
 </div>
 
 <div class="barra-movel" id="barraMovel"></div>
@@ -458,7 +458,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 <dialog id="janelaPrivacidade" aria-labelledby="tituloPrivacidade">
   <div class="janela">
     <h2 id="tituloPrivacidade">Privacidade e seus dados</h2>
-    <p class="destaque">O Supermatch não tem cadastro, anúncios nem rastreadores, e não vende nem repassa os seus dados.</p>
+    <p class="destaque">A Econolista não tem cadastro, anúncios nem rastreadores, e não vende nem repassa os seus dados.</p>
     <h3>O que fica no seu aparelho</h3>
     <p>O seu CEP, a cidade, a lista de compras e o modo de busca ficam guardados só no navegador, para você não digitar de novo. O site não usa cookies.</p>
     <h3>Para onde o seu CEP vai</h3>
@@ -469,7 +469,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     <h3>O que os serviços de hospedagem veem</h3>
     <p>O Netlify, que entrega este site, e o Render, que roda a nossa API, guardam registros técnicos de acesso, como o endereço IP.</p>
     <h3>Quem responde por isto</h3>
-    <p>O Supermatch é mantido por <strong>Rafael Lima</strong>. Para tirar dúvidas sobre os seus dados, escreva para <a id="contatoEmail" href="#" class="link-contato">o e-mail do responsável</a>.</p>
+    <p>A Econolista é mantida por <strong>Rafael Lima</strong>. Para tirar dúvidas sobre os seus dados, escreva para <a id="contatoEmail" href="#" class="link-contato">o e-mail do responsável</a>.</p>
     <div class="acoes">
       <button class="botao vazado" type="button" id="apagarMeusDados">Apagar meus dados deste aparelho</button>
       <button class="botao sol" type="button" id="fecharPrivacidade">Fechar</button>
@@ -492,7 +492,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
 </dialog>
 
 <script>
-/* Supermatch: lista de compras, busca na API, CEP e comparação por mercado.
+/* Núcleo do site (o objeto no código se chama Supermatch, o nome antigo; é interno e não aparece para ninguém): lista de compras, busca na API, CEP e comparação por mercado.
    Cuida do que não depende do desenho; a tela só desenha o estado e escuta as mudanças:
        Supermatch.aoMudar(() => desenhar(Supermatch.estado));
        Supermatch.iniciar(); */
@@ -1483,7 +1483,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
     const f = hist.fase;
     if (f === "carregando") corpoHist.innerHTML = `<div class="estado"><strong>Buscando o histórico<span class="pontinhos"></span></strong>${U.esc(hist.aviso || "Isso leva alguns segundos.")}</div>`;
     else if (f === "erro") corpoHist.innerHTML = `<div class="estado"><strong>Não deu para carregar o histórico</strong>Confira a conexão e tente de novo.<br><br><button class="botao vazado" type="button" id="histTentar">Tentar de novo</button></div>`;
-    else if (f === "vazio") corpoHist.innerHTML = `<div class="estado"><strong>Ainda não há histórico deste produto</strong>O Supermatch guarda o preço de cada dia desde 04/11/2026. Um produto novo aparece aqui depois da próxima atualização diária.</div>`;
+    else if (f === "vazio") corpoHist.innerHTML = `<div class="estado"><strong>Ainda não há histórico deste produto</strong>A Econolista guarda o preço de cada dia desde 04/11/2026. Um produto novo aparece aqui depois da próxima atualização diária.</div>`;
     else desenharGraficoHist();
   }
 
@@ -1677,7 +1677,7 @@ dialog::backdrop { background: rgba(24, 40, 72, .6); }
   // O e-mail do responsável é montado aqui, não escrito no HTML: quem varre páginas atrás de endereços para spam não roda o script.
   const CONTATO = { usuario: "rafaelhsts", dominio: "gmail.com" };
   const email = CONTATO.usuario + "@" + CONTATO.dominio;
-  $("contatoEmail").href = "mailto:" + email + "?subject=" + encodeURIComponent("Supermatch: privacidade");
+  $("contatoEmail").href = "mailto:" + email + "?subject=" + encodeURIComponent("Econolista: privacidade");
   $("contatoEmail").textContent = email;
   ["abrirPrivacidade", "abrirPrivacidadeCep"].forEach((id) => $(id).addEventListener("click", () => privacidade.showModal()));
   $("fecharPrivacidade").addEventListener("click", () => privacidade.close());

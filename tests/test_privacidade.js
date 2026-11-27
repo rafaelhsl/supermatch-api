@@ -36,7 +36,7 @@ confere(!/google-analytics|googletagmanager|gtag\(|fbq\(|hotjar|clarity\.ms|plau
 confere(/Apagar meus dados deste aparelho/.test(texto), 'o aviso tem o botão "Apagar meus dados deste aparelho"');
 
 // ---- quem responde: o nome e o contato do responsável (LGPD), com o e-mail montado no script e não escrito no HTML ----
-confere(/Quem responde por isto/.test(texto) && /mantido por Rafael Lima/.test(texto), 'o aviso diz quem responde: "mantido por Rafael Lima"');
+confere(/Quem responde por isto/.test(texto) && /Econolista é mantida por Rafael Lima/.test(texto), 'o aviso diz quem responde: "A Econolista é mantida por Rafael Lima"');
 confere(/id="contatoEmail"/.test(dialogo), "o aviso tem o link do e-mail do responsável");
 confere(!/rafaelhsts@gmail\.com|rafaelhsts%40|mailto:[^"'+]*@/.test(html), "o e-mail NÃO está escrito inteiro no HTML (é montado pelo script, contra quem varre páginas atrás de endereços)");
 confere(/CONTATO = \{ usuario: "rafaelhsts", dominio: "gmail\.com" \}/.test(script) && /"mailto:" \+ email/.test(script), "o script monta o mailto com o contato do responsável");

@@ -1,8 +1,8 @@
-# Supermatch
+# Econolista
 
-**Onde a sua compra sai mais barata?** O Supermatch compara a sua lista de compras em quatro supermercados com compra online e entrega em Belo Horizonte e região metropolitana: **Atacadão, Supernosso, Super ABC e Apoio Entrega**.
+**Onde a sua compra sai mais barata?** A Econolista compara a sua lista de compras em quatro supermercados com compra online e entrega em Belo Horizonte e região metropolitana: **Atacadão, Supernosso, Super ABC e Apoio Entrega**.
 
-**Site:** <https://spontaneous-hamster-cd3133.netlify.app/> · [![Testes](https://github.com/rafaelhsl/supermatch-api/actions/workflows/testes.yml/badge.svg)](https://github.com/rafaelhsl/supermatch-api/actions/workflows/testes.yml)
+**Site:** <https://econolista.com.br/> · [![Testes](https://github.com/rafaelhsl/supermatch-api/actions/workflows/testes.yml/badge.svg)](https://github.com/rafaelhsl/supermatch-api/actions/workflows/testes.yml)
 
 A pessoa informa o CEP, busca os produtos, monta a lista e vê **o total em cada mercado**, quais itens cada um não tem e onde a compra fica mais barata.
 
@@ -14,6 +14,7 @@ A pessoa informa o CEP, busca os produtos, monta a lista e vê **o total em cada
 - **Selo "caiu X% em 7 dias"** a partir do histórico de preços, e **aviso de preço velho** quando uma coleta não veio.
 - **Só os mercados que entregam na cidade** da pessoa; avisa quando entregam só em parte dela.
 - **Privacidade:** sem cadastro, anúncios nem rastreadores; as fontes são hospedadas no próprio site. Veja [`docs/privacidade.md`](docs/privacidade.md).
+- **Nome e domínio:** Econolista, `econolista.com.br` (registrado em 27/11/2026). Veja [`docs/nome_e_dominio.md`](docs/nome_e_dominio.md).
 
 ## Como funciona
 
